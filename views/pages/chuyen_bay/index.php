@@ -1,172 +1,196 @@
 <?php
-/**
- * ============================================================
- * TRANG: QUẢN LÝ CHUYẾN BAY  —  views/pages/chuyen_bay/index.php
- * Phân hệ: Điều hành chuyến bay (Thành viên 3)
- * ------------------------------------------------------------
- * Phạm vi gợi ý: lịch bay, giờ cất/hạ cánh, hãng hàng không, trạng thái.
- * Ghi chú cho Thành viên 3:
- *   - Dữ liệu trong bảng là MẪU, thay bằng dữ liệu do
- *     ChuyenBayController truyền vào.
- * ============================================================
- */
-
 $pageTitle  = 'Quản lý chuyến bay';
 $pageHeader = 'Quản lý chuyến bay';
 $navActive  = 'chuyen_bay';
 $breadcrumb = [
-    ['label' => 'Tổng quan', 'url' => '/AirportChainManagement/index.php'],
+    ['label' => 'Tổng quan', 'url' => BASE_URL . '/index.php'],
     ['label' => 'Chuyến bay', 'url' => null],
+];
+$escape = static function ($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
+$statusLabels = [
+    'Len_Lich' => ['Chuyến bay đang mở', 'primary'],
+    'Cat_Canh' => ['Cất cánh', 'info'],
+    'Ha_Canh' => ['Hạ cánh', 'success'],
+    'Tri_Hoan' => ['Trễ', 'warning'],
+    'Huy' => ['Hủy', 'danger'],
+];
+$flashMessages = [
+    'created' => 'Đã thêm chuyến bay.',
+    'updated' => 'Đã cập nhật chuyến bay.',
+    'cancelled' => 'Đã hủy chuyến bay.',
+    'deleted' => 'Đã xóa chuyến bay.',
+    'lich_mua_created' => 'Đã thêm lịch bay mùa.',
+    'lich_mua_deleted' => 'Đã xóa lịch bay mùa.',
+    'generated' => 'Đã tạo ' . (int) ($_GET['count'] ?? 0) . ' chuyến bay từ lịch mùa.',
 ];
 
 ob_start();
 ?>
-            <!--begin::Thống kê nhanh-->
-            <div class="row">
-              <div class="col-lg-3 col-6">
-                <div class="small-box text-bg-primary">
-                  <div class="inner">
-                    <h3>128</h3>
-                    <p>Chuyến bay hôm nay</p>
-                  </div>
-                  <i class="small-box-icon bi bi-airplane-engines"></i>
-                </div>
+            <?php if (isset($flashMessages[$_GET['msg'] ?? ''])): ?>
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?= $escape($flashMessages[$_GET['msg']]) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
               </div>
-              <div class="col-lg-3 col-6">
-                <div class="small-box text-bg-info">
-                  <div class="inner">
-                    <h3>64</h3>
-                    <p>Chuyến khởi hành</p>
-                  </div>
-                  <i class="small-box-icon bi bi-box-arrow-up-right"></i>
-                </div>
-              </div>
-              <div class="col-lg-3 col-6">
-                <div class="small-box text-bg-success">
-                  <div class="inner">
-                    <h3>64</h3>
-                    <p>Chuyến đến</p>
-                  </div>
-                  <i class="small-box-icon bi bi-box-arrow-in-down"></i>
-                </div>
-              </div>
-              <div class="col-lg-3 col-6">
-                <div class="small-box text-bg-warning">
-                  <div class="inner">
-                    <h3>6</h3>
-                    <p>Chuyến bị chậm</p>
-                  </div>
-                  <i class="small-box-icon bi bi-clock-history"></i>
-                </div>
-              </div>
-            </div>
-            <!--end::Thống kê nhanh-->
+            <?php endif; ?>
 
             <div class="row">
-              <!--begin::Danh sách chuyến bay-->
-              <div class="col-12">
-                <div class="card">
-                  <div class="card-header">
-                    <h3 class="card-title">Danh sách chuyến bay</h3>
-                    <div class="card-tools">
-                      <button type="button" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Thêm chuyến bay
-                      </button>
+              <?php
+              $statCards = [
+                  ['value' => $stats['total'] ?? 0, 'label' => 'Chuyến bay hôm nay', 'icon' => 'bi-airplane-engines', 'color' => 'primary'],
+                  ['value' => $stats['dep'] ?? 0, 'label' => 'Chuyến khởi hành', 'icon' => 'bi-box-arrow-up-right', 'color' => 'info'],
+                  ['value' => $stats['arr'] ?? 0, 'label' => 'Hạ cánh', 'icon' => 'bi-box-arrow-in-down', 'color' => 'success'],
+                  ['value' => $stats['delayed'] ?? 0, 'label' => 'Chuyến bị chậm', 'icon' => 'bi-clock-history', 'color' => 'warning'],
+              ];
+              foreach ($statCards as $card):
+              ?>
+                <div class="col-lg-3 col-6">
+                  <div class="small-box text-bg-<?= $card['color'] ?>">
+                    <div class="inner">
+                      <h3><?= (int) $card['value'] ?></h3>
+                      <p><?= $escape($card['label']) ?></p>
                     </div>
-                  </div>
-                  <div class="card-body">
-                    <form class="row g-2 mb-3" action="#" method="get">
-                      <div class="col-md-4">
-                        <input type="text" class="form-control" name="keyword" placeholder="Mã chuyến bay / hãng" />
-                      </div>
-                      <div class="col-md-3">
-                        <input type="date" class="form-control" name="date" />
-                      </div>
-                      <div class="col-md-3">
-                        <select class="form-select" name="status">
-                          <option value="">-- Tất cả trạng thái --</option>
-                          <option value="scheduled">Theo kế hoạch</option>
-                          <option value="delayed">Chậm chuyến</option>
-                          <option value="landed">Đã hạ cánh</option>
-                          <option value="cancelled">Hủy chuyến</option>
-                        </select>
-                      </div>
-                      <div class="col-md-2 d-grid">
-                        <button type="submit" class="btn btn-outline-primary">Tìm kiếm</button>
-                      </div>
-                    </form>
-
-                    <div class="table-responsive p-0">
-                      <table class="table table-hover align-middle">
-                        <thead>
-                          <tr>
-                            <th>Mã CB</th>
-                            <th>Hãng</th>
-                            <th>Điểm đi</th>
-                            <th>Điểm đến</th>
-                            <th>Cất cánh</th>
-                            <th>Hạ cánh</th>
-                            <th>Trạng thái</th>
-                            <th class="text-end">Thao tác</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <!-- Dữ liệu mẫu: Thành viên 3 thay bằng vòng lặp PHP -->
-                          <tr>
-                            <td>VN123</td>
-                            <td>Vietnam Airlines</td>
-                            <td>HAN</td>
-                            <td>SGN</td>
-                            <td>08:00</td>
-                            <td>10:10</td>
-                            <td><span class="badge text-bg-success">Theo kế hoạch</span></td>
-                            <td class="text-end">
-                              <a href="#" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                              <a href="#" class="btn btn-sm btn-outline-danger">Hủy</a>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>VJ456</td>
-                            <td>Vietjet Air</td>
-                            <td>DAD</td>
-                            <td>HAN</td>
-                            <td>09:15</td>
-                            <td>10:40</td>
-                            <td><span class="badge text-bg-warning">Chậm 25 phút</span></td>
-                            <td class="text-end">
-                              <a href="#" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                              <a href="#" class="btn btn-sm btn-outline-danger">Hủy</a>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>QH789</td>
-                            <td>Bamboo Airways</td>
-                            <td>SGN</td>
-                            <td>CXR</td>
-                            <td>11:30</td>
-                            <td>12:35</td>
-                            <td><span class="badge text-bg-success">Theo kế hoạch</span></td>
-                            <td class="text-end">
-                              <a href="#" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                              <a href="#" class="btn btn-sm btn-outline-danger">Hủy</a>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <div class="card-footer clearfix">
-                    <ul class="pagination pagination-sm m-0 float-end">
-                      <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
-                      <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                      <li class="page-item"><a class="page-link" href="#">2</a></li>
-                      <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
-                    </ul>
+                    <i class="small-box-icon bi <?= $card['icon'] ?>"></i>
                   </div>
                 </div>
-              </div>
-              <!--end::Danh sách chuyến bay-->
+              <?php endforeach; ?>
             </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Danh sách chuyến bay</h3>
+                <div class="card-tools d-flex flex-wrap gap-2">
+                  <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddFlight">
+                    <i class="bi bi-plus-lg me-1"></i> Thêm chuyến bay
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalLichMua">
+                    <i class="bi bi-calendar-range me-1"></i> Lịch bay mùa
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalBatchGenerate">
+                    <i class="bi bi-cpu me-1"></i> Sinh chuyến bay
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <?php require __DIR__ . '/timkiem.php'; ?>
+
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle">
+                    <thead>
+                      <tr>
+                        <th>Mã CB</th>
+                        <th>Hãng</th>
+                        <th>Điểm đi</th>
+                        <th>Điểm đến</th>
+                        <th>Giờ dự kiến</th>
+                        <th>Giờ thực tế</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php if (!empty($chuyenBays)): ?>
+                        <?php foreach ($chuyenBays as $cb): ?>
+                          <?php
+                          [$statusLabel, $statusColor] = $statusLabels[$cb['trang_thai_tong']] ?? [$cb['trang_thai_tong'], 'secondary'];
+                          ?>
+                          <tr>
+                            <td class="fw-semibold"><?= $escape($cb['so_hieu']) ?></td>
+                            <td><?= $escape($cb['ten_hang'] ?? '') ?></td>
+                            <td><?= $escape($cb['ma_sb_di'] ?? '') ?></td>
+                            <td><?= $escape($cb['ma_sb_den'] ?? '') ?></td>
+                            <td><?= $escape(date('d/m/Y H:i', strtotime($cb['gio_du_kien']))) ?></td>
+                            <td>
+                              <?= !empty($cb['gio_thuc_te']) ? $escape(date('d/m/Y H:i', strtotime($cb['gio_thuc_te']))) : '—' ?>
+                            </td>
+                            <td><span class="badge text-bg-<?= $statusColor ?>"><?= $escape($statusLabel) ?></span></td>
+                            <td class="text-end text-nowrap">
+                              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEdit_<?= (int) $cb['id'] ?>">
+                                Sửa
+                              </button>
+                              <?php if ($cb['trang_thai_tong'] !== 'Huy'): ?>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancel_<?= (int) $cb['id'] ?>">
+                                  Hủy
+                                </button>
+                              <?php endif; ?>
+                            </td>
+                          </tr>
+                        <?php endforeach; ?>
+                      <?php else: ?>
+                        <tr>
+                          <td colspan="8" class="text-center text-muted py-4">Không tìm thấy chuyến bay phù hợp.</td>
+                        </tr>
+                      <?php endif; ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card-footer clearfix">
+                <nav aria-label="Phân trang chuyến bay">
+                  <ul class="pagination pagination-sm m-0 float-end">
+                    <?php $previousPage = max(1, $page - 1); ?>
+                    <?php $previousQuery = [
+                        'controller' => 'chuyenbay',
+                        'action' => 'index',
+                        'keyword' => $keyword,
+                        'date' => $date,
+                        'status' => $status,
+                        'page' => $previousPage,
+                    ]; ?>
+                    <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                      <?php if ($page <= 1): ?>
+                        <span class="page-link">Trước</span>
+                      <?php else: ?>
+                        <a class="page-link" href="index.php?<?= $escape(http_build_query($previousQuery)) ?>">Trước</a>
+                      <?php endif; ?>
+                    </li>
+                    <?php for ($pageNumber = 1; $pageNumber <= $totalPages; $pageNumber++): ?>
+                      <?php
+                      $pageQuery = [
+                          'controller' => 'chuyenbay',
+                          'action' => 'index',
+                          'keyword' => $keyword,
+                          'date' => $date,
+                          'status' => $status,
+                          'page' => $pageNumber,
+                      ];
+                      ?>
+                      <li class="page-item <?= $pageNumber === (int) $page ? 'active' : '' ?>">
+                        <?php if ($pageNumber === (int) $page): ?>
+                          <span class="page-link" aria-current="page"><?= $pageNumber ?></span>
+                        <?php else: ?>
+                          <a class="page-link" href="index.php?<?= $escape(http_build_query($pageQuery)) ?>"><?= $pageNumber ?></a>
+                        <?php endif; ?>
+                      </li>
+                    <?php endfor; ?>
+                    <?php $nextPage = min($totalPages, $page + 1); ?>
+                    <?php $nextQuery = [
+                        'controller' => 'chuyenbay',
+                        'action' => 'index',
+                        'keyword' => $keyword,
+                        'date' => $date,
+                        'status' => $status,
+                        'page' => $nextPage,
+                    ]; ?>
+                    <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                      <?php if ($page >= $totalPages): ?>
+                        <span class="page-link">Sau</span>
+                      <?php else: ?>
+                        <a class="page-link" href="index.php?<?= $escape(http_build_query($nextQuery)) ?>">Sau</a>
+                      <?php endif; ?>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+
+            <?php
+            require __DIR__ . '/themmoi.php';
+            require __DIR__ . '/sua.php';
+            require __DIR__ . '/huy.php';
+            require __DIR__ . '/lich_mua_modal.php';
+            ?>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../../layouts/main.php';

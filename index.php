@@ -1,9 +1,6 @@
 <?php
 /**
  * ============================================================
- * ĐIỂM VÀO (ENTRY POINT) CỦA HỆ THỐNG
- * File: index.php (nằm ở gốc dự án)
- * ------------------------------------------------------------
  * CÁCH TRUY CẬP:
  *   http://localhost/AirportChainManagement/            -> Trang tổng quan
  *   http://localhost/AirportChainManagement/index.php?page=ha_tang
@@ -20,8 +17,40 @@
  * ============================================================
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 /* ---------- Nạp cấu hình dùng chung ---------- */
 require_once __DIR__ . '/config/config.php';
+
+$page            = isset($_GET['page']) ? strtolower(trim((string) $_GET['page'])) : '';
+$controllerParam = strtolower(trim((string) ($_GET['controller'] ?? '')));
+$actionParam     = trim((string) ($_GET['action'] ?? 'index'));
+
+if ($controllerParam === 'chuyenbay' || $page === 'chuyen_bay') {
+    require_once __DIR__ . '/config/database.php';
+    require_once __DIR__ . '/controllers/ChuyenBayController.php';
+
+    $actions = [
+        'index',
+        'create',
+        'edit',
+        'cancel',
+        'delete',
+        'createLichMua',
+        'deleteLichMua',
+        'generateDaily',
+    ];  
+    if (!in_array($actionParam, $actions, true)) {
+        http_response_code(404);
+        exit('Không tìm thấy chức năng chuyến bay.');
+    }
+
+    $controller = new ChuyenBayController($conn);
+    $controller->$actionParam();
+    exit;
+}
 
 /* ---------- Bảng điều hướng: ?page=key  ->  file view ---------- */
 $routes = [
@@ -38,8 +67,6 @@ $routes = [
     // Thành viên 5 - Kế toán
     'ke_toan'  => 'views/pages/ke_toan/index.php',
 ];
-
-$page = isset($_GET['page']) ? strtolower(trim((string) $_GET['page'])) : '';
 
 /* Nếu có ?page=... và tồn tại trong bảng điều hướng thì nạp trang đó.
    Bản thân các file trong views/pages/ đã tự gọi layout nên chỉ cần require. */
