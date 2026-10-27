@@ -123,11 +123,11 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
     </div>
     <?php if ($canUseTab): ?>
       <?php if ($formMode): ?>
-        <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm ms-auto">
           <i class="bi bi-x-lg me-1"></i> Đóng biểu mẫu
         </a>
       <?php else: ?>
-        <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm">
+        <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm ms-auto">
           <i class="bi bi-plus-lg me-1"></i> <?= $e($currentMeta['add']) ?>
         </a>
       <?php endif; ?>

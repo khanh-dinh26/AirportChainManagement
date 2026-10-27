@@ -51,6 +51,16 @@ $diagramCaptions = [
     'SGN-T3-03.jpg' => 'Tầng 4 · Phòng chờ thương gia',
     'DAD-T1-01.jpg' => 'Ga đến · Tầng trệt',
     'DAD-T3-01.jpg' => 'Ga đi · Tầng trệt',
+    'UIH-T1-01.jpg' => 'Tầng trệt · Mặt bằng nhà ga',
+    'UIH-T1-02.jpg' => 'Tầng lửng · Phòng chờ',
+    'PXU-T1-01.jpg' => 'Tầng 1 · Mặt bằng nhà ga hành khách',
+    'PXU-T1-02.jpg' => 'Tầng 2 · Mặt bằng nhà ga hành khách',
+    'THD-T1-01.jpg' => 'Tầng 1 · Ga đi và ga đến',
+    'THD-T1-02.jpg' => 'Tầng 2 · Phòng chờ',
+    'TBB-T1-01.jpg' => 'Tầng 1 · Khu vực công cộng và hạn chế',
+    'TBB-T1-02.jpg' => 'Tầng 2 · Khu cách ly và phòng chờ',
+    'DIN-T1-01.jpg' => 'Tầng 1 · Mặt bằng nhà ga hành khách',
+    'DIN-T1-02.jpg' => 'Tầng 2 · Mặt bằng nhà ga hành khách',
 ];
 
 $diagramSources = [
@@ -93,6 +103,26 @@ $diagramSources = [
     'DAD-T3' => [
         'url' => '',
         'label' => 'Người dùng cung cấp',
+    ],
+    'UIH-T1' => [
+        'url' => 'https://vexere.com/vn/ve-may-bay/san-bay-quoc-te-phu-cat.vi',
+        'label' => 'Vexere',
+    ],
+    'PXU-T1' => [
+        'url' => 'https://acv.vn/vi/pxu/thong-tin-chung-pxu/so-do-nha-ga-hanh-khach-cang-hang-khong-pleiku',
+        'label' => 'Cảng hàng không Pleiku',
+    ],
+    'THD-T1' => [
+        'url' => 'https://acv.vn/vi/thd/gioi-thieu-thd/so-do-nha-ga-cang-hang-khong-tho-xuan',
+        'label' => 'Cảng hàng không Thọ Xuân',
+    ],
+    'TBB-T1' => [
+        'url' => 'https://acv.vn/vi/tbb/quan-trac-moi-truong-tbb/so-do-nha-ga-hanh-khach-cang-hang-khong-tuy-hoa',
+        'label' => 'Cảng hàng không Tuy Hòa',
+    ],
+    'DIN-T1' => [
+        'url' => 'https://acv.vn/vi/din/tin-tuc-din/nha-ga-hanh-khach',
+        'label' => 'Cảng hàng không Điện Biên',
     ],
 ];
 
