@@ -33,6 +33,7 @@ $breadcrumb = [
 
 $tongLoaiTauBay = count($tau_bay);
 $sucChuaLonNhat = 0;
+$tongSucChua    = 0;
 $tongMtow       = 0.0;
 $mtowLonNhat    = 0.0;
 
@@ -47,10 +48,14 @@ foreach ($tau_bay as $tb) {
         $mtowLonNhat = $mtow;
     }
 
+    $tongSucChua += $sucChua;
     $tongMtow += $mtow;
 }
 
 $mtowTrungBinh = $tongLoaiTauBay > 0 ? $tongMtow / $tongLoaiTauBay : 0.0;
+$sucChuaTrungBinh = $tongLoaiTauBay > 0 ? (int) round($tongSucChua / $tongLoaiTauBay) : 0;
+$mtowAverageRatio = $mtowLonNhat > 0 ? min(100, (int) round(($mtowTrungBinh / $mtowLonNhat) * 100)) : 0;
+$sucChuaAverageRatio = $sucChuaLonNhat > 0 ? min(100, (int) round(($sucChuaTrungBinh / $sucChuaLonNhat) * 100)) : 0;
 
 /* ------------------------------------------------------------
  * Lọc danh sách phía máy chủ (thay cho bộ lọc JavaScript cũ).
@@ -89,102 +94,105 @@ if ($idCanXoa > 0) {
 ob_start();
 ?>
 <?php require __DIR__ . '/_flash.php'; ?>
-<style>
-    .aircraft-stat-card { transition: transform .15s ease, box-shadow .15s ease; }
-    .aircraft-stat-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important; }
-    .aircraft-stat-icon { width: 46px; height: 46px; flex: 0 0 46px; font-size: 1.3rem; }
-    .aircraft-stat-label { font-size: .7rem; letter-spacing: .04em; }
-    #themTauBayModal .modal-dialog { max-width: 620px; }
-    #themTauBayModal .modal-content { border: 0; border-radius: .75rem; overflow: hidden; }
-    #themTauBayModal .modal-header { background: linear-gradient(135deg, rgba(25, 135, 84, .12), rgba(25, 135, 84, .03)); }
-    #themTauBayModal .modal-icon { width: 38px; height: 38px; flex: 0 0 38px; }
-    #themTauBayModal .form-label { font-size: .8125rem; }
-    @media (max-width: 575.98px) {
-        .aircraft-stat-icon { width: 38px; height: 38px; flex-basis: 38px; font-size: 1.05rem; }
-        .aircraft-stat-label { font-size: .63rem; }
-        .aircraft-stat-card .card-body { padding: .75rem; }
-        .aircraft-stat-card h3 { font-size: 1.4rem; }
-    }
-</style>
-
-<div class="row g-3 mb-3">
+<div class="maint-page maint-page--aircraft">
+<div class="row g-3 mb-3 maint-stat-grid">
     <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 aircraft-stat-card">
+        <div class="card h-100 maint-stat-card maint-stat-card--primary maint-fade-up">
             <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="aircraft-stat-icon rounded-3 bg-primary-subtle text-primary-emphasis d-inline-flex align-items-center justify-content-center">
+                <span class="maint-stat-icon">
                     <i class="bi bi-airplane"></i>
                 </span>
-                <div style="min-width: 0;">
-                    <div class="aircraft-stat-label text-secondary text-uppercase fw-semibold">Tổng loại tàu bay</div>
-                    <h3 class="mb-0 fw-bold"><?= $tongLoaiTauBay ?></h3>
-                    <div class="small text-secondary text-truncate d-none d-sm-block">Đang quản lý</div>
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Tổng loại tàu bay</div>
+                    <h3 class="mb-0 fw-bold maint-stat-value"><?= $tongLoaiTauBay ?></h3>
+                    <div class="maint-progress mt-2">
+                        <div class="maint-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1">Đang quản lý</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 aircraft-stat-card">
+        <div class="card h-100 maint-stat-card maint-stat-card--success maint-fade-up">
             <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="aircraft-stat-icon rounded-3 bg-success-subtle text-success-emphasis d-inline-flex align-items-center justify-content-center">
+                <span class="maint-stat-icon">
                     <i class="bi bi-people"></i>
                 </span>
-                <div style="min-width: 0;">
-                    <div class="aircraft-stat-label text-secondary text-uppercase fw-semibold">Sức chứa lớn nhất</div>
-                    <h3 class="mb-0 fw-bold">
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Sức chứa lớn nhất</div>
+                    <h3 class="mb-0 fw-bold maint-stat-value">
                         <?= number_format($sucChuaLonNhat) ?>
                         <span class="fs-6 fw-normal text-secondary">khách</span>
                     </h3>
-                    <div class="small text-secondary text-truncate d-none d-sm-block">Số ghế tối đa</div>
+                    <div class="maint-progress mt-2">
+                        <div class="maint-progress-bar" style="width: <?= $sucChuaAverageRatio ?>%"></div>
+                    </div>
+                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1">TB <?= number_format($sucChuaTrungBinh) ?> khách/loại</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 aircraft-stat-card">
+        <div class="card h-100 maint-stat-card maint-stat-card--warning maint-fade-up">
             <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="aircraft-stat-icon rounded-3 bg-warning-subtle text-warning-emphasis d-inline-flex align-items-center justify-content-center">
+                <span class="maint-stat-icon">
                     <i class="bi bi-speedometer2"></i>
                 </span>
-                <div style="min-width: 0;">
-                    <div class="aircraft-stat-label text-secondary text-uppercase fw-semibold">MTOW trung bình</div>
-                    <h3 class="mb-0 fw-bold">
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">MTOW trung bình</div>
+                    <h3 class="mb-0 fw-bold maint-stat-value">
                         <?= number_format($mtowTrungBinh, 2) ?>
                         <span class="fs-6 fw-normal text-secondary">tấn</span>
                     </h3>
-                    <div class="small text-secondary text-truncate d-none d-sm-block">Trung bình danh mục</div>
+                    <div class="maint-progress mt-2">
+                        <div class="maint-progress-bar" style="width: <?= $mtowAverageRatio ?>%"></div>
+                    </div>
+                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1">So với MTOW lớn nhất</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 aircraft-stat-card">
+        <div class="card h-100 maint-stat-card maint-stat-card--info maint-fade-up">
             <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="aircraft-stat-icon rounded-3 bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center">
+                <span class="maint-stat-icon">
                     <i class="bi bi-arrow-up-circle"></i>
                 </span>
-                <div style="min-width: 0;">
-                    <div class="aircraft-stat-label text-secondary text-uppercase fw-semibold">MTOW lớn nhất</div>
-                    <h3 class="mb-0 fw-bold">
+                <div class="flex-grow-1" style="min-width: 0;">
+                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">MTOW lớn nhất</div>
+                    <h3 class="mb-0 fw-bold maint-stat-value">
                         <?= number_format($mtowLonNhat, 2) ?>
                         <span class="fs-6 fw-normal text-secondary">tấn</span>
                     </h3>
-                    <div class="small text-secondary text-truncate d-none d-sm-block">Cấu hình lớn nhất</div>
+                    <div class="maint-progress mt-2">
+                        <div class="maint-progress-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1">Cấu hình lớn nhất</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-body-tertiary border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div class="flex-grow-1">
-            <h3 class="card-title mb-0 float-none">
-                <i class="bi bi-airplane me-2 text-primary"></i>Danh sách loại tàu bay
-                <span class="badge bg-body-tertiary text-body border ms-1 align-middle fw-normal" title="Tổng số loại tàu bay"><?= $tongLoaiTauBayGoc ?></span>
-            </h3>
-            <div class="small text-secondary mt-1">Danh mục dòng máy bay và thông số khai thác</div>
+<div class="card maint-list-card maint-fade-up">
+    <div class="card-header border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2 flex-grow-1">
+            <span class="maint-section-icon">
+                <i class="bi bi-airplane"></i>
+            </span>
+            <div>
+                <h3 class="card-title mb-0 float-none">
+                    Danh sách loại tàu bay
+                    <span class="badge bg-body-tertiary text-body border ms-1 align-middle fw-normal" title="Tổng số loại tàu bay"><?= $tongLoaiTauBayGoc ?></span>
+                </h3>
+                <div class="small text-secondary mt-1">Danh mục dòng máy bay và thông số khai thác</div>
+            </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="maint-health-pill">
+                <span class="maint-pulse bg-primary"></span><?= $tongLoaiTauBayGoc ?> dòng máy bay
+            </span>
             <a href="#themTauBayModal" class="btn btn-sm btn-success">
                 <i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay
             </a>
@@ -193,29 +201,31 @@ ob_start();
 
     <?php if ($tongLoaiTauBayGoc > 0): ?>
         <div class="card-body pb-2">
-            <form method="get" action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2 align-items-end">
-                <div class="col-12 col-lg-8">
-                    <label for="aircraftSearch" class="form-label small text-secondary mb-1">Tìm kiếm</label>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-body-tertiary"><i class="bi bi-search" aria-hidden="true"></i></span>
-                        <input type="search" id="aircraftSearch" name="q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên dòng máy bay hoặc mã LTB...">
-                    </div>
-                </div>
-                <div class="col-12 col-lg-4">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-secondary">
-                        <span>Hiển thị <strong><?= $soLuongHienThi ?></strong> / <strong><?= $tongLoaiTauBayGoc ?></strong> loại</span>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
-                            <a href="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+            <div class="maint-toolbar">
+                <form method="get" action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2 align-items-end">
+                    <div class="col-12 col-lg-8">
+                        <label for="aircraftSearch" class="form-label small text-secondary mb-1">Tìm kiếm</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-search" aria-hidden="true"></i></span>
+                            <input type="search" id="aircraftSearch" name="q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên dòng máy bay hoặc mã LTB...">
                         </div>
                     </div>
-                </div>
-            </form>
+                    <div class="col-12 col-lg-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-secondary">
+                            <span>Hiển thị <strong><?= $soLuongHienThi ?></strong> / <strong><?= $tongLoaiTauBayGoc ?></strong> loại</span>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+                                <a href="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     <?php endif; ?>
 
     <div class="table-responsive">
-        <table class="table table-hover table-sm align-middle mb-0" id="aircraftTable">
+        <table class="table table-hover table-sm align-middle mb-0 maint-table" id="aircraftTable">
             <thead>
                 <tr class="text-uppercase small text-secondary">
                     <th class="ps-3">Loại tàu bay</th>
@@ -231,28 +241,36 @@ ob_start();
                         $maLoaiTauBay = 'LTB-' . sprintf('%03d', (int) $tb['id']);
                         $mtow         = (float) $tb['tai_trong_cat_canh_mtow'];
                         $sucChua      = (int) $tb['suc_chua_hanh_khach'];
+                        $mtowPct      = $mtowLonNhat > 0 ? max(4, min(100, (int) round(($mtow / $mtowLonNhat) * 100))) : 0;
+                        $capacityPct  = $sucChuaLonNhat > 0 ? max(4, min(100, (int) round(($sucChua / $sucChuaLonNhat) * 100))) : 0;
                         ?>
-                        <tr>
-                            <td class="ps-3" style="min-width: 240px; white-space: normal;">
+                        <tr class="maint-row" style="--row-accent: var(--bs-primary);">
+                            <td class="ps-3" style="min-width: 250px; white-space: normal;">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="d-inline-flex align-items-center justify-content-center bg-body-secondary border" style="width: 36px; height: 36px; flex: 0 0 36px;">
+                                    <span class="maint-avatar maint-avatar--primary">
                                         <i class="bi bi-airplane" aria-hidden="true"></i>
                                     </span>
                                     <div>
                                         <div class="fw-semibold"><?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?></div>
-                                        <div class="small text-secondary"><?= $maLoaiTauBay ?></div>
+                                        <div class="small text-secondary maint-code"><?= $maLoaiTauBay ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td style="min-width: 130px; white-space: nowrap;">
+                            <td style="min-width: 165px; white-space: normal;">
                                 <span class="badge border text-primary-emphasis bg-primary-subtle border-primary-subtle">
                                     <i class="bi bi-speedometer2 me-1"></i><?= number_format($mtow, 2) ?> tấn
                                 </span>
+                                <div class="maint-progress maint-progress--sm mt-1" style="--stat-rgb: var(--bs-primary-rgb);">
+                                    <div class="maint-progress-bar" style="width: <?= $mtowPct ?>%"></div>
+                                </div>
                             </td>
-                            <td style="min-width: 130px; white-space: nowrap;">
+                            <td style="min-width: 165px; white-space: normal;">
                                 <span class="badge border text-success-emphasis bg-success-subtle border-success-subtle">
                                     <i class="bi bi-people me-1"></i><?= number_format($sucChua) ?> khách
                                 </span>
+                                <div class="maint-progress maint-progress--sm mt-1" style="--stat-rgb: var(--bs-success-rgb);">
+                                    <div class="maint-progress-bar" style="width: <?= $capacityPct ?>%"></div>
+                                </div>
                             </td>
                             <td class="text-end pe-3 text-nowrap">
                                 <?php
@@ -277,7 +295,7 @@ ob_start();
                 <?php else: ?>
                     <tr>
                         <td colspan="4" class="text-center py-5">
-                            <div class="text-secondary mb-2"><i class="bi bi-airplane fs-1"></i></div>
+                            <div class="maint-empty-icon"><i class="bi bi-airplane"></i></div>
                             <div class="fw-semibold">Chưa có loại tàu bay nào</div>
                             <div class="small text-secondary mb-3">Thêm loại tàu bay đầu tiên để bắt đầu quản lý.</div>
                             <a href="#themTauBayModal" class="btn btn-sm btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay</a>
@@ -288,15 +306,16 @@ ob_start();
         </table>
     </div>
 </div>
+</div>
 
 <!--begin::Modal thêm loại tàu bay-->
-<div class="modal fade<?= $modalError !== null ? ' is-open' : '' ?>" id="themTauBayModal" tabindex="-1" aria-labelledby="themTauBayModalLabel" aria-hidden="true">
+<div class="modal fade maint-modal maint-modal--aircraft<?= $modalError !== null ? ' is-open' : '' ?>" id="themTauBayModal" tabindex="-1" aria-labelledby="themTauBayModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content shadow-lg">
             <form action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
-                <div class="modal-header border-0 px-3 py-2">
+                <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="modal-icon d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white shadow-sm">
+                        <span class="modal-icon">
                             <i class="bi bi-airplane"></i>
                         </span>
                         <div>
@@ -314,6 +333,8 @@ ob_start();
                             <div class="small"><?= htmlspecialchars($modalError, ENT_QUOTES, 'UTF-8') ?></div>
                         </div>
                     <?php endif; ?>
+
+                    <div class="maint-form-section"><i class="bi bi-airplane"></i> Thông số khai thác</div>
 
                     <div class="mb-2">
                         <label for="ma_loai" class="form-label fw-semibold">
@@ -351,12 +372,11 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="modal-footer border-0 bg-body-tertiary d-flex flex-wrap justify-content-between gap-2 px-3 py-2">
+                <div class="modal-footer border-0 d-flex flex-wrap justify-content-between gap-2 px-3 py-2">
                     <div class="small text-secondary d-none d-sm-block">
                         <i class="bi bi-info-circle me-1"></i> Thông số dùng để tính toán khai thác.
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-light border px-3">Hủy bỏ</a>
+                    <div class="d-flex gap-2 ms-auto">
                         <button type="submit" class="btn btn-sm btn-success px-3">
                             <i class="bi bi-check2 me-1"></i> Lưu loại tàu bay
                         </button>
