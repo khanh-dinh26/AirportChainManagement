@@ -19,10 +19,32 @@ class KeToanController {
         }
         return $data;
     }
+// Lấy một dòng đơn giá theo id
+    public function LayDonGia($id) {
+        $id = (int) $id;
+        $stmt = mysqli_prepare($this->conn, "SELECT * FROM bang_gia_dich_vu WHERE id = ?");
+        if (!$stmt) return null;
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = $result ? mysqli_fetch_assoc($result) : null;
+        mysqli_stmt_close($stmt);
+        return $row ?: null;
+    }
+
+// Cập nhật đơn giá + đơn vị tính
+    public function CapNhatDonGia($id, $gia, $donVi) {
+        $id = (int) $id;
+        $stmt = mysqli_prepare($this->conn, "UPDATE bang_gia_dich_vu SET don_gia = ?, don_vi_tinh = ? WHERE id = ?");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, 'dsi', $gia, $donVi, $id);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return $ok;
+    }
 
 // Thêm đơn giá mới
     public function ThemDonGia($ten, $gia, $don_vi) {
-        // Dùng mysqli_real_escape_string để chống SQL Injection
         $ten = mysqli_real_escape_string($this->conn, $ten);
         $gia = mysqli_real_escape_string($this->conn, $gia);
         $don_vi = mysqli_real_escape_string($this->conn, $don_vi);
@@ -35,7 +57,6 @@ class KeToanController {
 
   //Các chuyến bay đã hoàn thành
     public function ChuyenBayHoanThanh() {
-        // Đã sửa lại thành 'Hoan_Thanh' theo đúng Database của bạn
         $sql = "SELECT * FROM chuyen_bay_ngay WHERE trang_thai_tong = 'Hoan_Thanh'";
         $result = mysqli_query($this->conn, $sql);
         $data = [];
@@ -74,9 +95,6 @@ class KeToanController {
             $phi_do_tau_bay = $so_gio_do * $gia_do;
             $phi_phuc_vu_hk = $cb['luong_hanh_khach'] * $phi_psc;
             $tong_tien = $phi_cat_ha_canh + $phi_do_tau_bay + $phi_phuc_vu_hk;
-            // Bảng hoa_don trong CSDL không có cột han_thanh_toan:
-            // hạn thanh toán được suy ra = ngay_xuat + 30 ngày (xem DanhSachHoaDonCho).
-            // Cột id_hang_hang_khong là NOT NULL nên bắt buộc phải truyền vào.
             $id_hang = (int) ($cb['id_hang_hang_khong'] ?? 0);
             $sql_insert = "INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
                            VALUES ($id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien, NOW(), 'Chua_Thanh_Toan')";
@@ -139,7 +157,6 @@ class KeToanController {
                  FROM hoa_don 
                  WHERE trang_thai_thanh_toan = 'Chua_Thanh_Toan'";
         $stats['hd_chua_thu'] = mysqli_fetch_assoc(mysqli_query($this->conn, $sql3))['sl'] ?? 0;
-        // CSDL không có cột han_thanh_toan -> hạn thanh toán = ngay_xuat + 30 ngày
         $sql4 = "SELECT SUM(tong_tien) as tien_no 
                  FROM hoa_don 
                  WHERE trang_thai_thanh_toan = 'Chua_Thanh_Toan' 
@@ -154,8 +171,6 @@ class KeToanController {
 
 //Danh sách hóa đơn chờ
     public function DanhSachHoaDonCho() {
-        // CSDL không có cột han_thanh_toan -> tính hạn thanh toán = ngay_xuat + 30 ngày
-        // để view vẫn hiển thị được cột "Hạn chót" như thiết kế ban đầu.
         $sql = "SELECT hd.*, DATE_ADD(hd.ngay_xuat, INTERVAL 30 DAY) AS han_thanh_toan, cb.so_hieu 
                 FROM hoa_don hd 
                 JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id 
@@ -175,6 +190,18 @@ class KeToanController {
         $id_hoa_don = (int)$id_hoa_don;
         $sql = "UPDATE hoa_don SET trang_thai_thanh_toan = 'Da_Thanh_Toan' WHERE id = $id_hoa_don";
         return mysqli_query($this->conn, $sql);
+    }
+    // Lấy chi tiết hóa đơn
+    public function LayChiTietHoaDon($id_hoa_don) {
+        $id_hoa_don = (int)$id_hoa_don;
+        $sql = "SELECT hd.*, cb.so_hieu, cb.luong_hanh_khach, hk.ten_hang, tb.tai_trong_cat_canh_mtow
+                FROM hoa_don hd
+                JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
+                JOIN hang_hang_khong hk ON cb.id_hang_hang_khong = hk.id
+                JOIN loai_tau_bay tb ON cb.id_loai_tau_bay = tb.id
+                WHERE hd.id = $id_hoa_don";
+        $result = mysqli_query($this->conn, $sql);
+        return mysqli_fetch_assoc($result);
     }
 
 //4. THỐNG KÊ SÂN BAY
