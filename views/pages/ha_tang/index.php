@@ -1257,6 +1257,63 @@ ob_start();
   @media (max-width: 575.98px) {
     .ht-page .ht-airport-grid { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); }
   }
+
+  /* Typography: tăng cỡ chữ toàn bộ nội dung trang Hạ tầng */
+  .ht-page {
+    font-size: 1.05rem;
+  }
+  .ht-page .ht-eyebrow { font-size: .82rem; }
+  .ht-page .ht-hero__title { font-size: clamp(1.75rem, 2.8vw, 2.55rem); }
+  .ht-page .ht-hero__sub { font-size: 1.06rem; }
+  .ht-page .ht-hero__stat strong { font-size: 1.5rem; }
+  .ht-page .ht-hero__stat span { font-size: .82rem; }
+  .ht-page .ht-section-head h3 { font-size: 1.22rem; }
+  .ht-page .ht-section-head p { font-size: .96rem; }
+  .ht-page .ht-legend { font-size: .85rem; }
+  .ht-page .ht-airport__tag { font-size: .66rem; }
+  .ht-page .ht-airport__code { font-size: .85rem; }
+  .ht-page .ht-airport__name { font-size: .95rem; }
+  .ht-page .ht-airport__city { font-size: .78rem; }
+  .ht-page .ht-airport-detail__code { font-size: 1.35rem; }
+  .ht-page .ht-mini-stat strong { font-size: 1.3rem; }
+  .ht-page .ht-mini-stat span { font-size: .78rem; }
+  .ht-page .ht-tabs .nav-link { font-size: 1.02rem; }
+  .ht-page .ht-panel .card-header h3 { font-size: 1.2rem; }
+  .ht-page .ht-panel .card-header p { font-size: .92rem; }
+  .ht-page .ht-chip { font-size: .92rem; }
+  .ht-page .ht-flight-route { font-size: .95rem; }
+  .ht-page .ht-flight-route i { font-size: .82rem; }
+  .ht-page .ht-flight-sub { font-size: .82rem; }
+  .ht-page .ht-terminal-card__code { font-size: .82rem; }
+  .ht-page .ht-terminal-card__meta { font-size: .8rem; }
+  .ht-page .ht-diagram__zone h4 { font-size: .8rem; }
+  .ht-page .ht-gate { font-size: .92rem; }
+  .ht-page .ht-gate small,
+  .ht-page .ht-counter small,
+  .ht-page .ht-belt small { font-size: .68rem; }
+  .ht-page .ht-counter,
+  .ht-page .ht-belt { font-size: .86rem; }
+  .ht-page .ht-diagram__legend { font-size: .82rem; }
+  .ht-page .ht-diagram-thumb__caption { font-size: .78rem; }
+  .ht-page .ht-diagram-thumb__zoom { font-size: .74rem; }
+  .ht-page .ht-diagram-source { font-size: .84rem; }
+  .ht-page .ht-lightbox-heading .modal-title { font-size: 1.15rem; }
+  .ht-page .ht-lightbox-zoom button { font-size: .9rem; }
+  .ht-page .ht-lightbox-source { font-size: .84rem; }
+  .ht-page .ht-empty h3 { font-size: 1.2rem; }
+  .ht-page .ht-empty p { font-size: .96rem; }
+  .ht-page .ht-table { font-size: .94rem; }
+  .ht-page .ht-table thead th { font-size: .78rem; }
+  .ht-page .ht-form-card h4 { font-size: 1.08rem; }
+  .ht-page .ht-form-card .form-label { font-size: .8rem; }
+  .ht-page .ht-upload-preview span { font-size: .84rem; }
+  .ht-page .ht-admin-tabs a { font-size: .92rem; }
+  .ht-page .ht-soft-label { font-size: .8rem; }
+  .ht-page .form-control,
+  .ht-page .form-select { font-size: 1.02rem; }
+  .ht-page .btn { font-size: 1rem; }
+  .ht-page .btn-sm { font-size: .9rem; }
+  .ht-page .badge { font-size: .82rem; }
 </style>
 
 <div class="ht-page">
@@ -1434,9 +1491,6 @@ ob_start();
       <i class="bi bi-hand-index-thumb"></i>
       <h3>Chọn một sân bay để bắt đầu</h3>
       <p>Nhấn vào một ô sân bay phía trên để xem chuyến bay, danh sách nhà ga và sơ đồ khai thác.</p>
-      <a href="<?= $e($url(['quan_tri' => '1', 'tab' => 'san_bay'])) ?>" class="btn btn-outline-primary btn-sm mt-3">
-        <i class="bi bi-sliders me-1"></i> Quản trị danh mục sân bay
-      </a>
     </div>
   <?php endif; ?>
 </div>
