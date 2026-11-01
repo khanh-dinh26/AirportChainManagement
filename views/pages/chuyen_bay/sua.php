@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ============================================================
  * TRANG: SỬA CHUYẾN BAY  —  views/pages/chuyen_bay/sua.php

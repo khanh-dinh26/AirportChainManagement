@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ============================================================
  * POPUP: XÁC NHẬN ĐIỀU KIỆN CẤT CÁNH — views/pages/chuyen_bay/cat_canh.php

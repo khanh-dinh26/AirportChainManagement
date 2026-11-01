@@ -811,7 +811,9 @@ body:has(.modal.is-open) {
 }
 
 .maint-fade-up {
-  animation: maintFadeUp .45s ease both;
+  /* backwards thay vì both: chạy xong phải nhả transform,
+     nếu không hiệu ứng hover nổi thẻ (.maint-stat-card:hover) bị chặn. */
+  animation: maintFadeUp .45s ease backwards;
 }
 
 .maint-stat-grid > *:nth-child(2) .maint-fade-up { animation-delay: .05s; }
@@ -852,13 +854,55 @@ body:has(.modal.is-open) {
   }
 }
 
+/* ============================================================
+ * 5b. HIỆU ỨNG CHUNG TOÀN SITE — thuần CSS, không JavaScript
+ *     - Khối nội dung mờ dần + nhích lên khi tải trang
+ *       (card, small-box, khung riêng của Hạ tầng .ht-page)
+ *     - Thẻ thống kê nổi nhẹ khi rê chuột
+ *     Bảo trì đã có hiệu ứng riêng (.maint-fade-up) nên loại trừ
+ *     để không chạy hai lần.
+ * ============================================================ */
+@keyframes acvFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.app-content .card:not(.maint-fade-up),
+.app-content .small-box:not(.maint-fade-up),
+.app-content .ht-page:not(.maint-fade-up) {
+  /* backwards (không phải both): sau khi chạy xong phải nhả transform,
+     nếu không hiệu ứng hover nổi thẻ bên dưới sẽ bị chặn. */
+  animation: acvFadeUp .45s ease backwards;
+}
+
+/* Nhịp so le cho các khối nằm cạnh nhau trong cùng một hàng */
+.app-content .row > [class*="col-"]:nth-child(2) > :is(.card, .small-box) { animation-delay: .05s; }
+.app-content .row > [class*="col-"]:nth-child(3) > :is(.card, .small-box) { animation-delay: .1s; }
+.app-content .row > [class*="col-"]:nth-child(4) > :is(.card, .small-box) { animation-delay: .15s; }
+.app-content .row > [class*="col-"]:nth-child(5) > :is(.card, .small-box) { animation-delay: .2s; }
+
+/* Thẻ thống kê nổi nhẹ khi rê chuột (không áp cho bảng danh sách lớn) */
+.app-content .small-box,
+.app-content .card[class*="card-outline"] {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.app-content .small-box:hover,
+.app-content .card[class*="card-outline"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 .7rem 1.6rem rgba(15, 23, 42, .12);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .maint-stat-card,
   .maint-list-card,
   .maint-fade-up,
   .maint-pulse::after,
   .modal:target .modal-dialog,
-  .modal.is-open .modal-dialog {
+  .modal.is-open .modal-dialog,
+  .app-content .card,
+  .app-content .small-box,
+  .app-content .ht-page {
     animation: none !important;
     transition: none !important;
   }

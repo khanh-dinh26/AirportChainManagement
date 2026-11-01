@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ============================================================
  * TRANG: QUẢN LÝ CHUYẾN BAY  —  views/pages/chuyen_bay/index.php

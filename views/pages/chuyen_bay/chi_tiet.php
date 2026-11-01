@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ============================================================
  * POPUP: XEM CHI TIẾT CHUYẾN BAY — views/pages/chuyen_bay/chi_tiet.php
