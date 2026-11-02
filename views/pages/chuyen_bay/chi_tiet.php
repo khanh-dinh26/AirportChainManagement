@@ -14,15 +14,6 @@ $data = (new ChuyenBayController($conn))->handleFlightDetail();
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
-$dateTime = static function ($value) use ($escape) {
-    if ($value === null || $value === '') {
-        return '—';
-    }
-    $parsed = DateTime::createFromFormat('Y-m-d H:i:s', (string) $value);
-
-    return $escape($parsed ? $parsed->format('d/m/Y H:i') : (string) $value);
-};
-
 $flight = $data['flight'] ?? null;
 $delayHistory = $data['delayHistory'] ?? [];
 $statusLabels = [
@@ -32,21 +23,11 @@ $statusLabels = [
     'Delay' => 'Trễ chuyến',
     'Huy' => 'Hủy chuyến',
 ];
-$statusClasses = [
-    'Dang_Mo' => 'success',
-    'Cat_Canh' => 'primary',
-    'Ha_Canh' => 'warning',
-    'Delay' => 'warning',
-    'Huy' => 'danger',
-];
-
 // Trễ chuyến chỉ hiển thị cho chuyến sát ngày; chuyến tương lai xa coi là điều chỉnh lịch bay.
 $displayStatus = $flight['trang_thai_tong'] ?? '';
 $displayLabel = $statusLabels[$displayStatus] ?? $displayStatus;
-$displayClass = $statusClasses[$displayStatus] ?? 'secondary';
 if ($displayStatus === 'Delay' && $flight && substr((string) $flight['gio_du_kien'], 0, 10) > substr((string) $data['serverNow'], 0, 10)) {
     $displayLabel = 'Điều chỉnh lịch bay';
-    $displayClass = 'info';
 }
 
 
@@ -91,7 +72,6 @@ if ($flight && in_array($displayStatus, ['Cat_Canh', 'Delay'], true)
     && $effectiveLandingTs <= strtotime((string) $data['serverNow'])) {
     $displayStatus = 'Ha_Canh';
     $displayLabel = 'Hạ cánh';
-    $displayClass = 'warning';
 }
 
 $terminalText = 'Chưa phân công';
@@ -107,134 +87,223 @@ $navActive = 'chuyen_bay';
 
 ob_start();
 ?>
+            <?php if (!$popup): ?>
+              <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+            <?php endif; ?>
             <?php if ($flight === null): ?>
               <div class="card">
                 <div class="card-body">
                   <p class="mb-3">Không tìm thấy chuyến bay cần xem.</p>
-                  <button class="btn btn-outline-danger" type="button" data-flight-popup-close>Đóng</button>
                 </div>
               </div>
             <?php else: ?>
-              <?php if ($displayStatus === 'Delay'): ?>
-                <div class="alert alert-warning" role="alert">
-                  <strong>Thông tin trễ chuyến</strong><br>
-                  Lý do trễ: <?= $escape($latestDelay['ly_do'] ?? 'Chưa có lý do') ?><br>
-                  <?php if ($delayHistory): ?>
-                    <details class="mt-1">
-                      <summary class="text-secondary" style="cursor:pointer;">Lý do trễ trước đó (<?= count($delayHistory) ?>)</summary>
-                      <ul class="mb-0 mt-1">
-                        <?php foreach ($delayHistory as $entry): ?>
-                          <?php if (!empty($entry['ly_do'])): ?>
-                            <li>
-                              <?= $escape($entry['thoi_gian']) ?> — <?= $escape($entry['ly_do']) ?>
-                              <?php if (!empty($entry['so_phut'])): ?>
-                                (<?= (int) $entry['so_phut'] ?> phút)
-                              <?php endif; ?>
-                            </li>
-                          <?php endif; ?>
-                        <?php endforeach; ?>
-                      </ul>
-                    </details>
+              <div class="card flight-detail-content">
+                <?php if (!$popup): ?>
+                <div class="card-header">
+                  <h2 class="card-title h5 mb-0">Thông tin chuyến <?= $escape($flight['so_hieu']) ?></h2>
+                </div>
+                <?php endif; ?>
+                <div class="card-body">
+                  <?php if (in_array($displayStatus, ['Cat_Canh', 'Ha_Canh'], true)): ?>
+                    <?php $isLanded = $displayStatus === 'Ha_Canh'; ?>
+                    <div class="flight-readonly-banner mb-3">
+                      <div class="d-flex align-items-start gap-3">
+                        <i class="bi <?= $isLanded ? 'bi-check-circle-fill' : 'bi-airplane-engines-fill' ?>" aria-hidden="true"></i>
+                        <div class="flex-grow-1">
+                          <div class="d-flex flex-wrap align-items-center gap-2">
+                            <strong><?= $isLanded ? 'Chuyến bay đã hoàn tất' : 'Chuyến bay đang khai thác' ?></strong>
+                            <span class="badge flight-status-badge" data-flight-status="<?= $escape($displayStatus) ?>"><?= $escape($displayLabel) ?></span>
+                          </div>
+                          <p class="mb-0 mt-1 text-secondary">Thông tin chuyến bay chỉ xem được sau khi máy bay cất cánh để bảo toàn dữ liệu khai thác.</p>
+                        </div>
+                      </div>
+                    </div>
+                  <?php elseif ($displayStatus === 'Huy'): ?>
+                    <div class="flight-cancel-banner mb-3" role="status">
+                      <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-x-octagon-fill" aria-hidden="true"></i>
+                        <div>
+                          <strong>Chuyến bay đã bị hủy</strong>
+                          <p class="mb-0 mt-1 text-secondary">Thông tin và lịch sử chuyến được giữ lại để tra cứu.</p>
+                        </div>
+                      </div>
+                    </div>
                   <?php endif; ?>
-                  Thời gian trễ lần này: <?= (int) ($latestDelay['so_phut'] ?? $totalDelayMinutes) ?> phút<br>
-                  Tổng thời gian đã delay: <?= (int) ($totalDelayMinutes + $overdueMinutes) ?> phút<?php if ($overdueMinutes > 0): ?>
-                    <span class="text-danger">(gồm <?= (int) $overdueMinutes ?> phút quá hạn chờ xác nhận)</span><?php endif; ?><br>
-                  Giờ bắt đầu bay: <?= $escape($stdText) ?><br>
-                  Giờ dự kiến hạ cánh: <?= $escape($arrivalText) ?><br>
-                  Giờ cất cánh sau delay: <?= $escape($etdText) ?><br>
-                  Giờ dự kiến hạ cánh sau delay: <?= $escape($delayedArrivalText) ?>
-                </div>
-              <?php endif; ?>
 
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <div class="card h-100">
-                    <div class="card-header"><h3 class="card-title h6 mb-0">Hành trình & tàu bay</h3></div>
-                    <div class="card-body">
-                      <dl class="row departure-info mb-0">
-                        <dt class="col-sm-5">Mã chuyến bay</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['so_hieu']) ?></dd>
-
-                        <dt class="col-sm-5">Hãng hàng không</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['ten_hang']) ?></dd>
-
-                        <dt class="col-sm-5">Loại tàu bay</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['ma_loai']) ?></dd>
-
-                        <dt class="col-sm-5">Sân bay đi (đang ở)</dt>
-                        <dd class="col-sm-7">
-                          <?= $escape($flight['ma_di']) ?> — <?= $escape($flight['ten_di']) ?>
-                        </dd>
-
-                        <dt class="col-sm-5">Nhà ga đi</dt>
-                        <dd class="col-sm-7"><?= $escape($terminalText) ?></dd>
-
-                        <dt class="col-sm-5">Sân bay đến</dt>
-                        <dd class="col-sm-7">
-                          <?= $escape($flight['ma_den']) ?> — <?= $escape($flight['ten_den']) ?>
-                        </dd>
-
-                        <dt class="col-sm-5">Giờ cất cánh</dt>
-                        <dd class="col-sm-7">
-                          <?= $escape($stdText) ?>
-                          <?php if ($displayStatus === 'Delay'): ?>
-                            <span class="text-secondary small d-block">Sau delay dự kiến: <?= $escape($etdText) ?></span>
-                          <?php endif; ?>
-                        </dd>
-
-                        <dt class="col-sm-5">Giờ dự kiến hạ cánh</dt>
-                        <dd class="col-sm-7"><?= $escape($arrivalText) ?></dd>
-
-                        <dt class="col-sm-5">Giờ dự kiến hạ cánh sau delay</dt>
-                        <dd class="col-sm-7"><?= $escape($delayedArrivalText) ?></dd>
-
-
-                      </dl>
+                  <section class="flight-form-section mb-3" aria-labelledby="flight-detail-route-title">
+                    <div class="flight-form-section-heading">
+                      <span class="flight-form-section-icon"><i class="bi bi-signpost-split" aria-hidden="true"></i></span>
+                      <div>
+                        <h3 id="flight-detail-route-title">Hành trình và tàu bay</h3>
+                        <p><?= $escape($flight['so_hieu']) ?> · <?= $escape($flight['ten_hang'] ?? 'Chưa có hãng') ?></p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="card h-100">
-                    <div class="card-header"><h3 class="card-title h6 mb-0">Hạ tầng & tải</h3></div>
-                    <div class="card-body">
-                      <dl class="row departure-info mb-0">
-                        <dt class="col-sm-5">Cửa ra máy bay</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['cua_ra'] ?? 'Chưa phân công') ?></dd>
-
-                        <dt class="col-sm-5">Quầy check-in</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['quay_checkin'] ?? 'Chưa phân công') ?></dd>
-
-                        <dt class="col-sm-5">Băng chuyền hành lý</dt>
-                        <dd class="col-sm-7"><?= $escape($flight['bang_chuyen'] ?? 'Chưa phân công') ?></dd>
-
-                        <dt class="col-sm-5">Số hành khách</dt>
-                        <dd class="col-sm-7">
-                          <?= (int) ($flight['luong_hanh_khach'] ?? 0) ?> khách
-                          <?php if (!empty($flight['suc_chua_hanh_khach'])): ?>
-                            / <?= (int) $flight['suc_chua_hanh_khach'] ?> khách
-                          <?php endif; ?>
-                        </dd>
-
-                        <dt class="col-sm-5">Hành lý (tấn)</dt>
-                        <dd class="col-sm-7">
-                          <?= $escape(rtrim(rtrim(number_format((float) ($flight['luong_hang_hoa_tan'] ?? 0), 2, '.', ''), '0'), '.')) ?> tấn
-                        </dd>
-
-                        <dt class="col-sm-5">Trạng thái</dt>
-                        <dd class="col-sm-7">
-                          <span class="badge text-bg-<?= $escape($displayClass) ?>"<?= $displayStatus === 'Ha_Canh' ? ' style="background-color:#33FFFF;color:#000;"' : '' ?>>
-                            <?= $escape($displayLabel) ?>
-                          </span>
-                        </dd>
-                      </dl>
+                    <div class="flight-summary-route mb-3">
+                      <div class="flight-summary-airport">
+                        <span class="flight-summary-airport-code"><?= $escape($flight['ma_di'] ?? '—') ?></span>
+                        <span class="flight-summary-airport-name"><?= $escape($flight['ten_di'] ?? 'Chưa có sân bay đi') ?></span>
+                      </div>
+                      <span class="flight-summary-route-icon" aria-hidden="true"><i class="bi bi-airplane"></i></span>
+                      <div class="flight-summary-airport">
+                        <span class="flight-summary-airport-code"><?= $escape($flight['ma_den'] ?? '—') ?></span>
+                        <span class="flight-summary-airport-name"><?= $escape($flight['ten_den'] ?? 'Chưa có sân bay đến') ?></span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                    <div class="flight-summary-facts">
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Loại tàu bay</span>
+                        <span class="flight-summary-fact-value"><?= $escape($flight['ma_loai'] ?? 'Chưa cập nhật') ?></span>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Nhà ga đi</span>
+                        <span class="flight-summary-fact-value"><?= $escape($terminalText) ?></span>
+                      </div>
+                    </div>
+                  </section>
 
-              <div class="mt-3 d-flex flex-wrap gap-2">
-                <button class="btn btn-outline-danger" type="button" data-flight-popup-close>Đóng</button>
+                  <section class="flight-form-section mb-3" aria-labelledby="flight-detail-schedule-title">
+                    <div class="flight-form-section-heading">
+                      <span class="flight-form-section-icon"><i class="bi bi-calendar2-week" aria-hidden="true"></i></span>
+                      <div>
+                        <h3 id="flight-detail-schedule-title">Lịch trình</h3>
+                        <p>Thời gian dự kiến và tiến trình chuyến bay.</p>
+                      </div>
+                    </div>
+                    <div class="flight-progress mb-3" aria-label="Tiến trình chuyến bay">
+                      <div class="flight-progress-step is-complete">
+                        <span class="flight-progress-dot"><i class="bi bi-check2" aria-hidden="true"></i></span>
+                        <span>Đã lên lịch</span>
+                      </div>
+                      <div class="flight-progress-step <?= in_array($displayStatus, ['Cat_Canh', 'Ha_Canh'], true) ? 'is-complete' : ($displayStatus === 'Huy' ? '' : 'is-current') ?>">
+                        <span class="flight-progress-dot"><i class="bi <?= in_array($displayStatus, ['Cat_Canh', 'Ha_Canh'], true) ? 'bi-check2' : ($displayStatus === 'Huy' ? 'bi-x' : 'bi-clock') ?>" aria-hidden="true"></i></span>
+                        <span><?= in_array($displayStatus, ['Cat_Canh', 'Ha_Canh'], true) ? 'Đã cất cánh' : ($displayStatus === 'Huy' ? 'Đã hủy' : 'Chờ cất cánh') ?></span>
+                      </div>
+                      <div class="flight-progress-step <?= $displayStatus === 'Ha_Canh' ? 'is-complete' : ($displayStatus === 'Cat_Canh' ? 'is-current' : '') ?>">
+                        <span class="flight-progress-dot"><i class="bi <?= $displayStatus === 'Ha_Canh' ? 'bi-check2' : ($displayStatus === 'Cat_Canh' ? 'bi-airplane' : 'bi-geo-alt') ?>" aria-hidden="true"></i></span>
+                        <span><?= $displayStatus === 'Ha_Canh' ? 'Đã hạ cánh' : ($displayStatus === 'Cat_Canh' ? 'Đang bay' : 'Điểm đến') ?></span>
+                      </div>
+                    </div>
+                    <div class="flight-summary-facts">
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Giờ cất cánh</span>
+                        <span class="flight-summary-fact-value"><?= $escape($stdText) ?></span>
+                        <?php if ($displayStatus === 'Delay'): ?><small class="text-secondary">Dự kiến sau trễ: <?= $escape($etdText) ?></small><?php endif; ?>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Giờ hạ cánh dự kiến</span>
+                        <span class="flight-summary-fact-value"><?= $escape($arrivalText) ?></span>
+                        <?php if ($displayStatus === 'Delay'): ?><small class="text-secondary">Sau trễ: <?= $escape($delayedArrivalText) ?></small><?php endif; ?>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="flight-form-section mb-3" aria-labelledby="flight-detail-services-title">
+                    <div class="flight-form-section-heading">
+                      <span class="flight-form-section-icon"><i class="bi bi-building-check" aria-hidden="true"></i></span>
+                      <div>
+                        <h3 id="flight-detail-services-title">Dịch vụ tại sân bay đi</h3>
+                        <p>Cửa ra máy bay, quầy làm thủ tục và băng chuyền hành lý.</p>
+                      </div>
+                    </div>
+                    <div class="flight-summary-facts">
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Cửa ra máy bay</span>
+                        <span class="flight-summary-fact-value"><?= $escape($flight['cua_ra'] ?? 'Chưa phân công') ?></span>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Quầy check-in</span>
+                        <span class="flight-summary-fact-value"><?= $escape($flight['quay_checkin'] ?? 'Chưa phân công') ?></span>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Băng chuyền hành lý</span>
+                        <span class="flight-summary-fact-value"><?= $escape($flight['bang_chuyen'] ?? 'Chưa phân công') ?></span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="flight-form-section mb-3" aria-labelledby="flight-detail-operations-title">
+                    <div class="flight-form-section-heading">
+                      <span class="flight-form-section-icon"><i class="bi bi-gear-wide-connected" aria-hidden="true"></i></span>
+                      <div>
+                        <h3 id="flight-detail-operations-title">Trạng thái và tải khai thác</h3>
+                        <p>Trạng thái hiện tại, số hành khách và khối lượng hành lý.</p>
+                      </div>
+                    </div>
+                    <div class="flight-summary-facts">
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Hành khách</span>
+                        <span class="flight-summary-fact-value">
+                          <?= (int) ($flight['luong_hanh_khach'] ?? 0) ?> khách<?php if (!empty($flight['suc_chua_hanh_khach'])): ?> / <?= (int) $flight['suc_chua_hanh_khach'] ?> khách<?php endif; ?>
+                        </span>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Hành lý</span>
+                        <span class="flight-summary-fact-value"><?= number_format((float) ($flight['luong_hang_hoa_tan'] ?? 0), 2, ',', '.') ?> tấn</span>
+                      </div>
+                      <div class="flight-summary-fact">
+                        <span class="flight-summary-fact-label">Trạng thái</span>
+                        <span class="flight-summary-fact-value">
+                          <span class="badge flight-status-badge" data-flight-status="<?= $escape($displayStatus === 'Delay' && $displayLabel !== 'Trễ chuyến' ? 'Dang_Mo' : $displayStatus) ?>"><?= $escape($displayLabel) ?></span>
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <?php if ($displayStatus === 'Delay'): ?>
+                    <section class="flight-delay-panel mb-3" role="status" aria-labelledby="flight-delay-title">
+                      <div class="flight-delay-heading">
+                        <span class="flight-delay-icon" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+                        <div>
+                          <h3 id="flight-delay-title">Thông tin trễ chuyến</h3>
+                          <p>Chi tiết nguyên nhân và thời gian điều chỉnh lịch bay.</p>
+                        </div>
+                      </div>
+                      <div class="flight-delay-reason">
+                        <span class="flight-delay-label">Lý do trễ gần nhất</span>
+                        <strong><?= $escape($latestDelay['ly_do'] ?? 'Chưa có lý do') ?></strong>
+                      </div>
+                      <div class="flight-delay-metrics">
+                        <div class="flight-delay-metric">
+                          <span class="flight-delay-label">Lần trễ gần nhất</span>
+                          <strong><?= (int) ($latestDelay['so_phut'] ?? $totalDelayMinutes) ?> <small>phút</small></strong>
+                        </div>
+                        <div class="flight-delay-metric">
+                          <span class="flight-delay-label">Tổng thời gian trễ</span>
+                          <strong><?= (int) ($totalDelayMinutes + $overdueMinutes) ?> <small>phút</small></strong>
+                          <?php if ($overdueMinutes > 0): ?>
+                            <span class="flight-delay-overdue">Bao gồm <?= (int) $overdueMinutes ?> phút quá hạn chờ xác nhận</span>
+                          <?php endif; ?>
+                        </div>
+                      </div>
+                      <?php if ($delayHistory): ?>
+                        <details class="flight-delay-history">
+                          <summary>
+                            <span><i class="bi bi-list-ul me-2" aria-hidden="true"></i>Lịch sử các lần trễ chuyến</span>
+                            <span class="badge rounded-pill text-bg-warning"><?= count($delayHistory) ?> lần</span>
+                          </summary>
+                          <ul class="flight-delay-timeline">
+                            <?php foreach ($delayHistory as $entry): ?>
+                              <?php if (!empty($entry['ly_do'])): ?>
+                                <?php
+                                  $delayTimestamp = DateTime::createFromFormat('Y-m-d H:i:s', (string) ($entry['thoi_gian'] ?? ''));
+                                  $delayTimeLabel = $delayTimestamp ? $delayTimestamp->format('d/m/Y · H:i') : (string) ($entry['thoi_gian'] ?? 'Thời gian chưa cập nhật');
+                                ?>
+                                <li>
+                                  <span class="flight-delay-timeline-time"><?= $escape($delayTimeLabel) ?></span>
+                                  <span class="flight-delay-timeline-reason"><?= $escape($entry['ly_do']) ?></span>
+                                  <?php if (!empty($entry['so_phut'])): ?>
+                                    <span class="flight-delay-timeline-duration"><?= (int) $entry['so_phut'] ?> phút</span>
+                                  <?php endif; ?>
+                                </li>
+                              <?php endif; ?>
+                            <?php endforeach; ?>
+                          </ul>
+                        </details>
+                      <?php endif; ?>
+                    </section>
+                  <?php endif; ?>
+
+                </div>
               </div>
             <?php endif; ?>
 
@@ -244,13 +313,6 @@ ob_start();
                   event.preventDefault();
                   if (window.parent && typeof window.parent.openFlightPopup === 'function') {
                     return;
-                  }
-                });
-              });
-              document.querySelectorAll('[data-flight-popup-close]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                  if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'flight-popup-close' }, window.location.origin);
                   }
                 });
               });
@@ -269,12 +331,7 @@ if ($popup) {
     <link rel="stylesheet" href="<?= $escape(ADMINLTE_URL) ?>/css/adminlte.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/assets/css/style.css" />
-    <style>
-      body.flight-detail-page { background: #f4f6f9; padding: 1rem; }
-      body.flight-detail-page .card { margin-bottom: 0; }
-      .departure-info dt { color: #6c757d; font-weight: 500; }
-      .departure-info dd { margin-bottom: .5rem; font-weight: 600; }
-    </style>
+    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
   </head>
   <body class="flight-detail-page">
 <?= $content ?>

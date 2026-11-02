@@ -97,6 +97,7 @@ $delayToggleLabel = $isDelayed
     <link rel="stylesheet" href="<?= $escape(ADMINLTE_URL) ?>/css/adminlte.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/assets/css/style.css" />
+    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
     <style>
       body.departure-page { background: #f4f6f9; padding: 1rem; }
       body.departure-page .card { margin-bottom: .75rem; }
@@ -110,18 +111,8 @@ $delayToggleLabel = $isDelayed
       <div class="card">
         <div class="card-body">
           <p class="mb-3">Không tìm thấy chuyến bay cần xác nhận.</p>
-          <button type="button" class="btn btn-outline-danger" data-flight-popup-close>Đóng</button>
         </div>
       </div>
-      <script>
-        document.querySelectorAll('[data-flight-popup-close]').forEach(function (button) {
-          button.addEventListener('click', function () {
-            if (window.parent && window.parent !== window) {
-              window.parent.postMessage({ type: 'flight-popup-close' }, window.location.origin);
-            }
-          });
-        });
-      </script>
       <?php exit(); ?>
     <?php endif; ?>
 
@@ -158,7 +149,7 @@ $delayToggleLabel = $isDelayed
         <h2 class="card-title h5 mb-0">
           <i class="bi bi-airplane-engines me-1"></i>
           Chuyến <?= $escape($flight['so_hieu']) ?> — <?= $escape($flight['ten_hang'] ?? '') ?>
-          <span class="badge text-bg-<?= $escape($statusClasses[$flight['trang_thai_tong']] ?? 'secondary') ?> ms-1">
+          <span class="badge flight-status-badge ms-1" data-flight-status="<?= $escape($flight['trang_thai_tong'] ?? '') ?>">
             <?= $escape($statusLabels[$flight['trang_thai_tong']] ?? $flight['trang_thai_tong']) ?>
           </span>
         </h2>
@@ -208,9 +199,9 @@ $delayToggleLabel = $isDelayed
 
           <dt class="col-sm-3">Băng chuyền hành lý</dt>
           <dd class="col-sm-3"><?= $escape($flight['bang_chuyen']) ?></dd>
-          <dt class="col-sm-3">Hành lý / hàng hóa</dt>
+          <dt class="col-sm-3">Hành lý / hàng hóa (tấn)</dt>
           <dd class="col-sm-3">
-            <?= number_format(round((float) $flight['luong_hang_hoa_tan'] * 1000), 0, ',', '.') ?> kg
+            <?= number_format((float) $flight['luong_hang_hoa_tan'], 2, ',', '.') ?> tấn
           </dd>
 
           <dt class="col-sm-3">Giờ hiện tại</dt>
@@ -350,45 +341,51 @@ $delayToggleLabel = $isDelayed
 
             <div class="alert alert-danger py-2 d-none" data-confirm-warning></div>
 
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap justify-content-end gap-2">
               <button type="submit" class="btn btn-success" data-departure-confirm data-action="departure_confirm">
                 <i class="bi bi-check2-circle me-1"></i> <?= $escape($confirmLabel) ?>
               </button>
               <button type="button" class="btn btn-warning" data-delay-toggle>
                 <i class="bi bi-clock-history me-1"></i> <?= $escape($delayToggleLabel) ?>
               </button>
-              <button type="button" class="btn btn-outline-danger" data-flight-popup-close>Đóng</button>
             </div>
 
-            <div class="border rounded p-3 mt-3 d-none" data-delay-panel>
-              <div class="row g-2">
+            <section class="flight-form-section flight-delay-entry mt-3 d-none" data-delay-panel aria-labelledby="delay-panel-title">
+              <div class="flight-form-section-heading">
+                <span class="flight-form-section-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <div>
+                  <h3 id="delay-panel-title">Lý do và thời gian trễ tiếp</h3>
+                  <p>Ghi rõ nguyên nhân và chọn thời gian cất cánh dự kiến tiếp theo.</p>
+                </div>
+              </div>
+              <div class="row g-3 flight-form-grid">
                 <div class="col-12">
-                  <label class="form-label" for="delay_reason">Lý do trễ / chưa đủ điều kiện bay</label>
+                  <label class="form-label" for="delay_reason">Lý do trễ / chưa đủ điều kiện bay <span class="text-danger" aria-hidden="true">*</span></label>
                   <textarea class="form-control" id="delay_reason" name="ly_do" rows="2" maxlength="255"
                             placeholder="Ví dụ: Hỏng hệ thống thủy lực, đang chờ kỹ thuật" data-delay-reason></textarea>
                 </div>
                 <div class="col-sm-6">
-                  <label class="form-label" for="delay_minutes">Số phút trễ tiếp</label>
+                  <label class="form-label" for="delay_minutes">Số phút trễ tiếp <span class="text-danger" aria-hidden="true">*</span></label>
                   <input type="number" class="form-control" id="delay_minutes" name="thoi_gian_tre_phut"
                          min="1" max="1440" step="1" placeholder="Ví dụ: 45" data-delay-minutes />
+                  <small class="form-text text-secondary">Nhập thời gian trễ thêm, tối đa 1.440 phút.</small>
                 </div>
                 <div class="col-sm-6">
-                  <label class="form-label" for="delay_new_time">Hoặc giờ cất cánh mới</label>
+                  <label class="form-label" for="delay_new_time">Hoặc giờ cất cánh mới <span class="text-danger" aria-hidden="true">*</span></label>
                   <input type="datetime-local" class="form-control" id="delay_new_time" name="gio_cat_canh_moi"
-                         data-delay-new-time />
-                  <div class="form-text">Nhập một trong hai: số phút hoặc giờ cất cánh mới.</div>
+                         lang="vi" step="60" data-delay-new-time />
+                  <small class="form-text text-secondary">Chọn ngày và giờ theo định dạng 24 giờ.</small>
                 </div>
-                <div class="col-12 d-flex flex-wrap gap-2">
+                <div class="col-12 d-flex flex-wrap justify-content-end gap-2">
+                  <span class="small text-secondary me-auto">Cần nhập lý do và một trong hai lựa chọn thời gian.</span>
                   <button type="submit" class="btn btn-warning" data-action="departure_delay">
                     Xác nhận trễ
                   </button>
                   <button type="button" class="btn btn-outline-secondary" data-delay-cancel>Hủy</button>
                 </div>
               </div>
-            </div>
+            </section>
           </form>
-        <?php else: ?>
-          <button type="button" class="btn btn-outline-danger" data-flight-popup-close>Đóng</button>
         <?php endif; ?>
       </div>
     </div>
@@ -397,16 +394,6 @@ $delayToggleLabel = $isDelayed
     <script>
       (function () {
         const form = document.getElementById('departure-form');
-        const notifyParent = function (type) {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: type }, window.location.origin);
-          }
-        };
-        document.querySelectorAll('[data-flight-popup-close]').forEach(function (button) {
-          button.addEventListener('click', function () {
-            notifyParent('flight-popup-close');
-          });
-        });
         if (!form) {
           return;
         }
@@ -422,6 +409,15 @@ $delayToggleLabel = $isDelayed
 
         const openDelayPanel = function () {
           delayPanel.classList.remove('d-none');
+          syncDelayRequirements();
+        };
+        const syncDelayRequirements = function () {
+          const isOpen = !delayPanel.classList.contains('d-none');
+          const hasMinutes = delayMinutes.value.trim() !== '';
+          const hasNewTime = delayNewTime.value.trim() !== '';
+          delayReason.required = isOpen;
+          delayMinutes.required = isOpen && !hasMinutes && !hasNewTime;
+          delayNewTime.required = false;
         };
 
         const useSuggestedSlot = function () {
@@ -430,6 +426,7 @@ $delayToggleLabel = $isDelayed
             delayNewTime.value = suggestedSlot;
             delayMinutes.value = '';
           }
+          syncDelayRequirements();
           delayReason.focus();
         };
 
@@ -439,6 +436,7 @@ $delayToggleLabel = $isDelayed
         });
         form.querySelector('[data-delay-cancel]').addEventListener('click', function () {
           delayPanel.classList.add('d-none');
+          syncDelayRequirements();
         });
 
         // Chỉ dùng một trong hai cách nhập: số phút hoặc giờ cất cánh mới.
@@ -446,11 +444,13 @@ $delayToggleLabel = $isDelayed
           if (delayMinutes.value !== '') {
             delayNewTime.value = '';
           }
+          syncDelayRequirements();
         });
         delayNewTime.addEventListener('input', function () {
           if (delayNewTime.value !== '') {
             delayMinutes.value = '';
           }
+          syncDelayRequirements();
         });
 
         document.querySelectorAll('[data-use-suggested-slot]').forEach(function (button) {
