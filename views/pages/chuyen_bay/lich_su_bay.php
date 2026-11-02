@@ -63,9 +63,9 @@ $breadcrumb = [
 
 ob_start();
 ?>
-            <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+            <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=13" />
             <div class="mb-3 d-flex flex-wrap gap-2">
-              <a class="btn btn-sm btn-primary" href="<?= $e($listUrl) ?>">
+              <a class="btn btn-sm flight-add-button" href="<?= $e($listUrl) ?>">
                 <i class="bi bi-arrow-left me-1"></i> Quay lại trang chuyến bay
               </a>
             </div>
