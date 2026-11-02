@@ -14,40 +14,6 @@ class ChuyenBayController
         'Huy' => 'Hủy',
     ];
 
-    public const WEEKDAYS = [
-        1 => 'Thứ 2',
-        2 => 'Thứ 3',
-        3 => 'Thứ 4',
-        4 => 'Thứ 5',
-        5 => 'Thứ 6',
-        6 => 'Thứ 7',
-        7 => 'Chủ nhật',
-    ];
-
-    /**
-     * Trạng thái lịch bay mùa. Chỉ lịch "Đang mở" mới được dùng để sinh chuyến bay.
-     */
-    public const SCHEDULE_STATUSES = [
-        'Dang_Mo' => 'Đang mở',
-        'Tam_Dung' => 'Tạm dừng',
-        'Da_Dong' => 'Đã đóng',
-    ];
-
-    /** Trạng thái lịch bay mùa được phép sinh chuyến bay. */
-    public const SCHEDULE_STATUS_ACTIVE = 'Dang_Mo';
-
-    /** Trạng thái bắt buộc phải nhập lý do khi chuyển sang. */
-    private const SCHEDULE_REASON_REQUIRED = ['Tam_Dung', 'Da_Dong'];
-
-    /** Lý do ghi nhật ký khi hệ thống tự đóng lịch đã hết hạn hiệu lực. */
-    private const SCHEDULE_AUTO_CLOSE_REASON = 'Tự động đóng: đã hết thời gian hiệu lực.';
-
-    /** Cách xử lý khi sinh chuyến gặp chuyến đã tồn tại (cùng mã + tuyến + ngày). */
-    public const GENERATION_MODES = [
-        'bo_qua' => 'Bỏ qua chuyến đã có',
-        'ghi_de' => 'Ghi đè / Cập nhật lại chuyến đã có',
-    ];
-
     /** Loại hành động ghi vào nhật ký của từng chuyến bay. */
     public const FLIGHT_LOG_ACTIONS = [
         'Them' => 'Thêm chuyến bay',
@@ -101,6 +67,8 @@ class ChuyenBayController
 
         $filters = [
             'keyword' => trim((string) ($_GET['keyword'] ?? '')),
+            'id_san_bay_di' => max(0, (int) ($_GET['id_san_bay_di'] ?? 0)),
+            'id_san_bay_den' => max(0, (int) ($_GET['id_san_bay_den'] ?? 0)),
             'date' => trim((string) ($_GET['date'] ?? '')),
             'status' => (string) ($_GET['status'] ?? ''),
         ];
@@ -276,8 +244,10 @@ class ChuyenBayController
             'total' => $total,
             'totalPages' => $totalPages,
             'editing' => $editing,
+            'editingSummary' => $editing ? $this->getFlightSummary($editId) : null,
             'editLogs' => $editing ? $this->getFlightLogs($editId) : [],
             'canceling' => $canceling,
+            'cancelingSummary' => $canceling ? $this->getFlightSummary($cancelId) : null,
             'canCancel' => $canceling !== null
                 && in_array($canceling['trang_thai_tong'], ['Dang_Mo', 'Delay'], true),
             'airlines' => $this->getOptions('SELECT id, ma_iata, ten_hang AS label FROM hang_hang_khong ORDER BY ten_hang'),
@@ -339,11 +309,12 @@ class ChuyenBayController
         $flightId = (int) ($_POST['id'] ?? 0);
         $formPage = $action === 'update'
             ? 'chuyen_bay_sua'
-            : ($action === 'cancel' ? 'chuyen_bay_huy' : 'chuyen_bay_them');
+            : (in_array($action, ['cancel', 'delete'], true) ? 'chuyen_bay_huy' : 'chuyen_bay_them');
+        $formParams = $action === 'delete' ? ['delete' => 1] : [];
 
         if (!hash_equals($_SESSION['chuyen_bay_csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
             $this->setFlash('danger', 'Phiên làm việc không hợp lệ. Vui lòng tải lại trang.');
-            $this->redirect($popup ? $formPage : 'chuyen_bay', $flightId, $popup);
+            $this->redirect($popup ? $formPage : 'chuyen_bay', $flightId, $popup, $formParams);
         }
 
         $success = false;
@@ -353,6 +324,9 @@ class ChuyenBayController
                 $success = true;
             } elseif ($action === 'cancel') {
                 $this->cancelFlight($flightId, (string) ($_POST['ghi_chu'] ?? ''));
+                $success = true;
+            } elseif ($action === 'delete') {
+                $this->deleteFlight($flightId);
                 $success = true;
             } else {
                 $this->setFlash('danger', 'Thao tác không hợp lệ.');
@@ -366,10 +340,9 @@ class ChuyenBayController
 
         if (!$success && $action === 'create') {
             $fields = [
-                'so_hieu', 'id_hang_hang_khong', 'id_loai_tau_bay', 'id_san_bay_di',
+                'id_hang_hang_khong', 'id_loai_tau_bay', 'id_san_bay_di',
                 'id_san_bay_den', 'gio_du_kien', 'gio_thuc_te', 'id_cua_ra_may_bay',
                 'id_quay_checkin', 'id_bang_chuyen', 'trang_thai_tong',
-                'luong_hanh_khach', 'luong_hanh_ly_kg', 'luong_hang_hoa_tan',
             ];
             $_SESSION['chuyen_bay_old_input'] = array_intersect_key($_POST, array_flip($fields));
         }
@@ -383,7 +356,12 @@ class ChuyenBayController
         }
 
         // Thất bại: giữ nguyên form (trong popup thì mở lại đúng popup) để hiển thị lỗi.
-        $this->redirect($popup ? $formPage : ($action === 'create' ? 'chuyen_bay_them' : $formPage), $flightId, $popup);
+        $this->redirect(
+            $popup ? $formPage : ($action === 'create' ? 'chuyen_bay_them' : $formPage),
+            $flightId,
+            $popup,
+            $formParams
+        );
     }
 
     private function saveFlight($update)
@@ -401,13 +379,18 @@ class ChuyenBayController
         $actualInput = trim((string) ($_POST['gio_thuc_te'] ?? ''));
         $actual = $actualInput === '' ? null : $this->normalizeDateTime($actualInput);
         $passengerInput = trim((string) ($_POST['luong_hanh_khach'] ?? ''));
-        $passengers = $passengerInput === '' ? 0 : filter_var($passengerInput, FILTER_VALIDATE_INT);
+        $passengers = $update
+            ? ($passengerInput === '' ? 0 : filter_var($passengerInput, FILTER_VALIDATE_INT))
+            : null;
         // Ô "Hành lý" trên form có thể gửi tấn (luong_hanh_ly_tan) hoặc kg (luong_hanh_ly_kg).
         $cargoField = array_key_exists('luong_hanh_ly_tan', $_POST)
             ? 'luong_hanh_ly_tan'
             : (array_key_exists('luong_hanh_ly_kg', $_POST) ? 'luong_hanh_ly_kg' : null);
         $cargoInKilograms = $cargoField === 'luong_hanh_ly_kg';
-        $cargoInput = trim((string) ($_POST[$cargoField ?? 'luong_hang_hoa_tan'] ?? ''));
+        $cargoInputWasEmpty = trim((string) ($_POST[$cargoField ?? 'luong_hang_hoa_tan'] ?? '')) === '';
+        $cargoInput = $update
+            ? trim((string) ($_POST[$cargoField ?? 'luong_hang_hoa_tan'] ?? ''))
+            : '';
         $cargoInput = $cargoInput === '' ? '0' : $cargoInput;
         $status = $update ? (string) ($_POST['trang_thai_tong'] ?? '') : 'Dang_Mo';
         $statusReason = trim((string) ($_POST['ghi_chu'] ?? ''));
@@ -416,7 +399,7 @@ class ChuyenBayController
         if ($update && $id <= 0) {
             throw new RuntimeException('Chuyến bay cần sửa không hợp lệ.');
         }
-        if (!preg_match('/^[A-Z0-9-]{2,20}$/', $flightNumber)) {
+        if ($update && !preg_match('/^[A-Z0-9-]{2,20}$/', $flightNumber)) {
             throw new RuntimeException('Mã chuyến bay chỉ gồm 2-20 ký tự chữ in hoa, số hoặc dấu gạch ngang.');
         }
         if ($airlineId <= 0) {
@@ -431,15 +414,21 @@ class ChuyenBayController
         if ($originId === $destinationId) {
             throw new RuntimeException('Sân bay đi và sân bay đến phải khác nhau.');
         }
-        if ($planned === null || ($actualInput !== '' && $actual === null)) {
-            throw new RuntimeException('Thời gian không hợp lệ. Vui lòng chọn ngày giờ theo định dạng trên form.');
+        if ($planned === null) {
+            throw new RuntimeException('Vui lòng nhập giờ cất cánh hợp lệ.');
         }
-        if ($actual !== null && $actual <= $planned) {
+        if ($actualInput === '') {
+            throw new RuntimeException('Vui lòng nhập giờ dự kiến hạ cánh.');
+        }
+        if ($actual === null) {
+            throw new RuntimeException('Giờ dự kiến hạ cánh không hợp lệ. Vui lòng chọn lại.');
+        }
+        if ($actual <= $planned) {
             throw new RuntimeException('Giờ cất cánh phải nhỏ hơn giờ dự kiến hạ cánh. Vui lòng kiểm tra lại thời gian.');
         }
         // Trùng chuyến = cùng số hiệu + tuyến + ngày cất cánh (không xét giờ), bỏ qua chính chuyến đang sửa.
         $plannedDate = substr((string) $planned, 0, 10);
-        if ($this->flightExistsOnDate($flightNumber, $originId, $destinationId, $plannedDate, $update ? $id : 0)) {
+        if ($update && $this->flightExistsOnDate($flightNumber, $originId, $destinationId, $plannedDate, $id)) {
             throw new RuntimeException(
                 'Chuyến bay ' . $flightNumber . ' theo tuyến này ngày ' . date('d/m/Y', strtotime($plannedDate))
                 . ' đã tồn tại. Vui lòng chọn ngày hoặc tuyến khác.'
@@ -455,15 +444,23 @@ class ChuyenBayController
                 . '. Hai chuyến cùng sân bay phải cách nhau ít nhất 10 phút.'
             );
         }
-        if ($passengers === false || $passengers < 0) {
+        if ($update && ($passengerInput === '' || $cargoInputWasEmpty)) {
+            throw new RuntimeException('Vui lòng nhập số hành khách và khối lượng hành lý.');
+        }
+        if ($update && ($passengers === false || $passengers < 0)) {
             throw new RuntimeException('Số hành khách phải là số nguyên không âm.');
         }
-        if (!is_numeric($cargoInput) || (float) $cargoInput < 0) {
+        if ($update && (!is_numeric($cargoInput) || (float) $cargoInput < 0)) {
             throw new RuntimeException('Tải trọng hàng hóa phải là số không âm.');
         }
         $aircraft = $this->getAircraftCapacity($aircraftId);
         if ($aircraft === null) {
             throw new RuntimeException('Loại tàu bay đã chọn không tồn tại.');
+        }
+        if (!$update) {
+            $passengers = (int) $aircraft['suc_chua_hanh_khach'];
+            $cargoInput = (string) $aircraft['tai_trong_cat_canh_mtow'];
+            $cargoInKilograms = false;
         }
         if ($passengers > (int) $aircraft['suc_chua_hanh_khach']) {
             throw new RuntimeException(
@@ -480,7 +477,9 @@ class ChuyenBayController
         if (!isset(self::STATUSES[$status])) {
             throw new RuntimeException('Vui lòng chọn trạng thái chuyến bay hợp lệ.');
         }
-        $scheduleId = $this->optionalId($_POST['id_lich_mua'] ?? '');
+        if ($gateId === null || $checkinId === null || $beltId === null) {
+            throw new RuntimeException('Vui lòng chọn cửa ra máy bay, quầy check-in và băng chuyền hành lý.');
+        }
         $this->validateResourceAirport($gateId, 'cua_ra_may_bay', $originId);
         $this->validateResourceAirport($checkinId, 'quay_checkin', $originId);
         $this->validateResourceAirport($beltId, 'bang_chuyen_hanh_ly', $originId);
@@ -539,9 +538,6 @@ class ChuyenBayController
                     }
                     $delayMinutes = (int) $delayMinutes;
                 }
-                if (!array_key_exists('id_lich_mua', $_POST)) {
-                    $scheduleId = $oldFlight['id_lich_mua'];
-                }
                 $changes = $this->getFlightChanges($oldFlight, [
                     'so_hieu' => $flightNumber,
                     'id_hang_hang_khong' => $airlineId,
@@ -571,27 +567,28 @@ class ChuyenBayController
                 }
 
                 $stmt = $this->db->prepare(
-                    'UPDATE chuyen_bay_ngay SET id_lich_mua = ?, so_hieu = ?, id_hang_hang_khong = ?,
+                    'UPDATE chuyen_bay_ngay SET so_hieu = ?, id_hang_hang_khong = ?,
                      id_loai_tau_bay = ?, id_san_bay_di = ?, id_san_bay_den = ?, id_cua_ra_may_bay = ?,
                      id_quay_checkin = ?, id_bang_chuyen = ?, gio_du_kien = ?, gio_thuc_te = ?,
                      luong_hanh_khach = ?, luong_hang_hoa_tan = ?, trang_thai_tong = ? WHERE id = ?'
                 );
                 $stmt->bind_param(
-                    'isiiiiiiissidsi',
-                    $scheduleId, $flightNumber, $airlineId, $aircraftId, $originId, $destinationId,
+                    'siiiiiiissidsi',
+                    $flightNumber, $airlineId, $aircraftId, $originId, $destinationId,
                     $gateId, $checkinId, $beltId, $planned, $actual, $passengers, $cargo, $status, $id
                 );
             } else {
                 $stmt = $this->db->prepare(
                     'INSERT INTO chuyen_bay_ngay
-                     (id_lich_mua, so_hieu, id_hang_hang_khong, id_loai_tau_bay, id_san_bay_di,
+                     (so_hieu, id_hang_hang_khong, id_loai_tau_bay, id_san_bay_di,
                       id_san_bay_den, id_cua_ra_may_bay, id_quay_checkin, id_bang_chuyen,
                       gio_du_kien, gio_thuc_te, luong_hanh_khach, luong_hang_hoa_tan, trang_thai_tong)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
+                $pendingFlightNumber = 'CB-PENDING';
                 $stmt->bind_param(
-                    'isiiiiiiissids',
-                    $scheduleId, $flightNumber, $airlineId, $aircraftId, $originId, $destinationId,
+                    'siiiiiiissids',
+                    $pendingFlightNumber, $airlineId, $aircraftId, $originId, $destinationId,
                     $gateId, $checkinId, $beltId, $planned, $actual, $passengers, $cargo, $status
                 );
             }
@@ -605,28 +602,33 @@ class ChuyenBayController
                         'Sua',
                         $oldFlight['trang_thai_tong'],
                         $status,
-                        implode('; ', $changes),
+                        implode("\n", $changes),
                         (int) $_SESSION['user_id']
                     );
                 }
             } else {
                 // Mỗi chuyến thêm mới đều có một dòng nhật ký riêng.
                 $newFlightId = (int) $this->db->insert_id;
-                $sourceNote = $scheduleId !== null && $scheduleId > 0
-                    ? ' từ lịch bay mùa #' . (int) $scheduleId
-                    : '';
+                $flightNumber = $this->generateFlightNumber();
+                $stmt = $this->db->prepare('UPDATE chuyen_bay_ngay SET so_hieu = ? WHERE id = ?');
+                $stmt->bind_param('si', $flightNumber, $newFlightId);
+                $stmt->execute();
+                $stmt->close();
                 $this->logFlightAction(
                     $newFlightId,
                     'Them',
                     null,
                     $status,
-                    'Thêm chuyến bay mới' . $sourceNote . '.',
+                    'Thêm chuyến bay mới.',
                     $_SESSION['user_id'] ?? null
                 );
             }
 
             $this->db->commit();
-            $this->setFlash('success', $update ? 'Đã cập nhật chuyến bay.' : 'Đã thêm chuyến bay.');
+            $this->setFlash(
+                'success',
+                $update ? 'Đã cập nhật chuyến bay.' : 'Đã thêm chuyến bay ' . $flightNumber . '.'
+            );
         } catch (Throwable $exception) {
             $this->db->rollback();
             throw $exception;
@@ -638,6 +640,7 @@ class ChuyenBayController
         if ($id <= 0) {
             throw new RuntimeException('Chuyến bay cần hủy không hợp lệ.');
         }
+
         $reason = trim($reason);
         if (!$this->isValidReason($reason)) {
             throw new RuntimeException('Vui lòng nhập lý do hủy chuyến (tối đa 255 ký tự).');
@@ -687,6 +690,52 @@ class ChuyenBayController
         }
     }
 
+    private function deleteFlight(int $id): void
+    {
+        if ($id <= 0) {
+            throw new RuntimeException('Chuyến bay cần xóa không hợp lệ.');
+        }
+        if (empty($_SESSION['user_id'])) {
+            throw new RuntimeException('Bạn cần đăng nhập để xóa chuyến bay.');
+        }
+
+        $this->db->begin_transaction();
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT so_hieu, gio_du_kien, trang_thai_tong
+                 FROM chuyen_bay_ngay WHERE id = ? FOR UPDATE'
+            );
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $flight = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$flight) {
+                throw new RuntimeException('Không tìm thấy chuyến bay cần xóa.');
+            }
+            if (strtotime((string) $flight['gio_du_kien']) <= strtotime($this->getCurrentDateTime())) {
+                throw new RuntimeException('Chỉ được xóa chuyến bay chưa tới giờ cất cánh.');
+            }
+            if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay', 'Huy'], true)) {
+                throw new RuntimeException('Không thể xóa chuyến bay đã cất cánh hoặc hạ cánh.');
+            }
+
+            $stmt = $this->db->prepare('DELETE FROM chuyen_bay_ngay WHERE id = ?');
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            $this->db->commit();
+            $this->setFlash(
+                'success',
+                'Đã xóa vĩnh viễn chuyến bay ' . $flight['so_hieu'] . ' cùng dữ liệu liên quan.'
+            );
+        } catch (Throwable $exception) {
+            $this->db->rollback();
+            throw $exception;
+        }
+    }
+
     private function getFlights($filters, $limit, $offset)
     {
         $where = $this->filterSql();
@@ -707,13 +756,36 @@ class ChuyenBayController
                  GROUP BY so_hieu, id_san_bay_di, id_san_bay_den, DATE(gio_du_kien)
              ) dedup ON dedup.keep_id = cb.id
              WHERE $where
-             ORDER BY cb.gio_du_kien DESC, cb.id DESC LIMIT ? OFFSET ?"
+             ORDER BY (DATE(cb.gio_du_kien) = CURDATE()) DESC, cb.id DESC LIMIT ? OFFSET ?"
         );
+        $originId = $filters['id_san_bay_di'];
+        $destinationId = $filters['id_san_bay_den'];
         $keyword = $filters['keyword'];
-        $like = '%' . $keyword . '%';
+        $keywordLike = '%' . $keyword . '%';
         $date = $filters['date'];
         $status = $filters['status'];
-        $stmt->bind_param('sssssssssssii', $keyword, $like, $like, $like, $like, $date, $date, $status, $status, $status, $status, $limit, $offset);
+        $stmt->bind_param(
+            'iiiisssssssssssssii',
+            $originId,
+            $originId,
+            $destinationId,
+            $destinationId,
+            $date,
+            $date,
+            $status,
+            $status,
+            $keyword,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $limit,
+            $offset
+        );
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
@@ -766,11 +838,32 @@ class ChuyenBayController
              ) dedup ON dedup.keep_id = cb.id
              WHERE $where"
         );
+        $originId = $filters['id_san_bay_di'];
+        $destinationId = $filters['id_san_bay_den'];
         $keyword = $filters['keyword'];
-        $like = '%' . $keyword . '%';
+        $keywordLike = '%' . $keyword . '%';
         $date = $filters['date'];
         $status = $filters['status'];
-        $stmt->bind_param('sssssssssss', $keyword, $like, $like, $like, $like, $date, $date, $status, $status, $status, $status);
+        $stmt->bind_param(
+            'iiiisssssssssssss',
+            $originId,
+            $originId,
+            $destinationId,
+            $destinationId,
+            $date,
+            $date,
+            $status,
+            $status,
+            $keyword,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike,
+            $keywordLike
+        );
         $stmt->execute();
         $total = (int) $stmt->get_result()->fetch_assoc()['total'];
         $stmt->close();
@@ -780,11 +873,13 @@ class ChuyenBayController
 
     private function filterSql()
     {
-        return "(? = '' OR cb.so_hieu LIKE ? OR h.ten_hang LIKE ? OR sb1.ma_iata LIKE ? OR sb2.ma_iata LIKE ?)
+        return "(? = 0 OR cb.id_san_bay_di = ?)
+                AND (? = 0 OR cb.id_san_bay_den = ?)
                 AND (? = '' OR DATE(cb.gio_du_kien) = ?)
                 AND (? = '' OR cb.trang_thai_tong = ?)
-                AND (? <> '' OR cb.trang_thai_tong <> 'Ha_Canh')
-                AND (? <> '' OR cb.trang_thai_tong <> 'Huy')";
+                AND (? = '' OR cb.so_hieu LIKE ? OR h.ten_hang LIKE ?
+                     OR sb1.ma_iata LIKE ? OR sb1.ten_san_bay LIKE ? OR sb1.ten_ngan LIKE ?
+                     OR sb2.ma_iata LIKE ? OR sb2.ten_san_bay LIKE ? OR sb2.ten_ngan LIKE ?)";
     }
 
     private function getFlight($id)
@@ -796,6 +891,43 @@ class ChuyenBayController
         $stmt->close();
 
         return $flight ?: null;
+    }
+
+    private function getFlightSummary($flightId)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT h.ma_iata AS hang_iata, h.ten_hang,
+                    lt.ma_loai,
+                    sbdi.ma_iata AS ma_di, sbdi.ten_san_bay AS ten_di,
+                    sbde.ma_iata AS ma_den, sbde.ten_san_bay AS ten_den,
+                    CONCAT(sbg.ma_iata, ' - Cửa ', g.so_cua,
+                           IF(g.khu_vuc IS NULL OR g.khu_vuc = '', '', CONCAT(' (', g.khu_vuc, ')'))) AS cua_ra,
+                    CONCAT(sbq.ma_iata, ' - Quầy ', q.so_quay,
+                           IF(q.khu_vuc IS NULL OR q.khu_vuc = '', '', CONCAT(' (', q.khu_vuc, ')'))) AS quay_checkin,
+                    CONCAT(sbb.ma_iata, ' - Băng chuyền ', b.so_bang_chuyen,
+                           IF(b.khu_vuc IS NULL OR b.khu_vuc = '', '', CONCAT(' (', b.khu_vuc, ')'))) AS bang_chuyen
+             FROM chuyen_bay_ngay cb
+             JOIN hang_hang_khong h ON h.id = cb.id_hang_hang_khong
+             JOIN loai_tau_bay lt ON lt.id = cb.id_loai_tau_bay
+             JOIN san_bay sbdi ON sbdi.id = cb.id_san_bay_di
+             JOIN san_bay sbde ON sbde.id = cb.id_san_bay_den
+             LEFT JOIN cua_ra_may_bay g ON g.id = cb.id_cua_ra_may_bay
+             LEFT JOIN nha_ga ng ON ng.id = g.id_nha_ga
+             LEFT JOIN san_bay sbg ON sbg.id = ng.id_san_bay
+             LEFT JOIN quay_checkin q ON q.id = cb.id_quay_checkin
+             LEFT JOIN nha_ga nq ON nq.id = q.id_nha_ga
+             LEFT JOIN san_bay sbq ON sbq.id = nq.id_san_bay
+             LEFT JOIN bang_chuyen_hanh_ly b ON b.id = cb.id_bang_chuyen
+             LEFT JOIN nha_ga nb ON nb.id = b.id_nha_ga
+             LEFT JOIN san_bay sbb ON sbb.id = nb.id_san_bay
+             WHERE cb.id = ?"
+        );
+        $stmt->bind_param('i', $flightId);
+        $stmt->execute();
+        $summary = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        return $summary ?: [];
     }
 
     private function getFlightLogs($flightId)
@@ -1707,6 +1839,8 @@ class ChuyenBayController
     {
         $filters = [
             'keyword' => trim((string) ($_GET['keyword'] ?? '')),
+            'id_san_bay_di' => max(0, (int) ($_GET['id_san_bay_di'] ?? 0)),
+            'id_san_bay_den' => max(0, (int) ($_GET['id_san_bay_den'] ?? 0)),
             'date' => trim((string) ($_GET['date'] ?? '')),
         ];
         if ($filters['date'] !== '' && !$this->isValidDate($filters['date'])) {
@@ -1732,6 +1866,7 @@ class ChuyenBayController
         return [
             'rows' => $this->getFlightHistory($filters, $perPage, ($page - 1) * $perPage),
             'filters' => $filters,
+            'airports' => $this->getOptions('SELECT id, ma_iata, ten_san_bay AS label FROM san_bay ORDER BY ma_iata'),
             'page' => $page,
             'perPage' => $perPage,
             'total' => $total,
@@ -1751,8 +1886,14 @@ class ChuyenBayController
         );
         $keyword = $filters['keyword'];
         $like = '%' . $keyword . '%';
+        $originId = $filters['id_san_bay_di'];
+        $destinationId = $filters['id_san_bay_den'];
         $date = $filters['date'];
-        $stmt->bind_param('ssssssssii', $keyword, $like, $like, $like, $like, $like, $date, $date, $limit, $offset);
+        $stmt->bind_param(
+            'sssssssiiiissii',
+            $keyword, $like, $like, $like, $like, $like, $like,
+            $originId, $originId, $destinationId, $destinationId, $date, $date, $limit, $offset
+        );
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
@@ -1767,8 +1908,14 @@ class ChuyenBayController
         );
         $keyword = $filters['keyword'];
         $like = '%' . $keyword . '%';
+        $originId = $filters['id_san_bay_di'];
+        $destinationId = $filters['id_san_bay_den'];
         $date = $filters['date'];
-        $stmt->bind_param('ssssssss', $keyword, $like, $like, $like, $like, $like, $date, $date);
+        $stmt->bind_param(
+            'sssssssiiiiss',
+            $keyword, $like, $like, $like, $like, $like, $like,
+            $originId, $originId, $destinationId, $destinationId, $date, $date
+        );
         $stmt->execute();
         $total = (int) $stmt->get_result()->fetch_assoc()['total'];
         $stmt->close();
@@ -1778,7 +1925,9 @@ class ChuyenBayController
 
     private function historyFilterSql()
     {
-        return "(? = '' OR so_hieu LIKE ? OR ten_hang LIKE ? OR ma_di LIKE ? OR ma_den LIKE ? OR ten_san_bay_di LIKE ?)
+        return "(? = '' OR so_hieu LIKE ? OR ten_hang LIKE ? OR ma_di LIKE ? OR ma_den LIKE ? OR ten_san_bay_di LIKE ? OR ten_san_bay_den LIKE ?)
+                AND (? = 0 OR id_san_bay_di = ?)
+                AND (? = 0 OR id_san_bay_den = ?)
                 AND (? = '' OR DATE(gio_ha_canh) = ?)";
     }
 
@@ -1864,7 +2013,7 @@ class ChuyenBayController
             return date('d/m/Y H:i', strtotime($value));
         }
         if ($field === 'luong_hang_hoa_tan') {
-            return rtrim(rtrim(number_format((float) $value * 1000, 2, '.', ''), '0'), '.') . ' kg';
+            return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.') . ' tấn';
         }
         if ($field === 'trang_thai_tong') {
             return self::STATUSES[$value] ?? (string) $value;
@@ -1981,881 +2130,25 @@ class ChuyenBayController
         return $exists;
     }
 
-    /* ============================================================
-     * LỊCH BAY MÙA (lich_bay_mua) — CRUD
-     * ============================================================ */
-
-    public function handleSchedule()
-    {
-        $this->ensureCsrf();
-
-        // Lịch đã hết ngày hiệu lực thì tự động đóng trước khi hiển thị/sinh chuyến.
-        $this->autoCloseExpiredSchedules();
-
-        if ($this->isPost()) {
-            $this->processSchedulePost();
-        }
-
-        $flash = $this->pullNamedFlash('chuyen_bay_lich_flash');
-        $oldInput = $_SESSION['chuyen_bay_lich_old_input'] ?? [];
-        unset($_SESSION['chuyen_bay_lich_old_input']);
-
-        $editId = max(0, (int) ($_GET['edit'] ?? 0));
-        $editing = $editId > 0 ? $this->getSchedule($editId) : null;
-        if ($editId > 0 && $editing === null) {
-            $flash = ['type' => 'danger', 'message' => 'Không tìm thấy lịch bay mùa cần sửa.'];
-        }
-
-        return [
-            'schedules' => $this->getSchedules(),
-            'editing' => $editing,
-            'showForm' => $editing !== null || isset($_GET['new']),
-            'flash' => $flash,
-            'csrf' => $_SESSION['chuyen_bay_csrf'],
-            'oldInput' => $oldInput,
-            'weekdays' => self::WEEKDAYS,
-            'scheduleStatuses' => self::SCHEDULE_STATUSES,
-            'airlines' => $this->getOptions('SELECT id, ma_iata, ten_hang AS label FROM hang_hang_khong ORDER BY ten_hang'),
-            'airports' => $this->getOptions('SELECT id, ma_iata, ten_san_bay AS label, phan_cap FROM san_bay ORDER BY ma_iata'),
-        ];
-    }
-
-    private function processSchedulePost()
-    {
-        // Form lịch bay mùa cũng được mở trong popup (iframe) ở trang danh sách.
-        $popup = !empty($_POST['popup']);
-        $action = (string) ($_POST['action'] ?? '');
-        $editId = (int) ($_POST['id'] ?? 0);
-        $listPath = '/views/pages/chuyen_bay/lich_bay_mua.php';
-        if ($action === 'update' && $editId > 0) {
-            $formParams = ['edit' => $editId];
-        } elseif (($action === 'cancel' || $action === 'delete') && $editId > 0) {
-            $formParams = ['cancel' => $editId];
-        } else {
-            $formParams = ['new' => 1];
-        }
-        if ($popup) {
-            $formParams['popup'] = 1;
-        }
-
-        if (!hash_equals($_SESSION['chuyen_bay_csrf'] ?? '', (string) ($_POST['csrf'] ?? ''))) {
-            $this->setNamedFlash('chuyen_bay_lich_flash', 'danger', 'Phiên làm việc không hợp lệ. Vui lòng tải lại trang.');
-            $this->redirectTo($listPath, $popup ? $formParams : []);
-        }
-
-        try {
-            if ($action === 'create' || $action === 'update') {
-                $this->saveSchedule($action === 'update');
-                $this->setNamedFlash(
-                    'chuyen_bay_lich_flash',
-                    'success',
-                    $action === 'update' ? 'Đã cập nhật lịch bay mùa.' : 'Đã thêm lịch bay mùa.'
-                );
-                // Trong popup: về trang nhỏ báo trang cha tải lại danh sách.
-                $this->redirectTo($listPath, $popup ? ['popup' => 1, 'saved' => 1] : []);
-            }
-            if ($action === 'cancel' || $action === 'delete') {
-                $this->cancelSchedule($editId, (string) ($_POST['ly_do'] ?? ''));
-                $this->setNamedFlash('chuyen_bay_lich_flash', 'success', 'Đã hủy lịch bay mùa (chuyển sang Đã đóng) và ghi lý do vào nhật ký. Các chuyến đã sinh trước đó vẫn được giữ lại.');
-                $this->redirectTo($listPath, $popup ? ['popup' => 1, 'saved' => 1] : []);
-            }
-            $this->setNamedFlash('chuyen_bay_lich_flash', 'danger', 'Thao tác không hợp lệ.');
-        } catch (mysqli_sql_exception $exception) {
-            error_log('Lỗi lưu lịch bay mùa: ' . $exception->getMessage());
-            $_SESSION['chuyen_bay_lich_old_input'] = $_POST;
-            $this->setNamedFlash('chuyen_bay_lich_flash', 'danger', 'Không thể lưu lịch bay mùa. Vui lòng kiểm tra dữ liệu và thử lại.');
-        } catch (RuntimeException $exception) {
-            $_SESSION['chuyen_bay_lich_old_input'] = $_POST;
-            $this->setNamedFlash('chuyen_bay_lich_flash', 'danger', $exception->getMessage());
-        } catch (Throwable $exception) {
-            error_log('Lỗi không mong đợi khi lưu lịch bay mùa: ' . $exception->getMessage());
-            $_SESSION['chuyen_bay_lich_old_input'] = $_POST;
-            $this->setNamedFlash('chuyen_bay_lich_flash', 'danger', 'Đã xảy ra lỗi. Vui lòng kiểm tra dữ liệu và thử lại.');
-        }
-
-        $this->redirectTo($listPath, $popup ? $formParams : ($action === 'update' && $editId > 0 ? ['edit' => $editId] : ['new' => 1]));
-    }
-
-    private function saveSchedule($update)
-    {
-        $id = (int) ($_POST['id'] ?? 0);
-        $flightNumber = strtoupper(trim((string) ($_POST['so_hieu'] ?? '')));
-        $airlineId = (int) ($_POST['id_hang_hang_khong'] ?? 0);
-        $fromAirportId = (int) ($_POST['id_san_bay_di'] ?? 0);
-        $toAirportId = (int) ($_POST['id_san_bay_den'] ?? 0);
-        $fromDate = trim((string) ($_POST['tu_ngay'] ?? ''));
-        $toDate = trim((string) ($_POST['den_ngay'] ?? ''));
-        $status = (string) ($_POST['trang_thai'] ?? self::SCHEDULE_STATUS_ACTIVE);
-        if (!isset(self::SCHEDULE_STATUSES[$status])) {
-            $status = self::SCHEDULE_STATUS_ACTIVE;
-        }
-        $reason = trim((string) ($_POST['ly_do'] ?? ''));
-        $reason = $reason === '' ? null : mb_substr($reason, 0, 255, 'UTF-8');
-        $current = null;
-
-        if ($update && $id <= 0) {
-            throw new RuntimeException('Không xác định được lịch bay mùa cần cập nhật.');
-        }
-        if ($update) {
-            $current = $this->getSchedule($id);
-            if ($current === null) {
-                throw new RuntimeException('Không tìm thấy lịch bay mùa cần cập nhật.');
-            }
-        }
-        if (!preg_match('/^[A-Z0-9-]{2,20}$/', $flightNumber)) {
-            throw new RuntimeException('Mã chuyến bay chỉ gồm 2-20 ký tự chữ in hoa, số hoặc dấu gạch ngang.');
-        }
-        if ($airlineId <= 0) {
-            throw new RuntimeException('Vui lòng chọn hãng hàng không.');
-        }
-        if ($fromAirportId <= 0 || $toAirportId <= 0) {
-            throw new RuntimeException('Vui lòng chọn sân bay đi và sân bay đến.');
-        }
-        if ($fromAirportId === $toAirportId) {
-            throw new RuntimeException('Sân bay đi và sân bay đến phải khác nhau.');
-        }
-        if (!$this->isValidDate($fromDate) || !$this->isValidDate($toDate)) {
-            throw new RuntimeException('Ngày hiệu lực không hợp lệ. Vui lòng chọn lại.');
-        }
-        if ($fromDate > $toDate) {
-            throw new RuntimeException('Ngày bắt đầu hiệu lực phải nhỏ hơn hoặc bằng ngày kết thúc.');
-        }
-
-        $days = [];
-        foreach ((array) ($_POST['ngay_bay'] ?? []) as $day) {
-            $day = (int) $day;
-            if ($day >= 1 && $day <= 7) {
-                $days[$day] = $day;
-            }
-        }
-        ksort($days);
-        $days = array_values($days);
-        if (!$days) {
-            throw new RuntimeException('Vui lòng chọn ít nhất một ngày bay trong tuần.');
-        }
-        $frequency = count($days) === 7
-            ? 'Hằng ngày'
-            : implode(', ', array_map(static function ($day) {
-                return self::WEEKDAYS[$day];
-            }, $days));
-
-        if ($this->scheduleOverlaps($flightNumber, $fromAirportId, $toAirportId, $fromDate, $toDate, $update ? $id : 0)) {
-            throw new RuntimeException(
-                'Đã có lịch bay mùa ' . $flightNumber . ' trên tuyến này trong khoảng thời gian trùng. Vui lòng kiểm tra lại.'
-            );
-        }
-
-        $previousStatus = $update ? (string) ($current['trang_thai'] ?? '') : null;
-        $statusChanged = !$update || $previousStatus !== $status;
-
-        // Chuyển sang Tạm dừng / Đã đóng: bắt buộc có lý do và phải biết ai thực hiện.
-        if ($statusChanged && in_array($status, self::SCHEDULE_REASON_REQUIRED, true)) {
-            if ($reason === null) {
-                throw new RuntimeException(
-                    'Vui lòng nhập lý do khi chuyển lịch bay mùa sang trạng thái “' . self::SCHEDULE_STATUSES[$status] . '”.'
-                );
-            }
-            if (empty($_SESSION['user_id'])) {
-                throw new RuntimeException('Vui lòng đăng nhập để ghi nhận người thay đổi trạng thái lịch bay mùa.');
-            }
-        }
-        if ($status === self::SCHEDULE_STATUS_ACTIVE) {
-            $reason = null;
-        } elseif (!$statusChanged && $update) {
-            $reason = $reason ?? ($current['ly_do'] ?? null);
-        }
-
-        if ($update) {
-            $stmt = $this->db->prepare(
-                'UPDATE lich_bay_mua
-                 SET so_hieu = ?, id_hang_hang_khong = ?, id_san_bay_di = ?, id_san_bay_den = ?,
-                     tan_suat_tuan = ?, tu_ngay = ?, den_ngay = ?, trang_thai = ?, ly_do = ?
-                 WHERE id = ?'
-            );
-            $stmt->bind_param('siiisssssi', $flightNumber, $airlineId, $fromAirportId, $toAirportId, $frequency, $fromDate, $toDate, $status, $reason, $id);
-        } else {
-            $stmt = $this->db->prepare(
-                'INSERT INTO lich_bay_mua (so_hieu, id_hang_hang_khong, id_san_bay_di, id_san_bay_den, tan_suat_tuan, tu_ngay, den_ngay, trang_thai, ly_do)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $stmt->bind_param('siiisssss', $flightNumber, $airlineId, $fromAirportId, $toAirportId, $frequency, $fromDate, $toDate, $status, $reason);
-        }
-        $stmt->execute();
-        $scheduleId = $update ? $id : (int) $this->db->insert_id;
-        $stmt->close();
-
-        // Ghi nhật ký khi tạo mới ở trạng thái khác Đang mở hoặc khi đổi trạng thái.
-        if ($update ? $statusChanged : $status !== self::SCHEDULE_STATUS_ACTIVE) {
-            $this->logScheduleStatus(
-                $scheduleId,
-                $previousStatus,
-                $status,
-                $reason,
-                empty($_SESSION['user_id']) ? null : (int) $_SESSION['user_id']
-            );
-        }
-    }
-
-    /**
-     * Hủy lịch bay mùa = chuyển sang "Đã đóng" kèm lý do (không xóa dữ liệu),
-     * đồng thời ghi nhật ký người thực hiện.
-     */
-    private function cancelSchedule($id, $reason)
-    {
-        if ($id <= 0) {
-            throw new RuntimeException('Không xác định được lịch bay mùa cần hủy.');
-        }
-        $reason = trim((string) $reason);
-        if ($reason === '') {
-            throw new RuntimeException('Vui lòng nhập lý do hủy lịch bay mùa.');
-        }
-        if (empty($_SESSION['user_id'])) {
-            throw new RuntimeException('Vui lòng đăng nhập để ghi nhận người hủy lịch bay mùa.');
-        }
-
-        $current = $this->getSchedule($id);
-        if ($current === null) {
-            throw new RuntimeException('Không tìm thấy lịch bay mùa cần hủy.');
-        }
-        if ((string) ($current['trang_thai'] ?? '') === 'Da_Dong') {
-            throw new RuntimeException('Lịch bay mùa này đã đóng nên không thể hủy lại.');
-        }
-
-        $status = 'Da_Dong';
-        $reason = mb_substr($reason, 0, 255, 'UTF-8');
-        $stmt = $this->db->prepare('UPDATE lich_bay_mua SET trang_thai = ?, ly_do = ? WHERE id = ?');
-        $stmt->bind_param('ssi', $status, $reason, $id);
-        $stmt->execute();
-        $stmt->close();
-
-        $this->logScheduleStatus($id, $current['trang_thai'] ?? null, $status, $reason, (int) $_SESSION['user_id']);
-    }
-
-    /**
-     * Tự động đóng các lịch đã hết ngày hiệu lực (den_ngay < hôm nay) và ghi nhật ký hệ thống.
-     */
-    public function autoCloseExpiredSchedules()
+    private function generateFlightNumber(): string
     {
         $result = $this->db->query(
-            "SELECT id, trang_thai FROM lich_bay_mua WHERE trang_thai <> 'Da_Dong' AND den_ngay < CURDATE()"
+            "SELECT so_hieu FROM chuyen_bay_ngay WHERE so_hieu REGEXP '^CB[0-9]{4}$' FOR UPDATE"
         );
-        if (!$result) {
-            return;
+        $usedNumbers = [];
+        while ($row = $result->fetch_assoc()) {
+            $usedNumbers[$row['so_hieu']] = true;
         }
-        $expired = $result->fetch_all(MYSQLI_ASSOC);
         $result->free();
-        if (!$expired) {
-            return;
-        }
 
-        $reason = self::SCHEDULE_AUTO_CLOSE_REASON;
-        $stmt = $this->db->prepare("UPDATE lich_bay_mua SET trang_thai = 'Da_Dong', ly_do = ? WHERE id = ?");
-        foreach ($expired as $row) {
-            $id = (int) $row['id'];
-            $stmt->bind_param('si', $reason, $id);
-            $stmt->execute();
-            // id_nguoi_dung = NULL: do hệ thống tự động đóng.
-            $this->logScheduleStatus($id, $row['trang_thai'], 'Da_Dong', $reason, null);
-        }
-        $stmt->close();
-    }
-
-    /** Ghi một dòng nhật ký thay đổi trạng thái lịch bay mùa. */
-    private function logScheduleStatus($scheduleId, $oldStatus, $newStatus, $reason, $userId)
-    {
-        $scheduleId = (int) $scheduleId;
-        if ($scheduleId <= 0) {
-            return;
-        }
-        $oldStatus = $oldStatus === null || $oldStatus === '' ? null : (string) $oldStatus;
-        $newStatus = (string) $newStatus;
-        $reason = $reason === null ? null : (string) $reason;
-        $userId = $userId === null ? null : (int) $userId;
-
-        $stmt = $this->db->prepare(
-            'INSERT INTO nhat_ky_lich_bay_mua (id_lich_mua, id_nguoi_dung, trang_thai_cu, trang_thai_moi, ly_do)
-             VALUES (?, ?, ?, ?, ?)'
-        );
-        $stmt->bind_param('iisss', $scheduleId, $userId, $oldStatus, $newStatus, $reason);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    /** Nhật ký thay đổi trạng thái của một lịch bay mùa (mới nhất trước). */
-    public function getScheduleLogs($id)
-    {
-        $id = (int) $id;
-        if ($id <= 0) {
-            return [];
-        }
-        $stmt = $this->db->prepare(
-            'SELECT nk.*, nd.ho_ten, nd.ten_dang_nhap
-             FROM nhat_ky_lich_bay_mua nk
-             LEFT JOIN nguoi_dung nd ON nd.id = nk.id_nguoi_dung
-             WHERE nk.id_lich_mua = ?
-             ORDER BY nk.thoi_gian DESC, nk.id DESC'
-        );
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $logs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        return $logs;
-    }
-
-    private function scheduleOverlaps($flightNumber, $fromAirportId, $toAirportId, $fromDate, $toDate, $exceptId)
-    {
-        $stmt = $this->db->prepare(
-            'SELECT COUNT(*) AS total FROM lich_bay_mua
-             WHERE so_hieu = ? AND id_san_bay_di = ? AND id_san_bay_den = ?
-               AND id <> ? AND tu_ngay <= ? AND den_ngay >= ?'
-        );
-        $stmt->bind_param('siiiss', $flightNumber, $fromAirportId, $toAirportId, $exceptId, $toDate, $fromDate);
-        $stmt->execute();
-        $exists = (int) $stmt->get_result()->fetch_assoc()['total'] > 0;
-        $stmt->close();
-
-        return $exists;
-    }
-
-    public function getSchedules()
-    {
-        return $this->getOptions(
-            "SELECT lbm.*, h.ma_iata AS hang_iata, h.ten_hang,
-                    s1.ma_iata AS di_iata, s2.ma_iata AS den_iata,
-                    (SELECT COUNT(*) FROM chuyen_bay_ngay cb WHERE cb.id_lich_mua = lbm.id) AS so_chuyen
-             FROM lich_bay_mua lbm
-             JOIN hang_hang_khong h ON h.id = lbm.id_hang_hang_khong
-             JOIN san_bay s1 ON s1.id = lbm.id_san_bay_di
-             JOIN san_bay s2 ON s2.id = lbm.id_san_bay_den
-             ORDER BY lbm.so_hieu, lbm.tu_ngay"
-        );
-    }
-
-    public function getSchedule($id)
-    {
-        $id = (int) $id;
-        if ($id <= 0) {
-            return null;
-        }
-        $stmt = $this->db->prepare('SELECT * FROM lich_bay_mua WHERE id = ?');
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $schedule = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        return $schedule ?: null;
-    }
-
-    /**
-     * Đọc chuỗi tần suất ("Hằng ngày", "Thứ 2, 4, 6", "Thứ 2 - Thứ 6", "T2, T4, CN"...)
-     * thành danh sách thứ trong tuần (1 = Thứ 2 ... 7 = Chủ nhật).
-     */
-    public static function parseFrequency($frequency)
-    {
-        $text = mb_strtolower(trim((string) $frequency), 'UTF-8');
-        if ($text === '') {
-            return [];
-        }
-        if (preg_match('/(hằng ngày|hang ngay|hàng ngày|daily|tất cả các ngày|tat ca cac ngay)/u', $text)) {
-            return range(1, 7);
-        }
-
-        $days = [];
-        if (preg_match('/(chủ nhật|chu nhat|\bcn\b)/u', $text)) {
-            $days[7] = 7;
-        }
-        // Dạng khoảng: "Thứ 2 - Thứ 6" → ISO 1..5.
-        if (preg_match_all('/thứ\s*([2-7])\s*(?:-|–|—|đến|den)\s*(?:thứ\s*)?([2-7])/u', $text, $ranges, PREG_SET_ORDER)) {
-            foreach ($ranges as $range) {
-                $start = (int) $range[1] - 1;
-                $end = (int) $range[2] - 1;
-                $step = $start <= $end ? 1 : -1;
-                for ($day = $start; $day !== $end + $step; $day += $step) {
-                    if ($day >= 1 && $day <= 7) {
-                        $days[$day] = $day;
-                    }
-                }
-            }
-            $text = preg_replace('/thứ\s*[2-7]\s*(?:-|–|—|đến|den)\s*(?:thứ\s*)?[2-7]/u', ' ', $text);
-        }
-        // Các số 2..7 còn lại là "Thứ N" (Thứ 2 = ISO 1, Thứ 7 = ISO 6).
-        if (preg_match_all('/([2-7])/u', $text, $matches)) {
-            foreach ($matches[1] as $day) {
-                $isoDay = ((int) $day) - 1;
-                if ($isoDay >= 1 && $isoDay <= 7) {
-                    $days[$isoDay] = $isoDay;
-                }
+        for ($number = 0; $number <= 9999; $number++) {
+            $flightNumber = 'CB' . str_pad((string) $number, 4, '0', STR_PAD_LEFT);
+            if (!isset($usedNumbers[$flightNumber])) {
+                return $flightNumber;
             }
         }
 
-        ksort($days);
-
-        return array_values($days);
-    }
-
-    /* ============================================================
-     * BATCH JOB — SINH CHUYẾN BAY TỪ LỊCH BAY MÙA
-     * ============================================================ */
-
-    public function handleGenerate()
-    {
-        $this->ensureCsrf();
-        // Cập nhật trạng thái trước khi xem trước/sinh chuyến (lịch hết hạn coi như Đã đóng).
-        $this->autoCloseExpiredSchedules();
-        $defaultFrom = date('Y-m-d');
-        $defaultTo = date('Y-m-d', strtotime('+6 days'));
-
-        if ($this->isPost()) {
-            $action = (string) ($_POST['action'] ?? 'generate');
-            $fromDate = trim((string) ($_POST['tu_ngay'] ?? ''));
-            $toDate = trim((string) ($_POST['den_ngay'] ?? ''));
-            $timeOfDay = trim((string) ($_POST['gio_cat_canh'] ?? ''));
-            $aircraftId = (int) ($_POST['id_loai_tau_bay'] ?? 0);
-            $durationMinutes = (int) ($_POST['thoi_gian_bay'] ?? 90);
-            $mode = (string) ($_POST['che_do_trung'] ?? 'bo_qua');
-            if (!isset(self::GENERATION_MODES[$mode])) {
-                $mode = 'bo_qua';
-            }
-            if ($action === 'generate') {
-                try {
-                    $_SESSION['chuyen_bay_gen_result'] = $this->generateFromSchedules($fromDate, $toDate, $timeOfDay, $aircraftId, $durationMinutes, $mode);
-                    $this->setNamedFlash('chuyen_bay_gen_flash', 'success', 'Đã chạy batch job sinh chuyến bay từ lịch bay mùa.');
-                } catch (mysqli_sql_exception $exception) {
-                    error_log('Lỗi sinh chuyến bay từ lịch mùa: ' . $exception->getMessage());
-                    $this->setNamedFlash('chuyen_bay_gen_flash', 'danger', 'Không thể sinh chuyến bay. Vui lòng kiểm tra dữ liệu và thử lại.');
-                } catch (RuntimeException $exception) {
-                    $this->setNamedFlash('chuyen_bay_gen_flash', 'danger', $exception->getMessage());
-                } catch (Throwable $exception) {
-                    error_log('Lỗi không mong đợi khi sinh chuyến bay: ' . $exception->getMessage());
-                    $this->setNamedFlash('chuyen_bay_gen_flash', 'danger', 'Đã xảy ra lỗi khi sinh chuyến bay. Vui lòng thử lại.');
-                }
-            }
-            $this->redirectTo('/views/pages/chuyen_bay/tao_chuyen_bay.php', array_filter([
-                'tu_ngay' => $fromDate,
-                'den_ngay' => $toDate,
-                'gio' => $timeOfDay,
-                'phut' => $durationMinutes > 0 ? $durationMinutes : null,
-                'tau_bay' => $aircraftId > 0 ? $aircraftId : null,
-                'che_do' => $mode === 'ghi_de' ? $mode : null,
-                // Trang này được mở trong popup (iframe) ở trang danh sách: giữ nguyên chế độ popup.
-                'popup' => !empty($_POST['popup']) ? 1 : null,
-            ]));
-        }
-
-        $fromDate = trim((string) ($_GET['tu_ngay'] ?? $defaultFrom));
-        $toDate = trim((string) ($_GET['den_ngay'] ?? $defaultTo));
-        $timeOfDay = trim((string) ($_GET['gio'] ?? '08:00'));
-        $aircraftId = max(0, (int) ($_GET['tau_bay'] ?? 0));
-        $durationMinutes = (int) ($_GET['phut'] ?? 90);
-        if ($durationMinutes <= 0) {
-            $durationMinutes = 90;
-        }
-        $mode = (string) ($_GET['che_do'] ?? 'bo_qua');
-        if (!isset(self::GENERATION_MODES[$mode])) {
-            $mode = 'bo_qua';
-        }
-
-        $preview = [];
-        $totalPreview = 0;
-        $previewError = null;
-        try {
-            $preview = $this->previewScheduleGeneration($fromDate, $toDate, $timeOfDay, $durationMinutes, $mode);
-            foreach ($preview as $row) {
-                // Chế độ bỏ qua: chỉ cộng chuyến sẽ tạo mới; chế độ ghi đè: cộng cả chuyến sẽ cập nhật.
-                $totalPreview += $mode === 'ghi_de'
-                    ? (int) $row['so_chuyen']
-                    : (int) ($row['so_tao_moi'] ?? $row['so_chuyen']);
-            }
-        } catch (RuntimeException $exception) {
-            $previewError = $exception->getMessage();
-        }
-
-        $result = $_SESSION['chuyen_bay_gen_result'] ?? null;
-        unset($_SESSION['chuyen_bay_gen_result']);
-
-        $arrivalAt = $this->arrivalFrom('2000-01-01 ' . $timeOfDay, max(0, $durationMinutes));
-
-        return [
-            'fromDate' => $fromDate,
-            'toDate' => $toDate,
-            'timeOfDay' => $timeOfDay,
-            'aircraftId' => $aircraftId,
-            'durationMinutes' => $durationMinutes,
-            'arrivalPreview' => $arrivalAt ? $arrivalAt->format('H:i') : null,
-            'arrivalNextDay' => $arrivalAt ? $arrivalAt->format('Y-m-d') !== '2000-01-01' : false,
-            'preview' => $preview,
-            'totalPreview' => $totalPreview,
-            'previewError' => $previewError,
-            'result' => $result,
-            'overwriteMode' => $mode,
-            'generationModes' => self::GENERATION_MODES,
-            'scheduleStatuses' => self::SCHEDULE_STATUSES,
-            'flash' => $this->pullNamedFlash('chuyen_bay_gen_flash'),
-            'csrf' => $_SESSION['chuyen_bay_csrf'],
-            'aircraftTypes' => $this->getOptions('SELECT id, ma_loai AS label FROM loai_tau_bay ORDER BY ma_loai'),
-        ];
-    }
-
-    public function previewScheduleGeneration($fromDate, $toDate, $timeOfDay = '08:00', $durationMinutes = 90, $mode = 'bo_qua')
-    {
-        if (!isset(self::GENERATION_MODES[$mode])) {
-            $mode = 'bo_qua';
-        }
-        [$from, $to] = $this->validateGenerationRange($fromDate, $toDate, $timeOfDay);
-        $this->validateFlightDuration($durationMinutes);
-        $schedules = $this->getSchedulesInRange($from->format('Y-m-d'), $to->format('Y-m-d'));
-
-        // Chuyến đã tồn tại (cùng số hiệu + tuyến + ngày) sẽ bị bỏ qua, không tạo trùng.
-        $existingStmt = $this->db->prepare(
-            'SELECT DATE(gio_du_kien) AS ngay FROM chuyen_bay_ngay
-             WHERE so_hieu = ? AND id_san_bay_di = ? AND id_san_bay_den = ?
-               AND DATE(gio_du_kien) BETWEEN ? AND ?'
-        );
-
-        $preview = [];
-        foreach ($schedules as $schedule) {
-            $days = self::parseFrequency($schedule['tan_suat_tuan']);
-            $rangeFrom = $from->format('Y-m-d');
-            $rangeTo = $to->format('Y-m-d');
-
-            $existing = [];
-            $existingStmt->bind_param('siiss', $schedule['so_hieu'], $schedule['id_san_bay_di'], $schedule['id_san_bay_den'], $rangeFrom, $rangeTo);
-            $existingStmt->execute();
-            $result = $existingStmt->get_result();
-            while ($row = $result->fetch_assoc()) {
-                $existing[$row['ngay']] = true;
-            }
-            $result->free();
-
-            $count = 0;
-            $duplicates = 0;
-            foreach ($this->iterateDates($from, $to, $schedule['tu_ngay'], $schedule['den_ngay']) as $date) {
-                if (in_array((int) $date->format('N'), $days, true)) {
-                    $count++;
-                    if (isset($existing[$date->format('Y-m-d')])) {
-                        $duplicates++;
-                    }
-                }
-            }
-            $preview[] = [
-                'so_hieu' => $schedule['so_hieu'],
-                'hang' => trim($schedule['hang_iata'] . ' ' . $schedule['ten_hang']),
-                'tuyen' => $schedule['di_iata'] . ' → ' . $schedule['den_iata'],
-                'tan_suat' => $schedule['tan_suat_tuan'],
-                'trang_thai' => (string) ($schedule['trang_thai'] ?? self::SCHEDULE_STATUS_ACTIVE),
-                'trang_thai_nhan' => self::SCHEDULE_STATUSES[$schedule['trang_thai'] ?? self::SCHEDULE_STATUS_ACTIVE]
-                    ?? ($schedule['trang_thai'] ?? self::SCHEDULE_STATUS_ACTIVE),
-                'hieu_luc' => date('d/m/Y', strtotime($schedule['tu_ngay'])) . ' – ' . date('d/m/Y', strtotime($schedule['den_ngay'])),
-                'so_chuyen' => $count,
-                'so_trung' => $duplicates,
-                'so_tao_moi' => max(0, $count - $duplicates),
-                'so_cap_nhat' => $mode === 'ghi_de' ? $duplicates : 0,
-                'so_bo_qua' => $mode === 'ghi_de' ? 0 : $duplicates,
-                'hop_le' => (bool) $days,
-            ];
-        }
-
-        $existingStmt->close();
-
-        return $preview;
-    }
-
-    public function generateFromSchedules($fromDate, $toDate, $timeOfDay, $aircraftId = 0, $durationMinutes = 90, $mode = 'bo_qua')
-    {
-        if (!isset(self::GENERATION_MODES[$mode])) {
-            $mode = 'bo_qua';
-        }
-        [$from, $to] = $this->validateGenerationRange($fromDate, $toDate, $timeOfDay);
-        $timeOfDay = substr(trim($timeOfDay), 0, 5);
-        $durationMinutes = $this->validateFlightDuration($durationMinutes);
-        $schedules = $this->getSchedulesInRange($from->format('Y-m-d'), $to->format('Y-m-d'));
-        if (!$schedules) {
-            throw new RuntimeException('Không có lịch bay mùa nào hiệu lực trong khoảng ngày đã chọn (chỉ xét lịch ở trạng thái “Đang mở”).');
-        }
-
-        $aircraftId = (int) $aircraftId;
-        if ($aircraftId > 0 && !$this->aircraftExists($aircraftId)) {
-            throw new RuntimeException('Loại tàu bay đã chọn không tồn tại.');
-        }
-
-        $existsStmt = $this->db->prepare(
-            'SELECT id, gio_du_kien, gio_thuc_te, trang_thai_tong FROM chuyen_bay_ngay
-             WHERE so_hieu = ? AND id_san_bay_di = ? AND id_san_bay_den = ? AND DATE(gio_du_kien) = ?
-             LIMIT 1'
-        );
-        $updateStmt = $this->db->prepare('UPDATE chuyen_bay_ngay SET gio_thuc_te = ? WHERE id = ? AND gio_thuc_te IS NULL');
-        // Ghi đè: cập nhật lịch/giờ/loại tàu bay, giữ nguyên trạng thái khai thác và số khách/hàng hoá.
-        $overwriteStmt = $this->db->prepare(
-            'UPDATE chuyen_bay_ngay
-             SET id_lich_mua = ?, id_loai_tau_bay = ?, gio_du_kien = ?, gio_thuc_te = ?
-             WHERE id = ?'
-        );
-        $insertStmt = $this->db->prepare(
-            "INSERT INTO chuyen_bay_ngay
-                (id_lich_mua, so_hieu, id_hang_hang_khong, id_loai_tau_bay, id_san_bay_di, id_san_bay_den,
-                 gio_du_kien, gio_thuc_te, luong_hanh_khach, luong_hang_hoa_tan, trang_thai_tong)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'Dang_Mo')"
-        );
-
-        $created = 0;
-        $skipped = 0;
-        $updated = 0;
-        $filled = 0;
-        $errors = [];
-        $limit = 500;
-        $aircraftCache = [];
-
-        foreach ($schedules as $schedule) {
-            $days = self::parseFrequency($schedule['tan_suat_tuan']);
-            if (!$days) {
-                $errors[] = 'Lịch ' . $schedule['so_hieu'] . ': không đọc được tần suất "' . $schedule['tan_suat_tuan'] . '".';
-                continue;
-            }
-
-            $scheduleAircraftId = $aircraftId;
-            if ($scheduleAircraftId <= 0) {
-                $airlineId = (int) $schedule['id_hang_hang_khong'];
-                if (!isset($aircraftCache[$airlineId])) {
-                    $aircraftCache[$airlineId] = $this->defaultAircraftForAirline($airlineId);
-                }
-                $scheduleAircraftId = (int) $aircraftCache[$airlineId];
-            }
-            if ($scheduleAircraftId <= 0) {
-                $errors[] = 'Lịch ' . $schedule['so_hieu'] . ': chưa có loại tàu bay để sinh chuyến.';
-                continue;
-            }
-
-            foreach ($this->iterateDates($from, $to, $schedule['tu_ngay'], $schedule['den_ngay']) as $date) {
-                if (!in_array((int) $date->format('N'), $days, true)) {
-                    continue;
-                }
-                if ($created >= $limit) {
-                    $errors[] = 'Đã đạt giới hạn ' . $limit . ' chuyến trong một lần chạy. Vui lòng chia nhỏ khoảng ngày.';
-                    break 2;
-                }
-
-                $dateValue = $date->format('Y-m-d');
-                $existsStmt->bind_param('siis', $schedule['so_hieu'], $schedule['id_san_bay_di'], $schedule['id_san_bay_den'], $dateValue);
-                $existsStmt->execute();
-                $existing = $existsStmt->get_result()->fetch_assoc();
-                if ($existing) {
-                    if ($mode === 'ghi_de') {
-                        // Ghi đè: cập nhật giờ cất cánh / hạ cánh và loại tàu bay của chuyến đã có.
-                        $departureValue = $dateValue . ' ' . $timeOfDay . ':00';
-                        $overwriteArrival = $this->arrivalFrom($departureValue, $durationMinutes);
-                        if ($overwriteArrival === null) {
-                            throw new RuntimeException('Không tính được giờ hạ cánh dự kiến. Vui lòng kiểm tra lại giờ cất cánh.');
-                        }
-                        $overwriteArrivalValue = $overwriteArrival->format('Y-m-d H:i:s');
-                        $existingId = (int) $existing['id'];
-                        $overwriteStmt->bind_param(
-                            'iissi',
-                            $schedule['id'],
-                            $scheduleAircraftId,
-                            $departureValue,
-                            $overwriteArrivalValue,
-                            $existingId
-                        );
-                        $overwriteStmt->execute();
-                        $updated++;
-                        // Mỗi chuyến bị ghi đè cũng có một dòng nhật ký riêng.
-                        $this->logFlightAction(
-                            $existingId,
-                            'Ghi_De_Tu_Lich',
-                            $existing['trang_thai_tong'] ?? null,
-                            $existing['trang_thai_tong'] ?? null,
-                            'Ghi đè theo lịch bay mùa ' . $schedule['so_hieu'] . ': '
-                                . date('d/m/Y H:i', strtotime($existing['gio_du_kien'])) . ' → '
-                                . date('d/m/Y H:i', strtotime($departureValue)) . '.'
-                        );
-                        continue;
-                    }
-                    // Chuyến đã có nhưng còn thiếu giờ hạ cánh -> bổ sung theo giờ cất cánh thật của chuyến đó.
-                    if ($existing['gio_thuc_te'] === null) {
-                        $existingArrival = $this->arrivalFrom($existing['gio_du_kien'], $durationMinutes);
-                        if ($existingArrival !== null) {
-                            $existingArrivalValue = $existingArrival->format('Y-m-d H:i:s');
-                            $updateStmt->bind_param('si', $existingArrivalValue, $existing['id']);
-                            $updateStmt->execute();
-                            $filled++;
-                            $this->logFlightAction(
-                                (int) $existing['id'],
-                                'Sua',
-                                $existing['trang_thai_tong'] ?? null,
-                                $existing['trang_thai_tong'] ?? null,
-                                'Bổ sung giờ dự kiến hạ cánh từ lịch bay mùa ' . $schedule['so_hieu'] . ': '
-                                    . $existingArrival->format('d/m/Y H:i') . '.'
-                            );
-                        }
-                    } else {
-                        $skipped++;
-                    }
-                    continue;
-                }
-
-                $departure = $dateValue . ' ' . $timeOfDay . ':00';
-                $arrival = $this->arrivalFrom($departure, $durationMinutes);
-                if ($arrival === null) {
-                    throw new RuntimeException('Không tính được giờ hạ cánh dự kiến. Vui lòng kiểm tra lại giờ cất cánh.');
-                }
-                $departureValue = $departure;
-                $arrivalValue = $arrival->format('Y-m-d H:i:s');
-
-                $insertStmt->bind_param(
-                    'isiiiiss',
-                    $schedule['id'],
-                    $schedule['so_hieu'],
-                    $schedule['id_hang_hang_khong'],
-                    $scheduleAircraftId,
-                    $schedule['id_san_bay_di'],
-                    $schedule['id_san_bay_den'],
-                    $departureValue,
-                    $arrivalValue
-                );
-                $insertStmt->execute();
-                $created++;
-                // Mỗi chuyến sinh tự động đều có một dòng nhật ký riêng (người thực hiện = Hệ thống).
-                $this->logFlightAction(
-                    (int) $this->db->insert_id,
-                    'Tao_Tu_Lich',
-                    null,
-                    'Dang_Mo',
-                    'Sinh tự động từ lịch bay mùa ' . $schedule['so_hieu'] . ' ('
-                        . $schedule['di_iata'] . ' → ' . $schedule['den_iata'] . ').'
-                );
-            }
-        }
-
-        $existsStmt->close();
-        $updateStmt->close();
-        $overwriteStmt->close();
-        $insertStmt->close();
-
-        $arrivalPreview = $this->arrivalFrom('2000-01-01 ' . $timeOfDay, $durationMinutes);
-
-        return [
-            'created' => $created,
-            'skipped' => $skipped,
-            'updated' => $updated,
-            'mode' => $mode,
-            'filled' => $filled,
-            'from' => $from->format('Y-m-d'),
-            'to' => $to->format('Y-m-d'),
-            'time' => $timeOfDay,
-            'duration' => $durationMinutes,
-            'arrival' => $arrivalPreview ? $arrivalPreview->format('H:i') : '',
-            'arrival_next_day' => $arrivalPreview ? $arrivalPreview->format('Y-m-d') !== '2000-01-01' : false,
-            'errors' => $errors,
-        ];
-    }
-
-    private function validateFlightDuration($minutes)
-    {
-        $minutes = (int) $minutes;
-        if ($minutes < 15 || $minutes > 720) {
-            throw new RuntimeException('Thời gian bay phải từ 15 đến 720 phút.');
-        }
-
-        return $minutes;
-    }
-
-    private function arrivalFrom($dateTimeValue, $durationMinutes)
-    {
-        try {
-            return (new DateTimeImmutable($dateTimeValue))->modify('+' . (int) $durationMinutes . ' minutes');
-        } catch (Exception $exception) {
-            return null;
-        }
-    }
-
-    private function validateGenerationRange($fromDate, $toDate, $timeOfDay)
-    {
-        $from = $this->parseDateValue($fromDate);
-        $to = $this->parseDateValue($toDate);
-        if ($from === null || $to === null) {
-            throw new RuntimeException('Ngày không hợp lệ. Vui lòng chọn lại khoảng ngày.');
-        }
-        if ($from > $to) {
-            throw new RuntimeException('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.');
-        }
-        if ($from->diff($to)->days + 1 > 62) {
-            throw new RuntimeException('Khoảng thời gian tối đa là 62 ngày cho mỗi lần sinh chuyến.');
-        }
-        if (!preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', substr(trim((string) $timeOfDay), 0, 5))) {
-            throw new RuntimeException('Giờ cất cánh không hợp lệ. Vui lòng chọn lại.');
-        }
-
-        return [$from, $to];
-    }
-
-    private function getSchedulesInRange($fromDate, $toDate)
-    {
-        $stmt = $this->db->prepare(
-            "SELECT lbm.id, lbm.so_hieu, lbm.id_hang_hang_khong, lbm.id_san_bay_di, lbm.id_san_bay_den,
-                    lbm.tan_suat_tuan, lbm.tu_ngay, lbm.den_ngay,
-                    h.ma_iata AS hang_iata, h.ten_hang,
-                    s1.ma_iata AS di_iata, s2.ma_iata AS den_iata
-             FROM lich_bay_mua lbm
-             JOIN hang_hang_khong h ON h.id = lbm.id_hang_hang_khong
-             JOIN san_bay s1 ON s1.id = lbm.id_san_bay_di
-             JOIN san_bay s2 ON s2.id = lbm.id_san_bay_den
-             WHERE lbm.tu_ngay <= ? AND lbm.den_ngay >= ?
-               AND lbm.trang_thai = 'Dang_Mo'
-             ORDER BY lbm.so_hieu, lbm.id"
-        );
-        $stmt->bind_param('ss', $toDate, $fromDate);
-        $stmt->execute();
-        $schedules = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        return $schedules;
-    }
-
-    private function iterateDates($from, $to, $seasonFrom, $seasonTo)
-    {
-        $start = $from > new DateTimeImmutable($seasonFrom) ? $from : new DateTimeImmutable($seasonFrom);
-        $end = $to < new DateTimeImmutable($seasonTo) ? $to : new DateTimeImmutable($seasonTo);
-        $dates = [];
-        for ($date = $start; $date <= $end; $date = $date->modify('+1 day')) {
-            $dates[] = $date;
-        }
-
-        return $dates;
-    }
-
-    private function defaultAircraftForAirline($airlineId)
-    {
-        $stmt = $this->db->prepare(
-            'SELECT id_loai_tau_bay FROM chuyen_bay_ngay
-             WHERE id_hang_hang_khong = ?
-             GROUP BY id_loai_tau_bay
-             ORDER BY COUNT(*) DESC, id_loai_tau_bay
-             LIMIT 1'
-        );
-        $stmt->bind_param('i', $airlineId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if ($row) {
-            return (int) $row['id_loai_tau_bay'];
-        }
-
-        $fallback = $this->db->query('SELECT id FROM loai_tau_bay ORDER BY id LIMIT 1');
-        $first = $fallback ? $fallback->fetch_assoc() : null;
-
-        return $first ? (int) $first['id'] : 0;
-    }
-
-    private function aircraftExists($aircraftId)
-    {
-        $stmt = $this->db->prepare('SELECT id FROM loai_tau_bay WHERE id = ?');
-        $stmt->bind_param('i', $aircraftId);
-        $stmt->execute();
-        $exists = (bool) $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        return $exists;
+        throw new RuntimeException('Đã sử dụng hết mã chuyến bay từ CB0000 đến CB9999.');
     }
 
     private function ensureCsrf()
@@ -2991,16 +2284,6 @@ class ChuyenBayController
         }
 
         return checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1]);
-    }
-
-    private function parseDateValue($value)
-    {
-        $value = trim((string) $value);
-        if (!$this->isValidDate($value)) {
-            return null;
-        }
-
-        return new DateTimeImmutable($value);
     }
 
     private function setFlash($type, $message)
