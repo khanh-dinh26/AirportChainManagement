@@ -1,11 +1,9 @@
 <?php
+// Chế độ chỉ quản lý sân bay (mở từ nút "Quản lí sân bay" ở trang Hạ tầng):
+// không có thanh tab, không có khối chọn sân bay / nhà ga, chỉ còn danh mục sân bay.
+$airportAdminOnly = isset($airportAdminOnly) && $airportAdminOnly;
+
 $tabMeta = [
-    'san_bay' => [
-        'label' => 'Sân bay',
-        'icon' => 'bi-building',
-        'desc' => 'Danh mục sân bay, mã nhận diện, phân cấp và trạng thái khai thác.',
-        'add' => 'Thêm sân bay',
-    ],
     'nha_ga' => [
         'label' => 'Nhà ga',
         'icon' => 'bi-door-open',
@@ -32,9 +30,18 @@ $tabMeta = [
     ],
 ];
 
-$returnTab = $tab;
-$returnSanBay = $selectedAirport ? $selectedAirport['ma_iata'] : '';
-$returnNhaGa = $selectedTerminal ? (int) $selectedTerminal['id'] : 0;
+$sanBayMeta = [
+    'label' => 'Sân bay',
+    'icon' => 'bi-building',
+    'desc' => 'Danh mục sân bay, mã nhận diện, phân cấp và trạng thái khai thác.',
+    'add' => 'Thêm sân bay',
+];
+
+$airportPageUrl = $url(['quan_ly_san_bay' => '1']);
+
+$returnTab = $airportAdminOnly ? 'san_bay' : $tab;
+$returnSanBay = $airportAdminOnly || !$selectedAirport ? '' : $selectedAirport['ma_iata'];
+$returnNhaGa = $airportAdminOnly || !$selectedTerminal ? 0 : (int) $selectedTerminal['id'];
 $formMode = $management['formMode'];
 $formRecord = $management['editRecord'];
 $formType = $management['formType'];
@@ -58,26 +65,29 @@ $adminUrl = static function (array $overrides = []) use ($url, $returnTab, $retu
 
     return $url($params);
 };
-$listUrl = $adminUrl(['tab' => $returnTab]);
-$currentMeta = $tabMeta[$tab] ?? $tabMeta['san_bay'];
+$listUrl = $airportAdminOnly ? $airportPageUrl : $adminUrl(['tab' => $returnTab]);
+$currentMeta = $tabMeta[$tab] ?? ($airportAdminOnly ? $sanBayMeta : $tabMeta['nha_ga']);
 
 $canUseTab = true;
-if ($tab === 'nha_ga' && !$selectedAirport) {
-    $canUseTab = false;
-}
-if (in_array($tab, ['cua_ra', 'quay', 'bang_chuyen'], true) && !$selectedTerminal) {
-    $canUseTab = false;
+if (!$airportAdminOnly) {
+    if ($tab === 'nha_ga' && !$selectedAirport) {
+        $canUseTab = false;
+    }
+    if (in_array($tab, ['cua_ra', 'quay', 'bang_chuyen'], true) && !$selectedTerminal) {
+        $canUseTab = false;
+    }
 }
 
-$tabParams = ['quan_tri' => '1', 'tab' => $tab];
-if ($selectedAirport) {
+$tabParams = ['quan_tri' => '1', 'tab' => $airportAdminOnly ? 'san_bay' : $tab];
+if (!$airportAdminOnly && $selectedAirport) {
     $tabParams['san_bay'] = $selectedAirport['ma_iata'];
 }
-if ($selectedTerminal) {
+if (!$airportAdminOnly && $selectedTerminal) {
     $tabParams['nha_ga'] = (int) $selectedTerminal['id'];
 }
 $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
 ?>
+<?php if (!$airportAdminOnly): ?>
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
   <div class="d-flex flex-wrap align-items-center gap-2">
     <span class="badge text-bg-light border">
@@ -100,9 +110,7 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
     <a href="<?= $e($adminUrl(['tab' => $key]) . '#ht-admin-tabs') ?>" class="<?= $isActive ? 'is-active' : '' ?>">
       <i class="bi <?= $e($meta['icon']) ?>"></i>
       <?= $e($meta['label']) ?>
-      <?php if ($key === 'san_bay'): ?>
-        <span class="badge text-bg-secondary"><?= count($data['airports']) ?></span>
-      <?php elseif ($key === 'nha_ga'): ?>
+      <?php if ($key === 'nha_ga'): ?>
         <span class="badge text-bg-secondary"><?= count($terminals) ?></span>
       <?php elseif ($key === 'cua_ra'): ?>
         <span class="badge text-bg-secondary"><?= count($data['gates']) ?></span>
@@ -114,6 +122,7 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
     </a>
   <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
 <div class="card ht-panel">
   <div class="card-header d-flex flex-wrap align-items-start justify-content-between gap-2">
@@ -141,14 +150,14 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
         <?php if ($tab === 'nha_ga'): ?>
           <h3>Chưa chọn sân bay</h3>
           <p>Chọn một sân bay trên bản đồ phía trên để quản lý danh sách nhà ga trực thuộc.</p>
-          <a href="<?= $e($adminUrl(['tab' => 'san_bay'])) ?>" class="btn btn-primary btn-sm mt-3">
+          <a href="<?= $e($airportPageUrl) ?>" class="btn btn-primary btn-sm mt-3">
             <i class="bi bi-building me-1"></i> Đi tới danh mục sân bay
           </a>
         <?php else: ?>
           <h3>Chưa chọn nhà ga</h3>
           <p>Chọn sân bay trên bản đồ, sau đó chọn một nhà ga để quản lý cửa ra, quầy check-in hoặc băng chuyền.</p>
           <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-            <a href="<?= $e($adminUrl(['tab' => 'san_bay'])) ?>" class="btn btn-outline-primary btn-sm">
+            <a href="<?= $e($airportPageUrl) ?>" class="btn btn-outline-primary btn-sm">
               Chọn sân bay
             </a>
             <a href="<?= $e($adminUrl(['tab' => 'nha_ga'])) ?>" class="btn btn-primary btn-sm">
