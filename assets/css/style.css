@@ -229,6 +229,10 @@ body:has(.modal.is-open) {
   --maint-accent: rgb(var(--bs-primary-rgb));
 }
 
+.maint-page--aircraft #aircraftTable {
+  font-size: 1.05rem;
+}
+
 .maint-stat-grid > [class*="col-"] {
   display: flex;
 }
@@ -494,6 +498,89 @@ body:has(.modal.is-open) {
 
 .maint-thumb {
   border-radius: .5rem;
+  cursor: zoom-in;
+}
+
+.maint-aircraft-thumb {
+  width: 96px;
+  height: 60px;
+  object-fit: cover;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .45rem;
+  background: var(--bs-tertiary-bg);
+}
+
+.maint-aircraft-thumb--empty {
+  border-style: dashed;
+}
+
+/* ============================================================
+ * Lightbox ảnh sự cố — mở bằng :target, đóng bằng nút X (thuần CSS)
+ * ============================================================ */
+.maint-lightbox {
+  display: none;
+}
+
+.maint-lightbox:target {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1rem 1.5rem;
+  background-color: rgba(0, 0, 0, .85);
+}
+
+.maint-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.maint-lightbox__img {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: .5rem;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .5);
+  object-fit: contain;
+}
+
+.maint-lightbox__close {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, .18);
+  color: #fff;
+  font-size: 1.9rem;
+  font-weight: 300;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.maint-lightbox__close:hover,
+.maint-lightbox__close:focus {
+  background-color: #fff;
+  color: #000;
+  text-decoration: none;
+}
+
+.maint-lightbox__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+body:has(.maint-lightbox:target) {
+  overflow: hidden;
 }
 
 .maint-empty-icon {
@@ -565,12 +652,12 @@ body:has(.modal.is-open) {
 }
 
 .maint-modal--ticket .modal-dialog {
-  max-width: 680px;
+  max-width: 900px;
 }
 
 .maint-modal--equipment .modal-dialog,
 .maint-modal--aircraft .modal-dialog {
-  max-width: 620px;
+  max-width: 900px;
 }
 
 .maint-form-section {
@@ -604,6 +691,30 @@ body:has(.modal.is-open) {
   font-size: .8rem;
 }
 
+.maint-image-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 170px;
+  margin-top: .55rem;
+  padding: .4rem;
+  border: 1px dashed var(--bs-border-color);
+  border-radius: .6rem;
+  background: var(--bs-tertiary-bg);
+}
+
+.maint-image-preview img {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: .4rem;
+  object-fit: contain;
+}
+
+.maint-pagination .page-link {
+  min-width: 2rem;
+  text-align: center;
+}
+
 .maint-severity .btn {
   padding: .55rem .35rem;
   font-size: .8rem;
@@ -613,6 +724,151 @@ body:has(.modal.is-open) {
 .maint-severity .btn-check:checked + .btn {
   transform: translateY(-1px);
   box-shadow: 0 .35rem .75rem rgba(0, 0, 0, .12);
+}
+
+/* Bộ lọc sân bay dạng dropdown gọn cho modal tạo phiếu */
+.maint-airport-summary {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .45rem .6rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .65rem;
+  background: var(--bs-body-bg);
+  cursor: pointer;
+  list-style: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.maint-airport-summary::-webkit-details-marker {
+  display: none;
+}
+
+.maint-airport-summary:hover {
+  border-color: rgba(var(--maint-rgb), .55);
+}
+
+.maint-airport-picker[open] > .maint-airport-summary {
+  border-color: rgb(var(--maint-rgb));
+  box-shadow: 0 0 0 .2rem rgba(var(--maint-rgb), .12);
+}
+
+.maint-airport-summary-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  background: rgba(var(--maint-rgb), .12);
+  color: rgb(var(--maint-rgb));
+  font-size: .9rem;
+}
+
+.maint-airport-summary-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.maint-airport-summary-value {
+  overflow: hidden;
+  font-size: .85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maint-airport-summary-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 1px solid var(--bs-border-color);
+  font-weight: 600;
+}
+
+.maint-airport-summary-caret {
+  flex: 0 0 auto;
+  color: var(--bs-secondary-color);
+  transition: transform .15s ease;
+}
+
+.maint-airport-picker[open] .maint-airport-summary-caret {
+  transform: rotate(180deg);
+}
+
+.maint-airport-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: .25rem;
+  max-height: 320px;
+  margin-top: .4rem;
+  padding: .35rem;
+  overflow-y: auto;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .65rem;
+  background: var(--bs-tertiary-bg);
+}
+
+.maint-airport-option {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-width: 0;
+  padding: .38rem .5rem;
+  border: 1px solid transparent;
+  border-radius: .45rem;
+  color: var(--bs-body-color);
+  font-size: .8rem;
+  text-decoration: none;
+}
+
+.maint-airport-option:hover,
+.maint-airport-option:focus-visible {
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: rgb(var(--maint-rgb));
+}
+
+.maint-airport-option.is-active {
+  background: rgba(var(--maint-rgb), .1);
+  border-color: rgba(var(--maint-rgb), .25);
+  color: rgb(var(--maint-rgb));
+  font-weight: 600;
+}
+
+.maint-airport-option-code {
+  flex: 0 0 2.5rem;
+  color: var(--bs-secondary-color);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+
+.maint-airport-option.is-active .maint-airport-option-code {
+  color: rgb(var(--maint-rgb));
+}
+
+.maint-airport-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maint-airport-option-count {
+  margin-left: auto;
+  color: var(--bs-secondary-color);
+  font-size: .7rem;
+}
+
+.maint-airport-option-check {
+  color: rgb(var(--maint-rgb));
+  opacity: 0;
+}
+
+.maint-airport-option.is-active .maint-airport-option-check {
+  opacity: 1;
 }
 
 .maint-detail-avatar {

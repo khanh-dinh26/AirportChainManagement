@@ -22,9 +22,11 @@ class BaoTriController {
 
     public function getIndexData() {
         $sql = "SELECT y.id, y.id_thiet_bi, y.mo_ta_su_co, y.hinh_anh_minh_hoa, y.muc_do,
-                       y.trang_thai_xu_ly, y.ngay_tao, t.ten_thiet_bi
+                   y.trang_thai_xu_ly, y.ngay_tao, t.ten_thiet_bi, t.id_san_bay,
+                   sb.ma_iata, sb.ten_san_bay
                 FROM yeu_cau_bao_tri y
                 JOIN thiet_bi_san_bay t ON y.id_thiet_bi = t.id
+                LEFT JOIN san_bay sb ON t.id_san_bay = sb.id
                 ORDER BY y.ngay_tao DESC";
         $result = $this->db->query($sql);
         $tickets = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
@@ -42,8 +44,8 @@ class BaoTriController {
                 SUM(trang_thai_xu_ly IN ('Moi', 'Dang_Xu_Ly')) AS dang_mo,
                 SUM(muc_do = 'Khan_Cap' AND trang_thai_xu_ly <> 'Hoan_Thanh') AS khan_cap,
                 SUM(trang_thai_xu_ly = 'Hoan_Thanh'
-                    AND MONTH(ngay_tao) = MONTH(CURRENT_DATE())
-                    AND YEAR(ngay_tao) = YEAR(CURRENT_DATE())) AS hoan_thanh_thang
+                    AND ngay_hoan_thanh >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
+                    AND ngay_hoan_thanh < DATE_ADD(LAST_DAY(CURRENT_DATE()), INTERVAL 1 DAY)) AS hoan_thanh_thang
              FROM yeu_cau_bao_tri"
         );
         if ($result && ($row = $result->fetch_assoc())) {
@@ -65,7 +67,8 @@ class BaoTriController {
 
     public function getThietBiList() {
         $result = $this->db->query(
-            "SELECT tb.id, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, sb.ten_san_bay
+            "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai,
+                    sb.ten_san_bay, sb.ten_ngan, sb.ma_iata
              FROM thiet_bi_san_bay tb
              LEFT JOIN san_bay sb ON tb.id_san_bay = sb.id
              ORDER BY sb.ten_san_bay, tb.ten_thiet_bi"
@@ -74,7 +77,7 @@ class BaoTriController {
     }
 
     public function getSanBayList() {
-        $result = $this->db->query("SELECT id, ten_san_bay FROM san_bay ORDER BY ten_san_bay");
+        $result = $this->db->query("SELECT id, ma_iata, ten_san_bay, ten_ngan FROM san_bay ORDER BY ten_san_bay");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
@@ -172,15 +175,15 @@ class BaoTriController {
     }
 
     /**
-     * Lưu ảnh tải lên vào assets/img/su_co/ và trả về đường dẫn tương đối.
+     * Lưu ảnh tải lên vào assets/img/<thư mục>/ và trả về đường dẫn tương đối.
      * Ném RuntimeException kèm thông báo lỗi nếu file không hợp lệ.
      */
-    private function luuAnhTaiLenVaoSuCo(array $file) {
+    private function luuAnhTaiLen(array $file, string $thuMuc) {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             throw new RuntimeException('Tải ảnh lên thất bại. Vui lòng thử lại.');
         }
         if ($file['size'] > self::KICH_THUOC_ANH_TOI_DA) {
-            throw new RuntimeException('Ảnh minh họa không được vượt quá 5 MB.');
+            throw new RuntimeException('Ảnh không được vượt quá 5 MB.');
         }
 
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -191,12 +194,15 @@ class BaoTriController {
             throw new RuntimeException('Tệp tải lên không phải là ảnh hợp lệ.');
         }
 
-        $dir = __DIR__ . '/../assets/img/su_co/';
+        $thuMuc = trim($thuMuc, '/');
+        $dir    = __DIR__ . '/../assets/img/' . $thuMuc . '/';
         if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
             throw new RuntimeException('Không thể tạo thư mục lưu ảnh.');
         }
 
         $tenGoc  = $this->taoTenFileAnToan(pathinfo($file['name'], PATHINFO_FILENAME));
+        // Giới hạn độ dài tên file để đường dẫn lưu trong CSDL luôn nằm gọn trong cột đường dẫn ảnh.
+        $tenGoc  = substr($tenGoc, 0, 80);
         $tenFile = $tenGoc . '.' . $ext;
         $i = 2;
         while (is_file($dir . $tenFile)) {
@@ -205,16 +211,37 @@ class BaoTriController {
         }
 
         if (!move_uploaded_file($file['tmp_name'], $dir . $tenFile)) {
-            throw new RuntimeException('Không thể lưu ảnh minh họa lên máy chủ.');
+            throw new RuntimeException('Không thể lưu ảnh lên máy chủ.');
         }
 
-        return 'assets/img/su_co/' . $tenFile;
+        return 'assets/img/' . $thuMuc . '/' . $tenFile;
+    }
+
+    private function luuAnhTaiLenVaoSuCo(array $file) {
+        return $this->luuAnhTaiLen($file, 'su_co');
+    }
+
+    private function luuAnhTaiLenVaoTauBay(array $file) {
+        return $this->luuAnhTaiLen($file, 'tau_bay');
     }
 
     public function getDanhSachTauBay() {
-        $sql = "SELECT id, ma_loai, tai_trong_cat_canh_mtow, suc_chua_hanh_khach
-                FROM loai_tau_bay
-                ORDER BY id DESC";
+        $sql = "SELECT l.id, l.id_san_bay, l.ma_loai, l.id_hang_hang_khong,
+                       hh.ten_hang AS hang, hh.ma_iata AS ma_hang,
+                       l.tai_trong_cat_canh_mtow, l.suc_chua_hanh_khach, l.hinh_anh,
+                       sb.ma_iata, sb.ten_san_bay, sb.ten_ngan
+                FROM loai_tau_bay l
+                LEFT JOIN san_bay sb ON sb.id = l.id_san_bay
+                LEFT JOIN hang_hang_khong hh ON hh.id = l.id_hang_hang_khong
+                ORDER BY l.id DESC";
+        $result = $this->db->query($sql);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getHangHangKhongList() {
+        $sql = "SELECT id, ma_iata, ten_hang, quoc_gia
+                FROM hang_hang_khong
+                ORDER BY ten_hang";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
@@ -266,17 +293,26 @@ class BaoTriController {
         $mo_ta_su_co = isset($_POST['mo_ta_su_co']) ? trim((string) $_POST['mo_ta_su_co']) : '';
         $muc_do      = isset($_POST['muc_do']) ? (string) $_POST['muc_do'] : '';
 
+        // Giữ lại sân bay đang lọc và thiết bị đã chọn nếu phải mở lại form do lỗi.
+        $formQuery = ['open' => 'create'];
+        if (!empty($_POST['loc_san_bay'])) {
+            $formQuery['loc_san_bay'] = (int) $_POST['loc_san_bay'];
+        }
+        if ($id_thiet_bi > 0) {
+            $formQuery['id_thiet_bi'] = $id_thiet_bi;
+        }
+
         if ($id_thiet_bi <= 0) {
             $this->setFlash('error', 'Vui lòng chọn thiết bị gặp sự cố.');
-            $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
         if ($mo_ta_su_co === '') {
             $this->setFlash('error', 'Vui lòng nhập mô tả sự cố.');
-            $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
         if (!in_array($muc_do, self::MUC_DO_HOP_LE, true)) {
             $this->setFlash('error', 'Mức độ sự cố không hợp lệ.');
-            $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
         // Kiểm tra thiết bị có thật trong CSDL
@@ -289,7 +325,7 @@ class BaoTriController {
 
         if (!$thiet_bi_ton_tai) {
             $this->setFlash('error', 'Thiết bị không tồn tại trong hệ thống.');
-            $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
         // Ảnh minh họa là tùy chọn: ảnh chọn từ máy được lưu vào assets/img/su_co/
@@ -303,7 +339,7 @@ class BaoTriController {
                 $hinh_anh_minh_hoa = $anhVuaUpload;
             } catch (RuntimeException $e) {
                 $this->setFlash('error', $e->getMessage());
-                $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+                $this->redirect($this->viewUrl('index.php', $formQuery));
             }
         }
 
@@ -337,7 +373,7 @@ class BaoTriController {
             }
 
             $this->setFlash('error', 'Lỗi cơ sở dữ liệu: ' . $e->getMessage());
-            $this->redirect($this->viewUrl('index.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
         $this->setFlash('success', 'Đã tạo phiếu bảo trì thành công.');
@@ -446,21 +482,66 @@ class BaoTriController {
             $this->redirect($this->viewUrl('tau_bay.php'));
         }
 
-        $ma_loai  = isset($_POST['ma_loai']) ? trim((string) $_POST['ma_loai']) : '';
-        $mtow     = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
-        $suc_chua = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
+        $ma_loai    = isset($_POST['ma_loai']) ? trim((string) $_POST['ma_loai']) : '';
+        $id_hang    = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
+        $mtow       = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
+        $suc_chua   = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
+        $id_san_bay = isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0;
 
-        if ($ma_loai === '' || $mtow <= 0 || $suc_chua <= 0) {
+        // Giữ bộ lọc hiện tại khi quay lại trang danh sách.
+        $giuLoc = array_filter([
+            'q'       => trim((string) ($_POST['giu_q'] ?? '')),
+            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+        ], static fn($v) => $v !== '' && $v !== 0);
+
+        if ($ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0 || $id_san_bay <= 0) {
             $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ.');
-            $this->redirect($this->viewUrl('tau_bay.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+        }
+
+        // Sân bay phải tồn tại trong CSDL.
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
+        $stmt->bind_param('i', $id_san_bay);
+        $stmt->execute();
+        $stmt->bind_result($soSanBay);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soSanBay === 0) {
+            $this->setFlash('error', 'Sân bay đã chọn không tồn tại.');
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+        }
+
+        // Hãng hàng không phải tồn tại trong CSDL.
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM hang_hang_khong WHERE id = ?");
+        $stmt->bind_param('i', $id_hang);
+        $stmt->execute();
+        $stmt->bind_result($soHang);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soHang === 0) {
+            $this->setFlash('error', 'Hãng hàng không đã chọn không tồn tại.');
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+        }
+
+        // Ảnh minh họa là tùy chọn.
+        $hinh_anh = null;
+        if (isset($_FILES['anh_tai_len']) && (int) ($_FILES['anh_tai_len']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len']);
+            } catch (RuntimeException $e) {
+                $this->setFlash('error', $e->getMessage());
+                $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+            }
         }
 
         try {
             $stmt = $this->db->prepare(
-                "INSERT INTO loai_tau_bay (ma_loai, tai_trong_cat_canh_mtow, suc_chua_hanh_khach)
-                 VALUES (?, ?, ?)"
+                "INSERT INTO loai_tau_bay (id_san_bay, ma_loai, id_hang_hang_khong, tai_trong_cat_canh_mtow, suc_chua_hanh_khach, hinh_anh)
+                 VALUES (?, ?, ?, ?, ?, ?)"
             );
-            $stmt->bind_param('sdi', $ma_loai, $mtow, $suc_chua);
+            $stmt->bind_param('isidis', $id_san_bay, $ma_loai, $id_hang, $mtow, $suc_chua, $hinh_anh);
             $stmt->execute();
             $stmt->close();
         } catch (mysqli_sql_exception $e) {
@@ -469,14 +550,109 @@ class BaoTriController {
             } else {
                 $this->setFlash('error', 'Lỗi thêm loại tàu bay: ' . $e->getMessage());
             }
-            $this->redirect($this->viewUrl('tau_bay.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
         } catch (Throwable $e) {
             $this->setFlash('error', 'Lỗi thêm loại tàu bay: ' . $e->getMessage());
-            $this->redirect($this->viewUrl('tau_bay.php', ['open' => 'create']));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
         }
 
         $this->setFlash('success', 'Đã thêm loại tàu bay mới.');
-        $this->redirect($this->viewUrl('tau_bay.php'));
+        $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+    }
+
+    public function capNhatTauBay() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect($this->viewUrl('tau_bay.php'));
+        }
+
+        $id          = isset($_POST['id']) ? (int) $_POST['id'] : 0;
+        $ma_loai     = isset($_POST['ma_loai']) ? trim((string) $_POST['ma_loai']) : '';
+        $id_hang     = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
+        $mtow        = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
+        $suc_chua    = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
+        $id_san_bay  = isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0;
+
+        $giuLoc = array_filter([
+            'q'       => trim((string) ($_POST['giu_q'] ?? '')),
+            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+        ], static fn($v) => $v !== '' && $v !== 0);
+        $queryLoi = $giuLoc + ['sua' => $id];
+
+        if ($id <= 0 || $ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0 || $id_san_bay <= 0) {
+            $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ.');
+            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM loai_tau_bay WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $stmt->bind_result($soLoaiTauBay);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soLoaiTauBay === 0) {
+            $this->setFlash('error', 'Không tìm thấy loại tàu bay cần cập nhật.');
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
+        $stmt->bind_param('i', $id_san_bay);
+        $stmt->execute();
+        $stmt->bind_result($soSanBay);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soSanBay === 0) {
+            $this->setFlash('error', 'Sân bay đã chọn không tồn tại.');
+            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM hang_hang_khong WHERE id = ?");
+        $stmt->bind_param('i', $id_hang);
+        $stmt->execute();
+        $stmt->bind_result($soHang);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soHang === 0) {
+            $this->setFlash('error', 'Hãng hàng không đã chọn không tồn tại.');
+            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+        }
+
+        $hinh_anh = null;
+        if (isset($_FILES['anh_tai_len']) && (int) ($_FILES['anh_tai_len']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len']);
+            } catch (RuntimeException $e) {
+                $this->setFlash('error', $e->getMessage());
+                $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+            }
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                "UPDATE loai_tau_bay
+                 SET ma_loai = ?, id_hang_hang_khong = ?, tai_trong_cat_canh_mtow = ?,
+                     suc_chua_hanh_khach = ?, id_san_bay = ?, hinh_anh = COALESCE(?, hinh_anh)
+                 WHERE id = ?"
+            );
+            $stmt->bind_param('sidiisi', $ma_loai, $id_hang, $mtow, $suc_chua, $id_san_bay, $hinh_anh, $id);
+            $stmt->execute();
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            if ((int) $e->getCode() === 1062) {
+                $this->setFlash('error', 'Mã loại máy bay này đã tồn tại trong hệ thống.');
+            } else {
+                $this->setFlash('error', 'Lỗi cập nhật loại tàu bay: ' . $e->getMessage());
+            }
+            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+        } catch (Throwable $e) {
+            $this->setFlash('error', 'Lỗi cập nhật loại tàu bay: ' . $e->getMessage());
+            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+        }
+
+        $this->setFlash('success', 'Đã cập nhật loại tàu bay.');
+        $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
     }
 
     public function capNhatTrangThaiTicket() {
@@ -508,8 +684,16 @@ class BaoTriController {
         try {
             $this->db->begin_transaction();
 
-            $stmt = $this->db->prepare("UPDATE yeu_cau_bao_tri SET trang_thai_xu_ly = ? WHERE id = ?");
-            $stmt->bind_param('si', $trang_thai_moi, $id_ticket);
+            $stmt = $this->db->prepare(
+                "UPDATE yeu_cau_bao_tri
+                 SET trang_thai_xu_ly = ?,
+                     ngay_hoan_thanh = CASE
+                         WHEN ? = 'Hoan_Thanh' THEN COALESCE(ngay_hoan_thanh, CURRENT_TIMESTAMP)
+                         ELSE NULL
+                     END
+                 WHERE id = ?"
+            );
+            $stmt->bind_param('ssi', $trang_thai_moi, $trang_thai_moi, $id_ticket);
             $stmt->execute();
             $stmt->close();
 
@@ -567,9 +751,15 @@ class BaoTriController {
 
     public function xoaTauBay() {
         $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+
+        $giuLoc = array_filter([
+            'q'       => trim((string) ($_POST['giu_q'] ?? '')),
+            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+        ], static fn($v) => $v !== '' && $v !== 0);
+
         if ($id <= 0) {
             $this->setFlash('error', 'Loại tàu bay cần xóa không hợp lệ.');
-            $this->redirect($this->viewUrl('tau_bay.php'));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
         // Kiểm tra ràng buộc khóa ngoại với chuyen_bay_ngay trước khi xóa (chỉ đọc)
@@ -582,7 +772,7 @@ class BaoTriController {
 
         if ((int) $so_chuyen_bay > 0) {
             $this->setFlash('error', 'Không thể xóa loại tàu bay vì đang được dùng trong ' . (int) $so_chuyen_bay . ' chuyến bay.');
-            $this->redirect($this->viewUrl('tau_bay.php'));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
         try {
@@ -592,11 +782,11 @@ class BaoTriController {
             $stmt->close();
         } catch (Throwable $e) {
             $this->setFlash('error', 'Lỗi xóa loại tàu bay: ' . $e->getMessage());
-            $this->redirect($this->viewUrl('tau_bay.php'));
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
         $this->setFlash('success', 'Đã xóa loại tàu bay.');
-        $this->redirect($this->viewUrl('tau_bay.php'));
+        $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
     }
 
     /* =========================================================
