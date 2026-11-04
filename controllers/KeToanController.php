@@ -62,6 +62,19 @@ class KeToanController {
         return $data;
     }
 
+    public function TuDongTaoHoaDon() {
+        $sql = "SELECT cb.id 
+                FROM chuyen_bay_ngay cb 
+                WHERE cb.trang_thai_tong IN ('Hạ_Cánh', 'Hạ cánh', 'Ha_Canh', 'Hoan_Thanh') 
+                AND cb.id NOT IN (SELECT id_chuyen_bay FROM hoa_don)";
+        $result = mysqli_query($this->conn, $sql);
+        if ($result && mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $this->TinhVaTaoHoaDon($row['id']);
+            }
+        }
+    }
+
     public function TinhVaTaoHoaDon($id_chuyen_bay) {
         $id_chuyen_bay = (int)$id_chuyen_bay; 
         $sql_info = "SELECT cb.*, tb.tai_trong_cat_canh_mtow 

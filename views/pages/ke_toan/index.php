@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../../../config/database.php'; 
 require_once __DIR__ . '/../../../controllers/KeToanController.php';
 $keToan = new KeToanController($conn);
+$keToan->TuDongTaoHoaDon();
 
 //2. Xử lý các hành động
 $keToanUrl = 'index.php?page=ke_toan';
@@ -247,15 +248,22 @@ ob_start();
                             <td><span class="badge text-bg-primary"><?= htmlspecialchars($cb['ten_hang']) ?></span><br><small class="text-muted">MTOW: <?= htmlspecialchars($cb['tai_trong_cat_canh_mtow']) ?> Tấn</small></td>
                             <td><span class="fw-bold"><?= htmlspecialchars($cb['luong_hanh_khach']) ?></span> khách</td>
                             <td>
-    <span class="badge text-bg-success">
-        <?php 
-            $trang_thai = $cb['trang_thai_tong'];
-            if ($trang_thai == 'Ha_Canh' || $trang_thai == 'Hạ_Cánh') echo 'Hạ Cánh';
-            elseif ($trang_thai == 'Hoan_Thanh') echo 'Hoàn Thành';
-            else echo htmlspecialchars($trang_thai);
-        ?>
-    </span>
-</td>
+                                <span class="badge text-bg-success">
+                                    <?php 
+                                        $trang_thai = $cb['trang_thai_tong'];
+                                        // So sánh chính xác với dữ liệu trong Database
+                                        if ($trang_thai == 'Hạ_Cánh' || $trang_thai == 'Ha_Canh' || $trang_thai == 'Hạ cánh') {
+                                            echo 'Hạ Cánh';
+                                        } elseif ($trang_thai == 'Hoan_Thanh') {
+                                            echo 'Hoàn Thành';
+                                        } elseif ($trang_thai == 'Delay') {
+                                            echo 'Trễ Chuyến';
+                                        } else {
+                                            echo htmlspecialchars($trang_thai);
+                                        }
+                                    ?>
+                                </span>
+                            </td>
                             <td class="text-end"><a href="index.php?page=ke_toan&tao_hoa_don=<?= $cb['id'] ?>" class="btn btn-sm btn-outline-primary">Tính và lập hóa đơn</a></td>
                         </tr>
                         <?php endforeach; ?>
