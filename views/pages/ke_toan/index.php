@@ -72,9 +72,11 @@ $tu_nam = isset($_GET['tu_nam']) ? (int)$_GET['tu_nam'] : $nam_hien_tai;
 $den_nam = isset($_GET['den_nam']) ? (int)$_GET['den_nam'] : $nam_hien_tai;
 $tong_khach_san_bay = 0;
 $chi_tiet_thang = [];
+$chi_tiet_chuyen_bay = [];
 if ($san_bay_chon > 0) {
     $tong_khach_san_bay = $keToan->ThongKeHanhKhachSanBay($san_bay_chon, $tu_nam, $den_nam);
     $chi_tiet_thang = $keToan->ChiTietKhachTheoThang($san_bay_chon, $tu_nam, $den_nam);
+    $chi_tiet_chuyen_bay = $keToan->ChiTietKhachTheoChuyenBay($san_bay_chon, $tu_nam, $den_nam);
 }
 
 $giaDangSua = null;
@@ -144,7 +146,7 @@ ob_start();
     </div>
 </div>
 
-<!--HÓA ĐƠN CHỜ THANH TOÁN (ĐƯA LÊN TRÊN)-->
+<!--PHẦN 2:HÓA ĐƠN CHỜ THANH TOÁN-->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card card-warning card-outline">
@@ -206,26 +208,69 @@ ob_start();
                     </div>
                     <div class="col-md-4"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-filter"></i> Lọc dữ liệu</button></div>
                 </form>
+
+                <!-- KẾT QUẢ HIỂN THỊ -->
                 <?php if ($san_bay_chon > 0): ?>
                     <div class="alert alert-info text-center mb-4">
                         <h4 class="mb-0">Tổng sản lượng hành khách (Đi + Đến) từ <?= $tu_nam ?> đến <?= $den_nam ?>: <strong class="fs-3"><?= number_format($tong_khach_san_bay) ?></strong> lượt khách</h4>
                     </div>
+
+                    <!-- BẢNG 1: CHI TIẾT THEO THÁNG -->
                     <?php if (!empty($chi_tiet_thang)): ?>
-                        <table class="table table-bordered table-striped text-center">
-                            <thead class="table-dark"><tr><th>Năm</th><th>Tháng</th><th>Số lượng khách</th></tr></thead>
+                        <h6 class="fw-bold mb-3"><i class="bi bi-calendar-month text-primary me-2"></i>Chi tiết theo tháng</h6>
+                        <table class="table table-bordered table-striped text-center mb-4">
+                            <thead class="table-dark">
+                                <tr><th>Năm</th><th>Tháng</th><th>Số lượng khách</th></tr>
+                            </thead>
                             <tbody>
                                 <?php foreach ($chi_tiet_thang as $ct): ?>
-                                <tr><td><?= $ct['nam'] ?></td><td>Tháng <?= $ct['thang'] ?></td><td class="fw-bold text-primary"><?= number_format($ct['tong_khach']) ?></td></tr>
+                                <tr>
+                                    <td><?= $ct['nam'] ?></td>
+                                    <td>Tháng <?= $ct['thang'] ?></td>
+                                    <td class="fw-bold text-primary"><?= number_format($ct['tong_khach']) ?></td>
+                                </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     <?php else: ?>
                         <div class="alert alert-warning">Không có dữ liệu chuyến bay nào trong khoảng thời gian này.</div>
                     <?php endif; ?>
+
+                    <!-- BẢNG 2: CHI TIẾT THEO CHẶNG BAY -->
+                    <?php if (!empty($chi_tiet_chuyen_bay)): ?>
+                        <hr class="my-4">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-airplane-engines text-primary me-2"></i>Chi tiết sản lượng theo từng chặng bay</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center">Chặng bay</th>
+                                        <th class="text-center">Số hiệu</th>
+                                        <th class="text-end">Số lượng khách</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($chi_tiet_chuyen_bay as $ct_cb): ?>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge text-bg-primary fs-6"><?= htmlspecialchars($ct_cb['ten_di']) ?></span>
+                                            <i class="bi bi-arrow-right mx-2"></i>
+                                            <span class="badge text-bg-danger fs-6"><?= htmlspecialchars($ct_cb['ten_den']) ?></span>
+                                        </td>
+                                        <td class="text-center fw-bold"><?= htmlspecialchars($ct_cb['so_hieu']) ?></td>
+                                        <td class="text-end fw-bold text-success"><?= number_format($ct_cb['tong_khach']) ?> khách</td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
+
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <!--PHẦN 4: CHUYẾN BAY ĐÃ HOÀN THÀNH-->
@@ -319,27 +364,65 @@ ob_start();
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="loading-spinner" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Đang tải dữ liệu...</p></div>
+                <div id="loading-spinner" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Đang tải dữ liệu...</p>
+                </div>
+                
                 <div id="chi-tiet-content" style="display: none;">
                     <table class="table table-sm table-borderless mb-4">
                         <tr><th style="width: 30%;">Mã hóa đơn:</th><td class="fw-bold text-danger" id="ct-id">#</td></tr>
-                        <tr><th>Chuyến bay:</th><td class="fw-bold" id="ct-chuyen-bay"></td></tr>
                         <tr><th>Hãng hàng không:</th><td id="ct-hang-bay"></td></tr>
+                        <tr><th>Chuyến bay:</th><td class="fw-bold" id="ct-chuyen-bay"></td></tr>
+                        <tr><th>Lộ trình:</th><td class="fw-bold" id="ct-lo-trinh"></td></tr>
                         <tr><th>Ngày lập:</th><td id="ct-ngay-lap"></td></tr>
                     </table>
+                    
                     <h6 class="fw-bold border-bottom pb-2">Chi tiết các khoản phí</h6>
                     <table class="table table-bordered table-striped align-middle">
-                        <thead class="table-light"><tr><th>Khoản phí</th><th class="text-center">Cách tính</th><th class="text-end">Thành tiền (VNĐ)</th></tr></thead>
+                        <thead class="table-light">
+                            <tr>
+                                <th>Khoản phí</th>
+                                <th class="text-center">Cách tính</th>
+                                <th class="text-end">Thành tiền (VNĐ)</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Phí cất/hạ cánh</td><td class="text-center" id="ct-mtow"></td><td class="text-end" id="ct-phi-cat-ha-canh"></td></tr>
-                            <tr><td>Phí đỗ tàu bay</td><td class="text-center">Theo thời gian đỗ</td><td class="text-end" id="ct-phi-do"></td></tr>
-                            <tr><td>Phí phục vụ hành khách</td><td class="text-center" id="ct-so-khach"></td><td class="text-end" id="ct-phi-psc"></td></tr>
+                            <tr>
+                                <tr>
+                                    <td>
+                                        Phí cất/hạ cánh
+                                        <br><small class="text-muted">
+                                            Đi: <span id="ct-ten-sb-di"></span> <br>
+                                            Đến: <span class="text-muted" id="ct-ten-sb-den"></span>
+                                        </small>
+                                    </td>
+                                    <td class="text-center" id="ct-mtow"></td>
+                                    <td class="text-end" id="ct-phi-cat-ha-canh"></td>
+                                </tr>
+                            <tr>
+                                <td>Phí đỗ tàu bay</td>
+                                <td class="text-center">Theo thời gian đỗ</td>
+                                <td class="text-end" id="ct-phi-do"></td>
+                            </tr>
+                            <tr>
+                                <td>Phí phục vụ hành khách</td>
+                                <td class="text-center" id="ct-so-khach"></td>
+                                <td class="text-end" id="ct-phi-psc"></td>
+                            </tr>
                         </tbody>
-                        <tfoot><tr class="table-warning"><th colspan="2" class="text-end fs-5">TỔNG CỘNG:</th><th class="text-end fs-5 text-danger" id="ct-tong-tien"></th></tr></tfoot>
+                        <tfoot>
+                            <tr class="table-warning">
+                                <th colspan="2" class="text-end fs-5">TỔNG CỘNG:</th>
+                                <th class="text-end fs-5 text-danger" id="ct-tong-tien"></th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
         </div>
     </div>
 </div>
@@ -366,9 +449,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (res.status === 'success') {
                         var d = res.data;
                         document.getElementById('ct-id').innerText = '#' + d.id;
-                        document.getElementById('ct-chuyen-bay').innerText = d.so_hieu;
                         document.getElementById('ct-hang-bay').innerText = d.ten_hang;
+                        document.getElementById('ct-chuyen-bay').innerText = d.so_hieu;
+                        document.getElementById('ct-lo-trinh').innerText = d.ten_san_bay_di + ' ➔ ' + d.ten_san_bay_den;
                         document.getElementById('ct-ngay-lap').innerText = new Date(d.ngay_xuat).toLocaleString('vi-VN');
+                        document.getElementById('ct-ten-sb-di').innerText = d.ten_san_bay_di;
+                        document.getElementById('ct-ten-sb-den').innerText = d.ten_san_bay_den;
                         document.getElementById('ct-mtow').innerText = d.tai_trong_cat_canh_mtow + ' Tấn';
                         document.getElementById('ct-phi-cat-ha-canh').innerText = Number(d.phi_cat_ha_canh).toLocaleString('vi-VN');
                         document.getElementById('ct-phi-do').innerText = Number(d.phi_do_tau_bay).toLocaleString('vi-VN');

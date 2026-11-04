@@ -190,11 +190,15 @@ class KeToanController {
 
     public function LayChiTietHoaDon($id_hoa_don) {
         $id_hoa_don = (int)$id_hoa_don;
-        $sql = "SELECT hd.*, cb.so_hieu, cb.luong_hanh_khach, hk.ten_hang, tb.tai_trong_cat_canh_mtow
+        $sql = "SELECT hd.*, cb.so_hieu, cb.luong_hanh_khach, hk.ten_hang, tb.tai_trong_cat_canh_mtow,
+                       sb_di.ten_san_bay as ten_san_bay_di, 
+                       sb_den.ten_san_bay as ten_san_bay_den
                 FROM hoa_don hd
                 JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
                 JOIN hang_hang_khong hk ON cb.id_hang_hang_khong = hk.id
                 JOIN loai_tau_bay tb ON cb.id_loai_tau_bay = tb.id
+                JOIN san_bay sb_di ON cb.id_san_bay_di = sb_di.id
+                JOIN san_bay sb_den ON cb.id_san_bay_den = sb_den.id
                 WHERE hd.id = $id_hoa_don";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_assoc($result);
@@ -240,6 +244,35 @@ class KeToanController {
                 AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) >= $tu_nam AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) <= $den_nam
                 GROUP BY YEAR(COALESCE(gio_thuc_te, gio_du_kien)), MONTH(COALESCE(gio_thuc_te, gio_du_kien))
                 ORDER BY nam ASC, thang ASC";
+        $result = mysqli_query($this->conn, $sql);
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+    public function ChiTietKhachTheoChuyenBay($id_san_bay, $tu_nam, $den_nam) {
+        $id_san_bay = (int)$id_san_bay;
+        $tu_nam = (int)$tu_nam;
+        $den_nam = (int)$den_nam;
+        
+        $sql = "SELECT 
+                    sb_di.ten_san_bay as ten_di, 
+                    sb_den.ten_san_bay as ten_den, 
+                    cb.so_hieu,
+                    SUM(cb.luong_hanh_khach) as tong_khach 
+                FROM chuyen_bay_ngay cb 
+                JOIN san_bay sb_di ON cb.id_san_bay_di = sb_di.id 
+                JOIN san_bay sb_den ON cb.id_san_bay_den = sb_den.id 
+                WHERE (cb.id_san_bay_di = $id_san_bay OR cb.id_san_bay_den = $id_san_bay)
+                AND cb.trang_thai_tong = 'Hoan_Thanh'
+                AND YEAR(COALESCE(cb.gio_thuc_te, cb.gio_du_kien)) >= $tu_nam 
+                AND YEAR(COALESCE(cb.gio_thuc_te, cb.gio_du_kien)) <= $den_nam
+                GROUP BY sb_di.id, sb_den.id, cb.so_hieu
+                ORDER BY tong_khach DESC";
+                
         $result = mysqli_query($this->conn, $sql);
         $data = [];
         if ($result) {
