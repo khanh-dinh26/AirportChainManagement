@@ -133,7 +133,11 @@ foreach ($lichSu as $ticketItem) {
     }
 }
 $soPhieuMo = $soPhieuMoi + $soDangXuLy;
-$tyLeHoanThanh = $soPhieu > 0 ? min(100, (int) round(($soHoanThanh / $soPhieu) * 100)) : 0;
+$lichSuHoanThanh = array_values(array_filter(
+    $lichSu,
+    static fn (array $ticket): bool => ($ticket['trang_thai_xu_ly'] ?? '') === 'Hoan_Thanh'
+));
+$soLichSuHoanThanh = count($lichSuHoanThanh);
 $lastTicket = $lichSu[0] ?? null;
 $lastDate = $lastTicket !== null ? date('d/m/Y H:i', strtotime($lastTicket['ngay_tao'])) : 'Chưa có';
 
@@ -147,15 +151,28 @@ ob_start();
 ?>
 <?php require __DIR__ . '/_flash.php'; ?>
 <div class="maint-page maint-page--equipment maint-detail-page">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-        <div>
-            <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary mb-2">
+    <div class="maint-equipment-detail__header">
+        <div class="maint-equipment-detail__identity">
+            <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary align-self-start">
                 <i class="bi bi-arrow-left me-1"></i>Danh sách thiết bị
             </a>
-            <h2 class="h4 mb-1"><?= htmlspecialchars($thietBi['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></h2>
-            <div class="small text-secondary maint-code">TB-<?= sprintf('%03d', (int) $thietBi['id']) ?> · <?= $loaiLabel ?></div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="maint-avatar <?= $loaiAvatarClass ?> maint-detail-avatar">
+                    <i class="bi <?= $loaiIcon ?>"></i>
+                </span>
+                <div class="maint-equipment-detail__title">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="small text-secondary maint-code">TB-<?= sprintf('%03d', (int) $thietBi['id']) ?></span>
+                        <span class="badge text-bg-light border"><?= $loaiLabel ?></span>
+                    </div>
+                    <h2 class="h4 mb-2 text-break"><?= htmlspecialchars($thietBi['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></h2>
+                    <span class="badge <?= $statusClass ?>">
+                        <i class="bi <?= $thietBi['trang_thai'] === 'Tot' ? 'bi-check-circle' : ($thietBi['trang_thai'] === 'Bao_Tri' ? 'bi-tools' : 'bi-exclamation-triangle') ?> me-1"></i><?= $statusLabel ?>
+                    </span>
+                </div>
+            </div>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="maint-equipment-detail__actions">
             <a href="<?= htmlspecialchars($createTicketUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-primary">
                 <i class="bi bi-plus-lg me-1"></i>Tạo phiếu bảo trì
             </a>
@@ -176,70 +193,51 @@ ob_start();
 
     <div class="row g-3">
         <div class="col-12 col-xl-4">
-            <div class="card h-100">
+            <div class="card h-100 maint-equipment-detail__card">
+                <div class="card-header maint-equipment-detail__card-header">
+                    <h3 class="card-title"><i class="bi bi-info-circle me-2"></i>Thông tin thiết bị</h3>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="maint-avatar <?= $loaiAvatarClass ?> maint-detail-avatar">
-                            <i class="bi <?= $loaiIcon ?>"></i>
-                        </span>
-                        <div class="flex-grow-1" style="min-width: 0;">
-                            <div class="small text-secondary maint-code">TB-<?= sprintf('%03d', (int) $thietBi['id']) ?></div>
-                            <h3 class="h5 mb-1 text-break"><?= htmlspecialchars($thietBi['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></h3>
-                            <span class="badge <?= $statusClass ?>"><?= $statusLabel ?></span>
+                    <div class="maint-equipment-detail__location">
+                        <span class="maint-equipment-detail__location-icon"><i class="bi bi-geo-alt"></i></span>
+                        <div>
+                            <div class="small text-secondary">Sân bay</div>
+                            <strong><?= htmlspecialchars($thietBi['ten_san_bay'] ?? 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?></strong>
                         </div>
                     </div>
 
                     <div class="list-group list-group-flush small">
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
-                            <span class="text-secondary"><i class="bi bi-geo-alt me-1"></i>Sân bay</span>
-                            <strong class="text-end"><?= htmlspecialchars($thietBi['ten_san_bay'] ?? 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?></strong>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-tags me-1"></i>Phân loại</span>
                             <strong class="text-end"><?= $loaiLabel ?></strong>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-clipboard-check me-1"></i>Tổng phiếu</span>
                             <strong><?= $soPhieu ?></strong>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-funnel me-1"></i>Đang mở</span>
                             <strong class="<?= $soPhieuMo > 0 ? 'text-danger' : '' ?>"><?= $soPhieuMo ?></strong>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-check2-circle me-1"></i>Hoàn thành</span>
                             <strong class="text-success"><?= $soHoanThanh ?></strong>
                         </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-start gap-3 px-0">
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-clock-history me-1"></i>Gần nhất</span>
                             <strong class="text-end"><?= $lastDate ?></strong>
                         </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between align-items-center small text-secondary mb-1">
-                            <span>Tỷ lệ hoàn thành bảo trì</span>
-                            <strong><?= $tyLeHoanThanh ?>%</strong>
-                        </div>
-                        <div class="maint-progress">
-                            <div class="maint-progress-bar" style="width: <?= $tyLeHoanThanh ?>%"></div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-light border small mt-3 mb-0">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Trạng thái thiết bị được cập nhật tự động theo tiến độ các phiếu bảo trì.
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-xl-8">
-            <div class="card h-100">
-                <div class="card-header">
+            <div class="card h-100 maint-equipment-detail__card">
+                <div class="card-header maint-equipment-detail__card-header">
                     <h3 class="card-title">
-                        Lịch sử bảo trì
-                        <span class="badge text-bg-secondary ms-1"><?= $soPhieu ?></span>
+                        <i class="bi bi-clock-history me-2"></i>Lịch sử bảo trì
+                        <span class="badge text-bg-secondary ms-1"><?= $soLichSuHoanThanh ?></span>
                     </h3>
                     <div class="card-tools">
                         <a href="<?= htmlspecialchars($ticketListUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary">
@@ -249,42 +247,18 @@ ob_start();
                 </div>
 
                 <div class="card-body">
-                    <?php if (empty($lichSu)): ?>
+                    <?php if (empty($lichSuHoanThanh)): ?>
                         <div class="text-center py-5">
                             <div class="maint-empty-icon"><i class="bi bi-clipboard-x"></i></div>
-                            <div class="fw-semibold">Chưa có lịch sử bảo trì</div>
-                            <div class="small text-secondary mb-3">Tạo phiếu đầu tiên cho thiết bị này để theo dõi quá trình xử lý.</div>
+                            <div class="fw-semibold">Chưa có phiếu bảo trì hoàn thành</div>
+                            <div class="small text-secondary mb-3">Các phiếu sẽ xuất hiện tại đây sau khi hoàn tất xử lý.</div>
                             <a href="<?= htmlspecialchars($createTicketUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-primary">
                                 <i class="bi bi-plus-lg me-1"></i>Tạo phiếu bảo trì
                             </a>
                         </div>
                     <?php else: ?>
-                        <div class="maint-history-summary">
-                            <div class="maint-history-summary__item maint-history-summary__item--info">
-                                <span class="maint-history-summary__icon"><i class="bi bi-hourglass-split"></i></span>
-                                <div>
-                                    <div class="maint-history-summary__value"><?= $soPhieuMoi ?></div>
-                                    <div class="maint-history-summary__label">Mới</div>
-                                </div>
-                            </div>
-                            <div class="maint-history-summary__item maint-history-summary__item--warning">
-                                <span class="maint-history-summary__icon"><i class="bi bi-gear-wide-connected"></i></span>
-                                <div>
-                                    <div class="maint-history-summary__value"><?= $soDangXuLy ?></div>
-                                    <div class="maint-history-summary__label">Đang xử lý</div>
-                                </div>
-                            </div>
-                            <div class="maint-history-summary__item maint-history-summary__item--success">
-                                <span class="maint-history-summary__icon"><i class="bi bi-check2-circle"></i></span>
-                                <div>
-                                    <div class="maint-history-summary__value"><?= $soHoanThanh ?></div>
-                                    <div class="maint-history-summary__label">Hoàn thành</div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="maint-timeline">
-                            <?php foreach ($lichSu as $ticket): ?>
+                            <?php foreach ($lichSuHoanThanh as $ticket): ?>
                                 <?php
                                 $maPhieu = '#BT-' . sprintf('%03d', (int) $ticket['id']);
                                 $ngayTao = date('d/m/Y H:i', strtotime($ticket['ngay_tao']));
@@ -329,8 +303,8 @@ ob_start();
                                             <span class="badge <?= $priorityClass ?>">
                                                 <i class="bi <?= $priorityIcon ?> me-1"></i><?= $priorityLabel ?>
                                             </span>
-                                            <a href="<?= htmlspecialchars(baoTriUrl('index.php', ['q' => $maPhieu]), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-box-arrow-up-right me-1"></i>Mở phiếu
+                                            <a href="<?= htmlspecialchars(baoTriUrl('index.php', ['q' => $maPhieu, 'trang_thai' => 'Hoan_Thanh']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye me-1"></i>Xem phiếu
                                             </a>
                                         </div>
                                     </div>

@@ -22,7 +22,8 @@ class BaoTriController {
 
     public function getIndexData() {
         $sql = "SELECT y.id, y.id_thiet_bi, y.mo_ta_su_co, y.hinh_anh_minh_hoa, y.muc_do,
-                   y.trang_thai_xu_ly, y.ngay_tao, t.ten_thiet_bi, t.id_san_bay,
+                   y.trang_thai_xu_ly, y.ngay_tao, y.ngay_hoan_thanh,
+                   t.ten_thiet_bi, t.id_san_bay,
                    sb.ma_iata, sb.ten_san_bay
                 FROM yeu_cau_bao_tri y
                 JOIN thiet_bi_san_bay t ON y.id_thiet_bi = t.id
@@ -82,7 +83,7 @@ class BaoTriController {
     }
 
     public function getDanhSachThietBi() {
-        $sql = "SELECT tb.id, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, sb.ten_san_bay,
+        $sql = "SELECT tb.id, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, sb.ten_san_bay, sb.ma_iata,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y WHERE y.id_thiet_bi = tb.id) AS so_phieu,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y
                         WHERE y.id_thiet_bi = tb.id AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS so_phieu_mo
@@ -104,7 +105,7 @@ class BaoTriController {
 
         $stmt = $this->db->prepare(
             "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai,
-                    sb.ten_san_bay,
+                    sb.ten_san_bay, sb.ma_iata,
                     (SELECT COUNT(*) FROM yeu_cau_bao_tri y WHERE y.id_thiet_bi = tb.id) AS so_phieu,
                     (SELECT COUNT(*) FROM yeu_cau_bao_tri y
                      WHERE y.id_thiet_bi = tb.id AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS so_phieu_mo
@@ -492,6 +493,7 @@ class BaoTriController {
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
             'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
 
         if ($ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0 || $id_san_bay <= 0) {
@@ -575,6 +577,7 @@ class BaoTriController {
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
             'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
         $queryLoi = $giuLoc + ['sua' => $id];
 
@@ -715,6 +718,74 @@ class BaoTriController {
         $this->redirect($this->viewUrl('index.php'));
     }
 
+    public function xoaTicket() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect($this->viewUrl('index.php'));
+        }
+
+        $id_ticket = isset($_POST['id_ticket']) ? (int) $_POST['id_ticket'] : 0;
+        $queryQuayLai = array_filter([
+            'q'        => trim((string) ($_POST['giu_q'] ?? '')),
+            'san_bay'  => (int) ($_POST['giu_san_bay'] ?? 0),
+            'muc_do'   => trim((string) ($_POST['giu_muc_do'] ?? '')),
+            'thiet_bi' => (int) ($_POST['giu_thiet_bi'] ?? 0),
+            'trang'    => (int) ($_POST['giu_trang'] ?? 0),
+        ], static fn($value) => $value !== '' && $value !== 0);
+        $queryQuayLai['trang_thai'] = trim((string) ($_POST['giu_trang_thai'] ?? 'dang_mo'));
+
+        if ($id_ticket <= 0) {
+            $this->setFlash('error', 'Phiếu bảo trì cần xóa không hợp lệ.');
+            $this->redirect($this->viewUrl('index.php', $queryQuayLai));
+        }
+
+        try {
+            $this->db->begin_transaction();
+
+            $stmt = $this->db->prepare(
+                "SELECT id_thiet_bi, trang_thai_xu_ly
+                 FROM yeu_cau_bao_tri
+                 WHERE id = ?
+                 FOR UPDATE"
+            );
+            $stmt->bind_param('i', $id_ticket);
+            $stmt->execute();
+            $stmt->bind_result($id_thiet_bi, $trang_thai_ticket);
+            $tim_thay = $stmt->fetch();
+            $stmt->close();
+
+            if (!$tim_thay) {
+                $this->db->rollback();
+                $this->setFlash('error', 'Không tìm thấy phiếu bảo trì cần xóa.');
+                $this->redirect($this->viewUrl('index.php', $queryQuayLai));
+            }
+
+            if ($trang_thai_ticket === 'Hoan_Thanh') {
+                $this->db->rollback();
+                $this->setFlash('error', 'Không thể xóa phiếu bảo trì đã hoàn thành.');
+                $this->redirect($this->viewUrl('index.php', $queryQuayLai));
+            }
+
+            $stmt = $this->db->prepare("DELETE FROM yeu_cau_bao_tri WHERE id = ?");
+            $stmt->bind_param('i', $id_ticket);
+            $stmt->execute();
+            $stmt->close();
+
+            $this->capNhatTrangThaiThietBiTheoPhieu((int) $id_thiet_bi);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            try {
+                $this->db->rollback();
+            } catch (Throwable $ignored) {
+            }
+
+            $this->setFlash('error', 'Lỗi xóa phiếu bảo trì: ' . $e->getMessage());
+            $this->redirect($this->viewUrl('index.php', $queryQuayLai));
+        }
+
+        $this->setFlash('success', 'Đã xóa phiếu bảo trì và cập nhật lại trạng thái thiết bị.');
+        $this->redirect($this->viewUrl('index.php', $queryQuayLai));
+    }
+
     public function xoaThietBi() {
         $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
         if ($id <= 0) {
@@ -755,6 +826,7 @@ class BaoTriController {
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
             'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
 
         if ($id <= 0) {

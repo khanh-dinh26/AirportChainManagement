@@ -7,6 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $baoTriController->capNhatTrangThaiTicket();
     } elseif ($action === 'store_ticket') {
         $baoTriController->storeTicket();
+    } elseif ($action === 'xoa_ticket') {
+        $baoTriController->xoaTicket();
     }
 }
 
@@ -22,8 +24,7 @@ if (!isset($thiet_bi_list)) {
 
 // Nhóm thiết bị theo sân bay để hiển thị trong modal
 $thietBiTheoSanBay = [];
-$sanBayThietBi    = []; // nhãn ghép "IATA · Tên ngắn"
-$sanBayMa         = []; // mã IATA
+$sanBayThietBi    = []; // tên hiển thị của sân bay
 $sanBayTen        = []; // tên ngắn
 $sanBayCuaThietBi = []; // id thiết bị => id sân bay
 
@@ -33,24 +34,11 @@ foreach ($thiet_bi_list as $tb) {
     $sanBayCuaThietBi[(int) $tb['id']] = $idSanBay;
 
     if (!isset($sanBayThietBi[$idSanBay])) {
-        $maIata   = trim((string) ($tb['ma_iata'] ?? ''));
         $tenNgan  = trim((string) ($tb['ten_ngan'] ?? ''));
         $tenDayDu = trim((string) ($tb['ten_san_bay'] ?? ''));
 
-        $sanBayMa[$idSanBay]  = $maIata !== '' ? $maIata : '—';
         $sanBayTen[$idSanBay] = $tenNgan !== '' ? $tenNgan : ($tenDayDu !== '' ? $tenDayDu : 'Khác');
-
-        if ($maIata !== '' && $tenNgan !== '') {
-            $sanBayThietBi[$idSanBay] = $maIata . ' · ' . $tenNgan;
-        } elseif ($tenNgan !== '') {
-            $sanBayThietBi[$idSanBay] = $tenNgan;
-        } elseif ($maIata !== '') {
-            $sanBayThietBi[$idSanBay] = $maIata;
-        } elseif ($tenDayDu !== '') {
-            $sanBayThietBi[$idSanBay] = $tenDayDu;
-        } else {
-            $sanBayThietBi[$idSanBay] = 'Khác';
-        }
+        $sanBayThietBi[$idSanBay] = $sanBayTen[$idSanBay];
     }
 }
 
@@ -177,15 +165,9 @@ foreach ($thiet_bi_list as $tb) {
         continue;
     }
 
-    $maIata   = trim((string) ($tb['ma_iata'] ?? ''));
     $tenDayDu = trim((string) ($tb['ten_san_bay'] ?? ''));
 
-    $nhan = $maIata !== '' ? $maIata : 'SB-' . $idSb;
-    if ($tenDayDu !== '') {
-        $nhan .= ' · ' . $tenDayDu;
-    }
-
-    $sanBayLocOptions[$idSb] = $nhan;
+    $sanBayLocOptions[$idSb] = $tenDayDu !== '' ? $tenDayDu : 'SB-' . $idSb;
 }
 asort($sanBayLocOptions, SORT_NATURAL | SORT_FLAG_CASE);
 
@@ -248,10 +230,32 @@ $tickets = array_values(array_filter($tickets, static function (array $ticket) u
     return true;
 }));
 
+$ticketDeleteId = (int) ($_GET['xac_nhan_xoa'] ?? 0);
+$ticketCanXoa = null;
+if ($ticketDeleteId > 0) {
+    foreach ($tickets as $ticketItem) {
+        if ((int) $ticketItem['id'] === $ticketDeleteId) {
+            $ticketCanXoa = $ticketItem;
+            break;
+        }
+    }
+}
+
+$ticketChiTietId = (int) ($_GET['chi_tiet'] ?? 0);
+$ticketChiTiet = null;
+if ($ticketChiTietId > 0) {
+    foreach ($tickets as $ticketItem) {
+        if ((int) $ticketItem['id'] === $ticketChiTietId) {
+            $ticketChiTiet = $ticketItem;
+            break;
+        }
+    }
+}
+
 $soPhieuHienThi = count($tickets);
 
-// Phân trang danh sách phiếu: 5 phiếu mỗi trang.
-$soPhieuMoiTrang  = 5;
+// Phân trang danh sách phiếu: 4 phiếu mỗi trang.
+$soPhieuMoiTrang  = 4;
 $tongTrang        = max(1, (int) ceil($soPhieuHienThi / $soPhieuMoiTrang));
 $trangHienTai     = max(1, (int) ($_GET['trang'] ?? 1));
 $trangHienTai     = min($trangHienTai, $tongTrang);
@@ -454,114 +458,123 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="ticketTable">
-            <thead>
-                <tr>
-                    <th>Phiếu</th>
-                    <th>Sân bay</th>
-                    <th>Thiết bị &amp; sự cố</th>
-                    <th class="text-center">Hình ảnh</th>
-                    <th>Mức độ / Trạng thái</th>
-                    <th class="text-end">Cập nhật</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($tickets)): ?>
-                    <?php foreach ($ticketsTrenTrang as $ticket): ?>
-                        <?php
-                        $maPhieu = '#BT-' . sprintf('%03d', (int) $ticket['id']);
-                        $ngayTao = date('d/m/Y H:i', strtotime($ticket['ngay_tao']));
-                        $mucDo = $ticket['muc_do'];
-                        $trangThai = $ticket['trang_thai_xu_ly'];
-                        $priorityLabel = $priorityLabels[$mucDo] ?? htmlspecialchars($mucDo, ENT_QUOTES, 'UTF-8');
-                        $priorityClass = $priorityBadgeClasses[$mucDo] ?? 'text-bg-secondary';
-                        $priorityIcon = $priorityIcons[$mucDo] ?? 'bi-circle';
-                        $statusLabel = $statusLabels[$trangThai] ?? htmlspecialchars($trangThai, ENT_QUOTES, 'UTF-8');
-                        $statusClass = $statusBadgeClasses[$trangThai] ?? 'text-bg-secondary';
-                        $anhUrl = baoTriImageUrl($ticket['hinh_anh_minh_hoa'] ?? null, $ticket['mo_ta_su_co'] ?? '');
-                        ?>
-                        <tr data-ticket-search="<?= htmlspecialchars($maPhieu . ' ' . $ticket['ten_thiet_bi'] . ' ' . $ticket['mo_ta_su_co'], ENT_QUOTES, 'UTF-8') ?>"
-                            data-ticket-status="<?= htmlspecialchars($trangThai, ENT_QUOTES, 'UTF-8') ?>"
-                            data-ticket-priority="<?= htmlspecialchars($mucDo, ENT_QUOTES, 'UTF-8') ?>">
-                            <td class="text-nowrap">
-                                <div class="fw-semibold text-primary"><?= $maPhieu ?></div>
-                                <div class="small text-secondary"><i class="bi bi-clock me-1"></i><?= $ngayTao ?></div>
-                            </td>
-                            <td style="min-width: 150px; white-space: normal;">
-                                <?php if (!empty($ticket['ten_san_bay'])): ?>
-                                    <span><?= htmlspecialchars($ticket['ten_san_bay'], ENT_QUOTES, 'UTF-8') ?></span>
-                                <?php else: ?>
-                                    <span class="text-secondary">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="min-width: 230px; white-space: normal;">
-                                <a href="<?= htmlspecialchars(baoTriUrl('chi_tiet_thiet_bi.php', ['id' => (int) $ticket['id_thiet_bi']]), ENT_QUOTES, 'UTF-8') ?>" class="fw-semibold text-decoration-none" title="Xem chi tiết và lịch sử bảo trì của thiết bị">
-                                    <?= htmlspecialchars($ticket['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
-                                </a>
-                                <div class="small text-secondary maint-description" title="<?= htmlspecialchars($ticket['mo_ta_su_co'], ENT_QUOTES, 'UTF-8') ?>">
-                                    <?= htmlspecialchars($ticket['mo_ta_su_co'], ENT_QUOTES, 'UTF-8') ?>
-                                </div>
-                            </td>
-                            <td class="text-center" style="min-width: 90px;">
-                                <?php if ($anhUrl !== ''): ?>
-                                    <a href="#anh-su-co-<?= (int) $ticket['id'] ?>" class="d-inline-block" title="Xem ảnh minh họa">
-                                        <img src="<?= htmlspecialchars($anhUrl, ENT_QUOTES, 'UTF-8') ?>" alt="Ảnh sự cố của phiếu <?= $maPhieu ?>" class="rounded border maint-ticket-thumb maint-thumb" loading="lazy">
-                                    </a>
-                                <?php else: ?>
-                                    <span class="small text-secondary">Chưa có ảnh</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="text-nowrap">
-                                <div class="d-flex flex-column align-items-start gap-1">
-                                    <span class="badge <?= $priorityClass ?>">
-                                        <i class="bi <?= $priorityIcon ?> me-1"></i><?= $priorityLabel ?>
-                                    </span>
-                                    <span class="badge <?= $statusClass ?>"><?= $statusLabel ?></span>
-                                </div>
-                            </td>
-                            <td class="text-end text-nowrap">
-                                <?php if ($trangThai !== 'Hoan_Thanh'): ?>
-                                    <form action="<?= baoTriUrl('index.php') ?>" method="POST" class="d-flex justify-content-end align-items-center gap-1">
-                                        <input type="hidden" name="action" value="cap_nhat_ticket">
-                                        <input type="hidden" name="id_ticket" value="<?= (int) $ticket['id'] ?>">
-                                        <select name="trang_thai_xu_ly" class="form-select form-select-sm" style="max-width: 115px;" aria-label="Cập nhật trạng thái phiếu <?= $maPhieu ?>">
-                                            <option value="Moi" <?= $trangThai === 'Moi' ? 'selected' : '' ?>>Mới</option>
-                                            <option value="Dang_Xu_Ly" <?= $trangThai === 'Dang_Xu_Ly' ? 'selected' : '' ?>>Đang xử lý</option>
-                                            <option value="Hoan_Thanh" <?= $trangThai === 'Hoan_Thanh' ? 'selected' : '' ?>>Hoàn thành</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-success" title="Lưu trạng thái" aria-label="Lưu trạng thái phiếu <?= $maPhieu ?>">
-                                            <i class="bi bi-check2"></i>
-                                        </button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="badge text-bg-success">
-                                        <i class="bi bi-check2-circle me-1"></i>Đã hoàn thành
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <?php if ($totalTicketsGoc > 0): ?>
-                                <div class="fw-semibold">Không tìm thấy phiếu phù hợp với bộ lọc.</div>
-                                <div class="small text-secondary mb-3">Hãy xóa bớt điều kiện lọc để xem toàn bộ danh sách.</div>
-                                <a href="<?= htmlspecialchars(baoTriUrl('index.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+    <div class="card-body maint-ticket-list" id="ticketTable">
+        <?php if (!empty($ticketsTrenTrang)): ?>
+            <?php foreach ($ticketsTrenTrang as $ticket): ?>
+                <?php
+                $maPhieu = '#BT-' . sprintf('%03d', (int) $ticket['id']);
+                $ngayTaoTimestamp = strtotime($ticket['ngay_tao']);
+                $ngayTao = $ngayTaoTimestamp !== false ? date('d/m/Y H:i', $ngayTaoTimestamp) : 'Thời gian không hợp lệ';
+                $mucDo = $ticket['muc_do'];
+                $trangThai = $ticket['trang_thai_xu_ly'];
+                $priorityLabel = $priorityLabels[$mucDo] ?? htmlspecialchars($mucDo, ENT_QUOTES, 'UTF-8');
+                $priorityClass = $priorityBadgeClasses[$mucDo] ?? 'text-bg-secondary';
+                $priorityIcon = $priorityIcons[$mucDo] ?? 'bi-circle';
+                $statusLabel = $statusLabels[$trangThai] ?? htmlspecialchars($trangThai, ENT_QUOTES, 'UTF-8');
+                $statusClass = $statusBadgeClasses[$trangThai] ?? 'text-bg-secondary';
+                $thoiGianCho = $ngayTaoTimestamp !== false ? time() - $ngayTaoTimestamp : 0;
+                $hienThiThoiGianCho = $trangThai === 'Moi' && $thoiGianCho > 86400;
+                if ($hienThiThoiGianCho) {
+                    $soNgayCho = (int) floor($thoiGianCho / 86400);
+                    $soGioCho = (int) floor(($thoiGianCho % 86400) / 3600);
+                    $statusLabel = 'Chờ ' . $soNgayCho . ' ngày' . ($soGioCho > 0 ? ' ' . $soGioCho . ' giờ' : '');
+                }
+                $chiTietQuery = array_filter([
+                    'q'        => $ticketQ,
+                    'san_bay'  => $ticketSanBay > 0 ? $ticketSanBay : '',
+                    'muc_do'   => $ticketPriority,
+                    'thiet_bi' => $ticketThietBi > 0 ? $ticketThietBi : '',
+                    'trang'    => $trangHienTai > 1 ? $trangHienTai : '',
+                    'chi_tiet' => (int) $ticket['id'],
+                ], static fn($v) => $v !== '');
+                $chiTietQuery['trang_thai'] = $ticketStatus;
+                $chiTietUrl = baoTriUrl('index.php', $chiTietQuery);
+                ?>
+                <article class="maint-ticket-card"
+                         data-ticket-search="<?= htmlspecialchars($maPhieu . ' ' . $ticket['ten_thiet_bi'] . ' ' . $ticket['mo_ta_su_co'], ENT_QUOTES, 'UTF-8') ?>"
+                         data-ticket-status="<?= htmlspecialchars($trangThai, ENT_QUOTES, 'UTF-8') ?>"
+                         data-ticket-priority="<?= htmlspecialchars($mucDo, ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="maint-ticket-card__header">
+                        <div>
+                            <span class="maint-ticket-card__code"><?= $maPhieu ?></span>
+                            <div class="maint-ticket-card__date">
+                                <i class="bi bi-clock" aria-hidden="true"></i><?= $ngayTao ?>
+                            </div>
+                        </div>
+                        <div class="maint-ticket-card__badges">
+                            <span class="badge <?= $priorityClass ?>">
+                                <i class="bi <?= $priorityIcon ?> me-1" aria-hidden="true"></i><?= $priorityLabel ?>
+                            </span>
+                            <?php if ($hienThiThoiGianCho): ?>
+                                <span class="badge text-bg-warning" title="Phiếu vẫn đang ở trạng thái mới">
+                                    <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?>
+                                </span>
                             <?php else: ?>
-                                <div class="maint-empty-icon"><i class="bi bi-clipboard-x"></i></div>
-                                <div class="fw-semibold">Chưa có phiếu bảo trì nào</div>
-                                <div class="small text-secondary mb-3">Tạo phiếu đầu tiên để ghi nhận sự cố và theo dõi xử lý.</div>
-                                <a href="#taoPhieuModal" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-plus-lg me-1"></i>Tạo phiếu bảo trì
-                                </a>
+                                <span class="badge <?= $statusClass ?>"><?= $statusLabel ?></span>
                             <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                        </div>
+                    </div>
+                    <div class="maint-ticket-card__content">
+                        <div class="maint-ticket-card__field">
+                            <span class="maint-ticket-card__label">Sân bay</span>
+                            <div class="maint-ticket-card__value">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                <?= htmlspecialchars(trim((string) ($ticket['ten_san_bay'] ?? '')) ?: 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?>
+                            </div>
+                        </div>
+                        <div class="maint-ticket-card__field maint-ticket-card__field--incident">
+                            <span class="maint-ticket-card__label">Thiết bị &amp; sự cố</span>
+                            <a href="<?= htmlspecialchars(baoTriUrl('chi_tiet_thiet_bi.php', ['id' => (int) $ticket['id_thiet_bi']]), ENT_QUOTES, 'UTF-8') ?>"
+                               class="maint-ticket-card__equipment">
+                                <i class="bi bi-tools" aria-hidden="true"></i>
+                                <?= htmlspecialchars((string) $ticket['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
+                            </a>
+                            <p class="maint-ticket-card__description"><?= htmlspecialchars((string) $ticket['mo_ta_su_co'], ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                    </div>
+                    <div class="maint-ticket-card__footer">
+                        <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1" aria-hidden="true"></i>Xem chi tiết
+                        </a>
+                        <?php if ($trangThai !== 'Hoan_Thanh'): ?>
+                            <form action="<?= baoTriUrl('index.php') ?>" method="POST" class="maint-ticket-card__status-form">
+                                <label class="visually-hidden" for="ticketStatus<?= (int) $ticket['id'] ?>">Cập nhật trạng thái <?= $maPhieu ?></label>
+                                <input type="hidden" name="action" value="cap_nhat_ticket">
+                                <input type="hidden" name="id_ticket" value="<?= (int) $ticket['id'] ?>">
+                                <select id="ticketStatus<?= (int) $ticket['id'] ?>" name="trang_thai_xu_ly" class="form-select form-select-sm">
+                                    <option value="Moi" <?= $trangThai === 'Moi' ? 'selected' : '' ?>>Mới</option>
+                                    <option value="Dang_Xu_Ly" <?= $trangThai === 'Dang_Xu_Ly' ? 'selected' : '' ?>>Đang xử lý</option>
+                                    <option value="Hoan_Thanh">Hoàn thành</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-success" title="Lưu trạng thái phiếu <?= $maPhieu ?>" aria-label="Lưu trạng thái phiếu <?= $maPhieu ?>">
+                                    <i class="bi bi-check2" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <span class="maint-ticket-card__completed">
+                                <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Đã hoàn thành
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </article>
+            <?php endforeach; ?>
+        <?php elseif ($totalTicketsGoc > 0): ?>
+            <div class="text-center py-5">
+                <div class="fw-semibold">Không tìm thấy phiếu phù hợp với bộ lọc.</div>
+                <div class="small text-secondary mb-3">Hãy xóa bớt điều kiện lọc để xem toàn bộ danh sách.</div>
+                <a href="<?= htmlspecialchars(baoTriUrl('index.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+            </div>
+        <?php else: ?>
+            <div class="text-center py-5">
+                <div class="maint-empty-icon"><i class="bi bi-clipboard-x"></i></div>
+                <div class="fw-semibold">Chưa có phiếu bảo trì nào</div>
+                <div class="small text-secondary mb-3">Tạo phiếu đầu tiên để ghi nhận sự cố và theo dõi xử lý.</div>
+                <a href="#taoPhieuModal" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Tạo phiếu bảo trì
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 
     <?php if ($tongTrang > 1): ?>
@@ -573,22 +586,165 @@ ob_start();
 </div>
 </div>
 
+<?php if ($ticketCanXoa !== null): ?>
 <?php
-// Lightbox cho từng ảnh sự cố trong danh sách (mở bằng :target, đóng bằng nút X).
-$lightboxImages = [];
-foreach ($ticketsTrenTrang as $ticketAnh) {
-    $urlAnh = baoTriImageUrl($ticketAnh['hinh_anh_minh_hoa'] ?? null, $ticketAnh['mo_ta_su_co'] ?? '');
-    if ($urlAnh === '') {
-        continue;
-    }
-    $lightboxImages[] = [
-        'id'  => 'anh-su-co-' . (int) $ticketAnh['id'],
-        'url' => $urlAnh,
-        'alt' => 'Ảnh sự cố của phiếu #BT-' . sprintf('%03d', (int) $ticketAnh['id']),
-    ];
-}
-require __DIR__ . '/_lightbox.php';
+$ticketCanXoaMa = '#BT-' . sprintf('%03d', (int) $ticketCanXoa['id']);
+$urlHuyXoaQuery = array_filter([
+    'q'        => $ticketQ,
+    'san_bay'  => $ticketSanBay > 0 ? $ticketSanBay : '',
+    'muc_do'   => $ticketPriority,
+    'thiet_bi' => $ticketThietBi > 0 ? $ticketThietBi : '',
+    'trang'    => $trangHienTai > 1 ? $trangHienTai : '',
+    'chi_tiet' => (int) $ticketCanXoa['id'],
+], static fn($v) => $v !== '');
+$urlHuyXoaQuery['trang_thai'] = $ticketStatus;
+$urlHuyXoa = baoTriUrl('index.php', $urlHuyXoaQuery);
 ?>
+<div class="modal fade is-open" id="xoaTicketModal" tabindex="-1" aria-labelledby="xoaTicketModalLabel" aria-hidden="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-4">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger mb-3" style="width: 58px; height: 58px;">
+                    <i class="bi bi-trash3 fs-4"></i>
+                </span>
+                <h5 class="mb-2" id="xoaTicketModalLabel">Xóa phiếu bảo trì?</h5>
+                <p class="text-secondary small mb-0">
+                    Bạn có chắc muốn xóa <strong><?= $ticketCanXoaMa ?></strong> của thiết bị
+                    <strong><?= htmlspecialchars((string) $ticketCanXoa['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></strong>?
+                    Hành động này không thể hoàn tác.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pt-0 pb-4">
+                <a href="<?= htmlspecialchars($urlHuyXoa, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-light border px-3">Hủy</a>
+                <form method="post" action="<?= htmlspecialchars(baoTriUrl('index.php'), ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                    <input type="hidden" name="action" value="xoa_ticket">
+                    <input type="hidden" name="id_ticket" value="<?= (int) $ticketCanXoa['id'] ?>">
+                    <input type="hidden" name="giu_q" value="<?= htmlspecialchars($ticketQ, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="giu_san_bay" value="<?= $ticketSanBay ?>">
+                    <input type="hidden" name="giu_muc_do" value="<?= htmlspecialchars($ticketPriority, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="giu_thiet_bi" value="<?= $ticketThietBi ?>">
+                    <input type="hidden" name="giu_trang_thai" value="<?= htmlspecialchars($ticketStatus, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
+                    <button type="submit" class="btn btn-danger px-3">
+                        <i class="bi bi-trash3 me-1"></i>Xóa phiếu
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if ($ticketChiTiet !== null): ?>
+<?php
+$chiTietMaPhieu = '#BT-' . sprintf('%03d', (int) $ticketChiTiet['id']);
+$chiTietAnhThuc = trim((string) ($ticketChiTiet['hinh_anh_minh_hoa'] ?? ''));
+$chiTietAnhUrl = $chiTietAnhThuc !== '' ? baoTriImageUrl($chiTietAnhThuc) : '';
+$chiTietMucDo = (string) $ticketChiTiet['muc_do'];
+$chiTietTrangThai = (string) $ticketChiTiet['trang_thai_xu_ly'];
+$chiTietNgayHoanThanh = trim((string) ($ticketChiTiet['ngay_hoan_thanh'] ?? ''));
+$chiTietThoiGianHoanThanh = $chiTietNgayHoanThanh !== '' ? strtotime($chiTietNgayHoanThanh) : false;
+?>
+<div class="modal fade maint-modal maint-modal--ticket maint-ticket-detail is-open" id="chiTietPhieuModal" tabindex="-1" aria-labelledby="chiTietPhieuModalLabel" aria-hidden="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="modal-icon"><i class="bi bi-clipboard-pulse"></i></span>
+                    <div>
+                        <div class="small text-secondary text-uppercase fw-semibold">Hồ sơ sự cố</div>
+                        <h5 class="modal-title mb-0 fs-5" id="chiTietPhieuModalLabel">Chi tiết phiếu bảo trì</h5>
+                    </div>
+                </div>
+                <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="acv-close" aria-label="Đóng">&times;</a>
+            </div>
+            <div class="modal-body">
+                <div class="maint-ticket-detail__heading">
+                    <div class="maint-ticket-detail__identity">
+                        <span class="maint-ticket-detail__code"><?= $chiTietMaPhieu ?></span>
+                        <h3><?= htmlspecialchars((string) $ticketChiTiet['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></h3>
+                        <div class="small text-secondary">
+                            <i class="bi bi-clock me-1" aria-hidden="true"></i><?= date('d/m/Y H:i', strtotime($ticketChiTiet['ngay_tao'])) ?>
+                        </div>
+                    </div>
+                    <div class="maint-ticket-detail__badges">
+                        <span class="badge <?= $priorityBadgeClasses[$chiTietMucDo] ?? 'text-bg-secondary' ?>">
+                            <i class="bi <?= $priorityIcons[$chiTietMucDo] ?? 'bi-circle' ?> me-1" aria-hidden="true"></i>
+                            <?= $priorityLabels[$chiTietMucDo] ?? htmlspecialchars($chiTietMucDo, ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                        <span class="badge <?= $statusBadgeClasses[$chiTietTrangThai] ?? 'text-bg-secondary' ?>">
+                            <?= $statusLabels[$chiTietTrangThai] ?? htmlspecialchars($chiTietTrangThai, ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </div>
+                </div>
+
+                <section class="maint-ticket-detail__section maint-ticket-detail__section--description">
+                    <h6><i class="bi bi-card-text me-2" aria-hidden="true"></i>Mô tả sự cố</h6>
+                    <p class="maint-ticket-detail__description"><?= nl2br(htmlspecialchars((string) $ticketChiTiet['mo_ta_su_co'], ENT_QUOTES, 'UTF-8')) ?></p>
+                </section>
+
+                <section class="maint-ticket-detail__section maint-ticket-detail__section--info">
+                    <h6><i class="bi bi-info-circle me-2" aria-hidden="true"></i>Thông tin phiếu</h6>
+                    <div class="maint-ticket-detail__info">
+                        <div>
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                            <span>Sân bay</span>
+                            <strong><?= htmlspecialchars(trim((string) ($ticketChiTiet['ten_san_bay'] ?? '')) ?: 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                        <div>
+                            <i class="bi bi-tools" aria-hidden="true"></i>
+                            <span>Thiết bị</span>
+                            <strong><?= htmlspecialchars((string) $ticketChiTiet['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                        <?php if ($chiTietTrangThai === 'Hoan_Thanh'): ?>
+                            <div>
+                                <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                <span>Hoàn thành lúc</span>
+                                <strong><?= $chiTietThoiGianHoanThanh !== false ? date('d/m/Y H:i', $chiTietThoiGianHoanThanh) : 'Chưa ghi nhận thời gian' ?></strong>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+
+                <section class="maint-ticket-detail__section maint-ticket-detail__section--image">
+                    <h6><i class="bi bi-image me-2" aria-hidden="true"></i>Ảnh sự cố</h6>
+                    <?php if ($chiTietAnhUrl !== ''): ?>
+                        <img src="<?= htmlspecialchars($chiTietAnhUrl, ENT_QUOTES, 'UTF-8') ?>"
+                             alt="Ảnh sự cố của phiếu <?= $chiTietMaPhieu ?>"
+                             class="maint-ticket-detail__image" loading="lazy">
+                    <?php else: ?>
+                        <div class="maint-ticket-detail__no-image">
+                            <i class="bi bi-image me-2" aria-hidden="true"></i>Phiếu này chưa có ảnh sự cố được tải lên.
+                        </div>
+                    <?php endif; ?>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <?php if ($chiTietTrangThai !== 'Hoan_Thanh'): ?>
+                    <?php
+                    $xoaChiTietQuery = array_filter([
+                        'q'            => $ticketQ,
+                        'san_bay'      => $ticketSanBay > 0 ? $ticketSanBay : '',
+                        'muc_do'       => $ticketPriority,
+                        'thiet_bi'     => $ticketThietBi > 0 ? $ticketThietBi : '',
+                        'trang'        => $trangHienTai > 1 ? $trangHienTai : '',
+                        'xac_nhan_xoa' => (int) $ticketChiTiet['id'],
+                    ], static fn($v) => $v !== '');
+                    $xoaChiTietQuery['trang_thai'] = $ticketStatus;
+                    $xoaChiTietUrl = baoTriUrl('index.php', $xoaChiTietQuery);
+                    ?>
+                    <a href="<?= htmlspecialchars($xoaChiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-danger me-auto">
+                        <i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa phiếu
+                    </a>
+                <?php endif; ?>
+                <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary px-3">
+                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>Đóng
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!--begin::Modal tạo phiếu bảo trì-->
 <div class="modal fade maint-modal maint-modal--ticket<?= $modalOpen ? ' is-open' : '' ?>" id="taoPhieuModal" tabindex="-1" aria-labelledby="taoPhieuModalLabel" aria-hidden="true">
@@ -647,7 +803,7 @@ require __DIR__ . '/_lightbox.php';
                                             <a href="<?= htmlspecialchars($ticketFormLocUrl((int) $idSanBay), ENT_QUOTES, 'UTF-8') ?>"
                                                class="maint-airport-option<?= $sanBayDangLoc === (int) $idSanBay ? ' is-active' : '' ?>"
                                                title="<?= htmlspecialchars((string) ($dsThietBi[0]['ten_san_bay'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                                <span class="maint-airport-option-code"><?= htmlspecialchars($sanBayMa[$idSanBay] ?? '—', ENT_QUOTES, 'UTF-8') ?></span>
+                                                <span class="maint-airport-option-code"><i class="bi bi-geo-alt"></i></span>
                                                 <span class="maint-airport-option-name"><?= htmlspecialchars($sanBayTen[$idSanBay] ?? 'Khác', ENT_QUOTES, 'UTF-8') ?></span>
                                                 <span class="maint-airport-option-count"><?= count($dsThietBi) ?></span>
                                                 <i class="bi bi-check2 maint-airport-option-check"></i>

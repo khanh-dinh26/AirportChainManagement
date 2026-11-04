@@ -62,25 +62,6 @@ $breadcrumb = [
 ];
 
 $tongLoaiTauBay = count($tau_bay);
-$sucChuaLonNhat = 0;
-$tongMtow       = 0.0;
-$mtowLonNhat    = 0.0;
-
-foreach ($tau_bay as $tb) {
-    $sucChua = (int) $tb['suc_chua_hanh_khach'];
-    $mtow    = (float) $tb['tai_trong_cat_canh_mtow'];
-
-    if ($sucChua > $sucChuaLonNhat) {
-        $sucChuaLonNhat = $sucChua;
-    }
-    if ($mtow > $mtowLonNhat) {
-        $mtowLonNhat = $mtow;
-    }
-
-    $tongMtow += $mtow;
-}
-
-$mtowTrungBinh = $tongLoaiTauBay > 0 ? $tongMtow / $tongLoaiTauBay : 0.0;
 
 /* ------------------------------------------------------------
  * Lọc danh sách phía máy chủ: ?q=...&san_bay=<id>.
@@ -110,14 +91,30 @@ if ($tuKhoa !== '' || $locSanBay > 0) {
     }));
 }
 
-$soLuongHienThi = count($tau_bay);
+$tongKetQua = count($tau_bay);
+$soTauBayMoiTrang = 6;
+$tongTrang = max(1, (int) ceil($tongKetQua / $soTauBayMoiTrang));
+$trangHienTai = max(1, (int) ($_GET['trang'] ?? 1));
+$trangHienTai = min($trangHienTai, $tongTrang);
+$viTriBatDau = ($trangHienTai - 1) * $soTauBayMoiTrang;
+$tauBayTrenTrang = array_slice($tau_bay, $viTriBatDau, $soTauBayMoiTrang);
+$tuTauBay = $tongKetQua > 0 ? $viTriBatDau + 1 : 0;
+$denTauBay = min($viTriBatDau + $soTauBayMoiTrang, $tongKetQua);
 
 $filterQuery = array_filter([
     'q'       => $tuKhoa,
     'san_bay' => $locSanBay > 0 ? $locSanBay : '',
+    'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
 ], static fn($v) => $v !== '');
 
 $urlDongModal = baoTriUrl('tau_bay.php', $filterQuery);
+$tauBayPageUrl = static function (int $page) use ($tuKhoa, $locSanBay): string {
+    return baoTriUrl('tau_bay.php', array_filter([
+        'q'       => $tuKhoa,
+        'san_bay' => $locSanBay > 0 ? $locSanBay : '',
+        'trang'   => $page > 1 ? $page : '',
+    ], static fn($v) => $v !== ''));
+};
 
 /* ------------------------------------------------------------
  * Xác nhận xóa (thuần PHP + CSS, không dùng confirm() của JS):
@@ -146,49 +143,21 @@ if ($idCanSua > 0) {
     }
 }
 
+$idCanXemChiTiet = (int) ($_GET['chi_tiet'] ?? 0);
+$tauBayChiTiet = null;
+if ($idCanXemChiTiet > 0) {
+    foreach ($baoTriController->getDanhSachTauBay() as $tbItem) {
+        if ((int) $tbItem['id'] === $idCanXemChiTiet) {
+            $tauBayChiTiet = $tbItem;
+            break;
+        }
+    }
+}
+
 ob_start();
 ?>
 <?php require __DIR__ . '/_flash.php'; ?>
 <div class="maint-page maint-page--aircraft">
-<div class="row">
-    <div class="col-lg-3 col-6">
-        <div class="small-box text-bg-primary">
-            <div class="inner">
-                <h3><?= $tongLoaiTauBay ?></h3>
-                <p>Tổng loại tàu bay</p>
-            </div>
-            <i class="small-box-icon bi bi-airplane"></i>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box text-bg-success">
-            <div class="inner">
-                <h3><?= number_format($sucChuaLonNhat) ?></h3>
-                <p>Sức chứa lớn nhất (khách)</p>
-            </div>
-            <i class="small-box-icon bi bi-people"></i>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box text-bg-warning">
-            <div class="inner">
-                <h3><?= number_format($mtowTrungBinh, 2) ?></h3>
-                <p>MTOW trung bình (tấn)</p>
-            </div>
-            <i class="small-box-icon bi bi-speedometer2"></i>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box text-bg-info">
-            <div class="inner">
-                <h3><?= number_format($mtowLonNhat, 2) ?></h3>
-                <p>MTOW lớn nhất (tấn)</p>
-            </div>
-            <i class="small-box-icon bi bi-arrow-up-circle"></i>
-        </div>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
@@ -229,7 +198,11 @@ ob_start();
             </form>
             <div class="d-flex flex-wrap align-items-center gap-2 small text-secondary mb-2">
                 <span>
-                    Hiển thị <strong><?= $soLuongHienThi ?></strong> / <strong><?= $tongLoaiTauBayGoc ?></strong> loại tàu bay
+                    <?php if ($tongKetQua > 0): ?>
+                        Hiển thị <strong><?= $tuTauBay ?>–<?= $denTauBay ?></strong> / <strong><?= $tongKetQua ?></strong> loại tàu bay
+                    <?php else: ?>
+                        Hiển thị <strong>0</strong> loại tàu bay
+                    <?php endif; ?>
                     <?php if ($locSanBay > 0 && isset($sanBayLabels[$locSanBay])): ?>
                         · <span class="badge text-bg-light border"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($sanBayLabels[$locSanBay], ENT_QUOTES, 'UTF-8') ?></span>
                     <?php endif; ?>
@@ -238,125 +211,107 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="aircraftTable">
-            <thead>
-                <tr>
-                    <th>Hình ảnh</th>
-                    <th>Loại tàu bay</th>
-                    <th>Hãng hàng không</th>
-                    <th>Sân bay</th>
-                    <th>MTOW</th>
-                    <th>Sức chứa</th>
-                    <th class="text-end">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($tau_bay)): ?>
-                    <?php foreach ($tau_bay as $tb): ?>
-                        <?php
-                        $maLoaiTauBay = 'LTB-' . sprintf('%03d', (int) $tb['id']);
-                        $mtow         = (float) $tb['tai_trong_cat_canh_mtow'];
-                        $sucChua      = (int) $tb['suc_chua_hanh_khach'];
-                        $anhUrl       = baoTriAircraftImageUrl($tb['hinh_anh'] ?? null);
-                        $tenSanBay    = trim((string) ($tb['ten_san_bay'] ?? ''));
-                        ?>
-                        <tr>
-                            <td style="width: 112px;">
-                                <?php if ($anhUrl !== ''): ?>
-                                    <a href="#anh-tau-bay-<?= (int) $tb['id'] ?>" class="d-inline-block" title="Xem ảnh <?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?>">
-                                        <img src="<?= htmlspecialchars($anhUrl, ENT_QUOTES, 'UTF-8') ?>"
-                                             alt="Ảnh loại tàu bay <?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?>"
-                                             class="maint-aircraft-thumb maint-thumb" loading="lazy">
+    <div class="card-body">
+        <?php if (!empty($tauBayTrenTrang)): ?>
+            <div class="maint-aircraft-grid" id="aircraftList">
+                <?php foreach ($tauBayTrenTrang as $tb): ?>
+                    <?php
+                    $maLoaiTauBay = 'LTB-' . sprintf('%03d', (int) $tb['id']);
+                    $anhUrl       = baoTriAircraftImageUrl($tb['hinh_anh'] ?? null);
+                    $tenSanBay    = trim((string) ($tb['ten_san_bay'] ?? ''));
+                    $hangTauBay   = trim((string) ($tb['hang'] ?? ''));
+                    $xoaUrl = baoTriUrl('tau_bay.php', array_filter([
+                        'q'            => $tuKhoa,
+                        'san_bay'      => $locSanBay > 0 ? $locSanBay : '',
+                        'trang'        => $trangHienTai > 1 ? $trangHienTai : '',
+                        'xac_nhan_xoa' => (int) $tb['id'],
+                    ], static fn($v) => $v !== ''));
+                    $suaUrl = baoTriUrl('tau_bay.php', array_filter([
+                        'q'       => $tuKhoa,
+                        'san_bay' => $locSanBay > 0 ? $locSanBay : '',
+                        'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
+                        'sua'     => (int) $tb['id'],
+                    ], static fn($v) => $v !== ''));
+                    $chiTietUrl = baoTriUrl('tau_bay.php', array_filter([
+                        'q'        => $tuKhoa,
+                        'san_bay'  => $locSanBay > 0 ? $locSanBay : '',
+                        'trang'    => $trangHienTai > 1 ? $trangHienTai : '',
+                        'chi_tiet' => (int) $tb['id'],
+                    ], static fn($v) => $v !== ''));
+                    ?>
+                    <article class="maint-aircraft-card">
+                        <div class="maint-aircraft-card__image">
+                            <?php if ($anhUrl !== ''): ?>
+                                <a href="#anh-tau-bay-<?= (int) $tb['id'] ?>" title="Phóng to ảnh <?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <img src="<?= htmlspecialchars($anhUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                         alt="Ảnh loại tàu bay <?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?>"
+                                         loading="lazy">
+                                </a>
+                            <?php else: ?>
+                                <span class="maint-aircraft-card__image-empty" aria-label="Chưa có ảnh">
+                                    <i class="bi bi-airplane" aria-hidden="true"></i>
+                                </span>
+                            <?php endif; ?>
+                            <span class="maint-aircraft-card__code"><?= $maLoaiTauBay ?></span>
+                        </div>
+                        <div class="maint-aircraft-card__body">
+                            <h4><?= htmlspecialchars((string) $tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?></h4>
+                            <div class="maint-aircraft-card__meta">
+                                <div>
+                                    <i class="bi bi-building" aria-hidden="true"></i>
+                                    <span><?= htmlspecialchars($hangTauBay !== '' ? $hangTauBay : 'Chưa xác định hãng', ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                                <div>
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                    <span><?= htmlspecialchars($tenSanBay !== '' ? $tenSanBay : 'Chưa xác định sân bay', ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                            </div>
+                            <div class="maint-aircraft-card__actions">
+                                <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                </a>
+                                <div class="d-flex gap-1">
+                                    <a href="<?= htmlspecialchars($suaUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                       class="btn btn-sm btn-outline-secondary" title="Sửa loại tàu bay">
+                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
-                                <?php else: ?>
-                                    <span class="maint-aircraft-thumb maint-aircraft-thumb--empty d-inline-flex align-items-center justify-content-center text-secondary">
-                                        <i class="bi bi-image"></i>
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <div class="fw-semibold"><?= htmlspecialchars($tb['ma_loai'], ENT_QUOTES, 'UTF-8') ?></div>
-                                <div class="small text-secondary"><?= $maLoaiTauBay ?></div>
-                            </td>
-                            <td>
-                                <?php
-                                $hangTauBay = trim((string) ($tb['hang'] ?? ''));
-                                ?>
-                                <?php if ($hangTauBay !== ''): ?>
-                                    <span class="badge text-bg-info"><?= htmlspecialchars($hangTauBay, ENT_QUOTES, 'UTF-8') ?></span>
-                                <?php else: ?>
-                                    <span class="text-secondary">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="min-width: 180px; white-space: normal;">
-                                <?php if ($tenSanBay !== ''): ?>
-                                    <i class="bi bi-geo-alt text-secondary me-1" aria-hidden="true"></i>
-                                    <span><?= htmlspecialchars($tenSanBay, ENT_QUOTES, 'UTF-8') ?></span>
-                                <?php else: ?>
-                                    <span class="text-secondary">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <span class="badge text-bg-primary">
-                                    <i class="bi bi-speedometer2 me-1"></i><?= number_format($mtow, 2) ?> tấn
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge text-bg-success">
-                                    <i class="bi bi-people me-1"></i><?= number_format($sucChua) ?> khách
-                                </span>
-                            </td>
-                            <td class="text-end text-nowrap">
-                                <?php
-                                $xoaUrl = baoTriUrl('tau_bay.php', array_filter([
-                                    'q'            => $tuKhoa,
-                                    'san_bay'      => $locSanBay > 0 ? $locSanBay : '',
-                                    'xac_nhan_xoa' => (int) $tb['id'],
-                                ], static fn($v) => $v !== ''));
-                                $suaUrl = baoTriUrl('tau_bay.php', array_filter([
-                                    'q'       => $tuKhoa,
-                                    'san_bay' => $locSanBay > 0 ? $locSanBay : '',
-                                    'sua'     => (int) $tb['id'],
-                                ], static fn($v) => $v !== ''));
-                                ?>
-                                <a href="<?= htmlspecialchars($suaUrl, ENT_QUOTES, 'UTF-8') ?>"
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil-square me-1"></i>Sửa
-                                </a>
-                                <a href="<?= htmlspecialchars($xoaUrl, ENT_QUOTES, 'UTF-8') ?>"
-                                   class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash3 me-1"></i>Xóa
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php elseif ($tuKhoa !== '' || $locSanBay > 0): ?>
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-secondary">
-                            Không tìm thấy loại tàu bay phù hợp với bộ lọc hiện tại.
-                        </td>
-                    </tr>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="maint-empty-icon"><i class="bi bi-airplane"></i></div>
-                            <div class="fw-semibold">Chưa có loại tàu bay nào</div>
-                            <div class="small text-secondary mb-3">Thêm loại tàu bay đầu tiên để bắt đầu quản lý.</div>
-                            <a href="#themTauBayModal" class="btn btn-sm btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay</a>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                                    <a href="<?= htmlspecialchars($xoaUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                       class="btn btn-sm btn-outline-danger" title="Xóa loại tàu bay">
+                                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        <?php elseif ($tuKhoa !== '' || $locSanBay > 0): ?>
+            <div class="text-center py-4 text-secondary">
+                Không tìm thấy loại tàu bay phù hợp với bộ lọc hiện tại.
+            </div>
+        <?php else: ?>
+            <div class="text-center py-5">
+                <div class="maint-empty-icon"><i class="bi bi-airplane"></i></div>
+                <div class="fw-semibold">Chưa có loại tàu bay nào</div>
+                <div class="small text-secondary mb-3">Thêm loại tàu bay đầu tiên để bắt đầu quản lý.</div>
+                <a href="#themTauBayModal" class="btn btn-sm btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay</a>
+            </div>
+        <?php endif; ?>
     </div>
+    <?php if ($tongTrang > 1): ?>
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small text-secondary">Trang <strong><?= $trangHienTai ?></strong> / <?= $tongTrang ?></div>
+            <?= baoTriPagination($trangHienTai, $tongTrang, $tauBayPageUrl) ?>
+        </div>
+    <?php endif; ?>
 </div>
 </div>
 
 <?php
 // Lightbox cho ảnh loại tàu bay (mở bằng :target, đóng bằng nút X).
 $lightboxImages = [];
-foreach ($tau_bay as $tbAnh) {
+foreach ($tauBayTrenTrang as $tbAnh) {
     $urlAnh = baoTriAircraftImageUrl($tbAnh['hinh_anh'] ?? null);
     if ($urlAnh === '') {
         continue;
@@ -370,6 +325,89 @@ foreach ($tau_bay as $tbAnh) {
 require __DIR__ . '/_lightbox.php';
 ?>
 
+<?php if ($tauBayChiTiet !== null): ?>
+<?php $anhTauBayChiTiet = baoTriAircraftImageUrl($tauBayChiTiet['hinh_anh'] ?? null); ?>
+<div class="modal fade maint-modal maint-modal--aircraft maint-aircraft-detail is-open" id="chiTietTauBayModal" tabindex="-1" aria-labelledby="chiTietTauBayModalLabel" aria-hidden="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="modal-icon"><i class="bi bi-airplane"></i></span>
+                    <div>
+                        <div class="small text-secondary text-uppercase fw-semibold">Hồ sơ khai thác</div>
+                        <h5 class="modal-title mb-0 fs-5" id="chiTietTauBayModalLabel">Chi tiết loại tàu bay</h5>
+                    </div>
+                </div>
+                <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="acv-close" aria-label="Đóng">&times;</a>
+            </div>
+            <div class="modal-body">
+                <section class="maint-aircraft-detail__hero">
+                    <div class="maint-aircraft-detail__image">
+                        <?php if ($anhTauBayChiTiet !== ''): ?>
+                            <img src="<?= htmlspecialchars($anhTauBayChiTiet, ENT_QUOTES, 'UTF-8') ?>"
+                                 alt="Ảnh loại tàu bay <?= htmlspecialchars((string) $tauBayChiTiet['ma_loai'], ENT_QUOTES, 'UTF-8') ?>"
+                                 loading="lazy">
+                        <?php else: ?>
+                            <i class="bi bi-airplane" aria-hidden="true"></i>
+                        <?php endif; ?>
+                    </div>
+                    <div class="maint-aircraft-detail__identity">
+                        <span class="maint-aircraft-detail__code">LTB-<?= sprintf('%03d', (int) $tauBayChiTiet['id']) ?></span>
+                        <h3><?= htmlspecialchars((string) $tauBayChiTiet['ma_loai'], ENT_QUOTES, 'UTF-8') ?></h3>
+                        <div class="maint-aircraft-detail__airline">
+                            <i class="bi bi-building" aria-hidden="true"></i>
+                            <?= htmlspecialchars(trim((string) ($tauBayChiTiet['hang'] ?? '')) ?: 'Chưa xác định hãng', ENT_QUOTES, 'UTF-8') ?>
+                        </div>
+                    </div>
+                </section>
+                <section class="maint-aircraft-detail__stats" aria-label="Thông số khai thác">
+                    <div class="maint-aircraft-detail__stat">
+                        <span class="maint-aircraft-detail__stat-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+                        <div>
+                            <div class="maint-aircraft-detail__label">MTOW</div>
+                            <div class="maint-aircraft-detail__value"><?= number_format((float) $tauBayChiTiet['tai_trong_cat_canh_mtow'], 2) ?><small> tấn</small></div>
+                        </div>
+                    </div>
+                    <div class="maint-aircraft-detail__stat">
+                        <span class="maint-aircraft-detail__stat-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+                        <div>
+                            <div class="maint-aircraft-detail__label">Sức chứa</div>
+                            <div class="maint-aircraft-detail__value"><?= number_format((int) $tauBayChiTiet['suc_chua_hanh_khach']) ?><small> khách</small></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="maint-aircraft-detail__location">
+                    <span class="maint-aircraft-detail__location-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+                    <div>
+                        <div class="maint-aircraft-detail__label">Sân bay khai thác</div>
+                        <div class="maint-aircraft-detail__location-name">
+                            <?= htmlspecialchars(trim((string) ($tauBayChiTiet['ten_san_bay'] ?? '')) ?: 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?>
+                        </div>
+                    </div>
+                </section>
+                <section class="maint-aircraft-detail__description">
+                    <div class="maint-aircraft-detail__description-title">
+                        <i class="bi bi-card-text" aria-hidden="true"></i><span>Mô tả</span>
+                    </div>
+                    <p>
+                        Loại tàu bay <strong><?= htmlspecialchars((string) $tauBayChiTiet['ma_loai'], ENT_QUOTES, 'UTF-8') ?></strong>
+                        do <strong><?= htmlspecialchars(trim((string) ($tauBayChiTiet['hang'] ?? '')) ?: 'hãng hàng không chưa xác định', ENT_QUOTES, 'UTF-8') ?></strong>
+                        khai thác tại <strong><?= htmlspecialchars(trim((string) ($tauBayChiTiet['ten_san_bay'] ?? '')) ?: 'sân bay chưa xác định', ENT_QUOTES, 'UTF-8') ?></strong>.
+                        Tàu bay có trọng tải cất cánh tối đa <?= number_format((float) $tauBayChiTiet['tai_trong_cat_canh_mtow'], 2) ?> tấn
+                        và sức chứa <?= number_format((int) $tauBayChiTiet['suc_chua_hanh_khach']) ?> hành khách.
+                    </p>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary px-3">
+                    <i class="bi bi-x-lg me-1" aria-hidden="true"></i>Đóng
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!--begin::Modal thêm loại tàu bay-->
 <div class="modal fade maint-modal maint-modal--aircraft<?= $modalError !== null ? ' is-open' : '' ?>" id="themTauBayModal" tabindex="-1" aria-labelledby="themTauBayModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -378,6 +416,7 @@ require __DIR__ . '/_lightbox.php';
                 <input type="hidden" name="action" value="them_tau_bay">
                 <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+                <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
                 <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
                         <span class="modal-icon">
@@ -496,6 +535,7 @@ require __DIR__ . '/_lightbox.php';
                 <input type="hidden" name="id" value="<?= (int) $tauBayCanSua['id'] ?>">
                 <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+                <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
                 <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
                         <span class="modal-icon"><i class="bi bi-pencil-square"></i></span>
@@ -632,6 +672,7 @@ require __DIR__ . '/_lightbox.php';
                     <input type="hidden" name="action" value="xoa_tau_bay" />
                     <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
                     <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>" />
+                    <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />
                     <button type="submit" class="btn btn-danger px-3">
                         <i class="bi bi-trash3 me-1"></i>Xóa loại tàu bay
                     </button>

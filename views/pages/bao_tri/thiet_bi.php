@@ -84,6 +84,14 @@ $loaiThietBiIcons = [
     'Khac'               => 'bi-box-seam',
 ];
 
+$loaiAvatarClasses = [
+    'Den_Tin_Hieu'       => 'maint-avatar--warning',
+    'Thiet_Bi_Dan_Duong' => 'maint-avatar--info',
+    'Xe_Thang'           => 'maint-avatar--primary',
+    'Xe_Keo'             => 'maint-avatar--success',
+    'Khac'               => 'maint-avatar--secondary',
+];
+
 $tongThietBi     = count($thiet_bi);
 $soThietBiTot    = 0;
 $soThietBiBaoTri = 0;
@@ -361,14 +369,12 @@ ob_start();
             <?php endif; ?>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="thietBiTable">
+                <table class="table table-hover align-middle mb-0 maint-equipment-table" id="thietBiTable">
                     <thead>
                         <tr>
                             <th>Thiết bị</th>
-                            <th>Phân loại</th>
                             <th>Sân bay</th>
                             <th>Trạng thái</th>
-                            <th class="text-center">Số phiếu</th>
                             <th class="text-end">Thao tác</th>
                         </tr>
                     </thead>
@@ -378,9 +384,8 @@ ob_start();
                                 <?php
                                 $maThietBi  = 'TB-' . sprintf('%03d', (int) $item['id']);
                                 $soPhieu    = (int) $item['so_phieu'];
-                                $soPhieuMo  = (int) ($item['so_phieu_mo'] ?? 0);
-                                $loaiLabel  = $loaiThietBiLabels[$item['loai_thiet_bi']] ?? htmlspecialchars(str_replace('_', ' ', $item['loai_thiet_bi']), ENT_QUOTES, 'UTF-8');
-                                $loaiIcon   = $loaiThietBiIcons[$item['loai_thiet_bi']] ?? 'bi-hdd-stack';
+                                $loaiIcon = $loaiThietBiIcons[$item['loai_thiet_bi']] ?? 'bi-hdd-stack';
+                                $loaiAvatarClass = $loaiAvatarClasses[$item['loai_thiet_bi']] ?? 'maint-avatar--secondary';
                                 $statusLabel = $statusLabels[$item['trang_thai']] ?? htmlspecialchars($item['trang_thai'], ENT_QUOTES, 'UTF-8');
                                 $statusClass = $statusBadgeClasses[$item['trang_thai']] ?? 'text-bg-secondary';
                                 $chiTietUrl = baoTriUrl('chi_tiet_thiet_bi.php', ['id' => (int) $item['id']]);
@@ -399,33 +404,23 @@ ob_start();
                                     data-loai="<?= htmlspecialchars($item['loai_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>"
                                     data-trang-thai="<?= htmlspecialchars($item['trang_thai'], ENT_QUOTES, 'UTF-8') ?>">
                                     <td>
-                                        <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="fw-semibold text-decoration-none" title="Xem chi tiết và lịch sử bảo trì">
-                                            <?= htmlspecialchars($item['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
-                                        </a>
-                                        <div class="small text-secondary"><?= $maThietBi ?></div>
-                                    </td>
-                                    <td>
-                                        <span class="badge text-bg-light border">
-                                            <i class="bi <?= $loaiIcon ?> me-1"></i><?= $loaiLabel ?>
-                                        </span>
+                                        <div class="maint-equipment-row__identity">
+                                            <span class="maint-avatar maint-equipment-row__icon <?= $loaiAvatarClass ?>">
+                                                <i class="bi <?= $loaiIcon ?>"></i>
+                                            </span>
+                                            <div class="min-w-0">
+                                                <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="maint-equipment-row__name" title="Xem chi tiết và lịch sử bảo trì">
+                                                    <?= htmlspecialchars($item['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
+                                                </a>
+                                                <div class="small text-secondary maint-code"><?= $maThietBi ?></div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <i class="bi bi-geo-alt text-secondary me-1"></i><?= htmlspecialchars($item['ten_san_bay'], ENT_QUOTES, 'UTF-8') ?>
                                     </td>
                                     <td>
-                                        <span class="badge <?= $statusClass ?>"><?= $statusLabel ?></span>
-                                    </td>
-                                    <td class="text-center">
-                                        <?php if ($soPhieu > 0): ?>
-                                            <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="badge text-bg-light border text-decoration-none" title="Xem lịch sử bảo trì">
-                                                <i class="bi bi-clipboard-check me-1"></i><?= $soPhieu ?>
-                                            </a>
-                                            <?php if ($soPhieuMo > 0): ?>
-                                                <span class="badge text-bg-danger ms-1" title="<?= $soPhieuMo ?> phiếu đang mở"><?= $soPhieuMo ?> mở</span>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="text-secondary small">Chưa có</span>
-                                        <?php endif; ?>
+                                        <span class="badge maint-equipment-row__status <?= $statusClass ?>"><?= $statusLabel ?></span>
                                     </td>
                                     <td class="text-end text-nowrap">
                                         <div class="d-flex justify-content-end align-items-center gap-1">
@@ -464,7 +459,7 @@ ob_start();
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="4" class="text-center py-5">
                                     <?php if ($tongThietBiGoc > 0): ?>
                                         <div class="fw-semibold">Không tìm thấy thiết bị phù hợp với bộ lọc.</div>
                                         <div class="small text-secondary mb-3">Hãy xóa bớt điều kiện lọc để xem toàn bộ danh mục.</div>
