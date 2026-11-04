@@ -53,13 +53,13 @@ if (!function_exists('baoTriImageUrl')) {
         // Thứ tự ưu tiên: từ khóa cụ thể trước, từ khóa chung sau.
         $goiY = [
             ['denbivo.jpg',             ['đèn vỡ', 'vỡ đèn', 'bể đèn', 'bóng đèn vỡ']],
-            ['thangcuon.jpg',           ['thang cuốn', 'thang cuon']],
-            ['bangchuyen.jpg',          ['băng chuyền', 'băng tải', 'bang chuyen']],
-            ['hethongdieuhoa.jpg',      ['điều hòa', 'điều hoà', 'máy lạnh']],
+            ['thang-cuon-tu-dong/19.jpg',           ['thang cuốn', 'thang cuon']],
+            ['bang-chuyen-hanh-ly/19.jpg',          ['băng chuyền', 'băng tải', 'bang chuyen']],
+            ['he-thong-dieu-hoa-nha-ga/19.jpg',      ['điều hòa', 'điều hoà', 'máy lạnh']],
             ['xevacham.jpg',            ['va chạm', 'tông xe', 'đâm xe']],
-            ['cauonglonghanhkhach.jpg', ['ống lồng', 'cầu ống lồng']],
-            ['xekeohanhly.jpg',         ['hành lý', 'hành lí']],
-            ['xenanghanghoa.jpg',       ['hàng hóa', 'hàng hoá']],
+            ['cau-ong-long-hanh-khach/19.jpg', ['ống lồng', 'cầu ống lồng']],
+            ['xe-keo-hanh-ly/17.jpg',         ['hành lý', 'hành lí']],
+            ['xe-nang-hang-hoa/17.jpg',       ['hàng hóa', 'hàng hoá']],
             ['maychieu.jpg',            ['máy chiếu', 'màn hình']],
             ['chayden.jpg',             ['cháy', 'đèn', 'led']],
             ['roridau.jpg',             ['rò rỉ', 'dầu', 'thủy lực']],
@@ -80,7 +80,7 @@ if (!function_exists('baoTriImageUrl')) {
 if (!function_exists('baoTriAircraftImageUrl')) {
     /**
      * Trả về URL ảnh của loại tàu bay.
-     * - Đường dẫn đầy đủ: assets/img/tau_bay/<file>.
+     * - Đường dẫn đầy đủ: assets/img/tau_bay/<hang>/<file>.
      * - Dữ liệu cũ chỉ lưu tên file: tra trong assets/img/tau_bay/.
      */
     function baoTriAircraftImageUrl($value) {

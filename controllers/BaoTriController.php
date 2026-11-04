@@ -147,9 +147,9 @@ class BaoTriController {
     }
 
     /**
-     * Chuẩn hóa tên file: bỏ dấu tiếng Việt, ký tự lạ; giữ dạng chữ thường không dấu.
+     * Bỏ dấu tiếng Việt, giữ nguyên chữ và khoảng trắng để hàm gọi tự chuẩn hóa.
      */
-    private function taoTenFileAnToan($ten) {
+    private function boDauTiengViet($ten) {
         $nhomDau = [
             'a' => 'áàảãạăắằẳẵặâấầẩẫậä',
             'd' => 'đ',
@@ -168,11 +168,28 @@ class BaoTriController {
             }
         }
 
-        $ten = strtr((string) $ten, $map);
-        $ten = strtolower($ten);
+        return strtr((string) $ten, $map);
+    }
+
+    /**
+     * Chuẩn hóa tên file: bỏ dấu tiếng Việt, ký tự lạ; giữ dạng chữ thường không dấu.
+     */
+    private function taoTenFileAnToan($ten) {
+        $ten = strtolower($this->boDauTiengViet($ten));
         $ten = preg_replace('/[^a-z0-9]+/', '', $ten);
 
         return $ten !== '' ? $ten : 'anh';
+    }
+
+    /**
+     * Tạo tên thư mục từ tên hãng: "Vietnam Airlines" -> "vietnam-airlines".
+     */
+    private function taoSlugThuMuc($ten) {
+        $ten = strtolower($this->boDauTiengViet($ten));
+        $ten = preg_replace('/[^a-z0-9]+/', '-', $ten);
+        $ten = trim((string) $ten, '-');
+
+        return $ten !== '' ? $ten : 'khac';
     }
 
     /**
@@ -222,8 +239,25 @@ class BaoTriController {
         return $this->luuAnhTaiLen($file, 'su_co');
     }
 
-    private function luuAnhTaiLenVaoTauBay(array $file) {
-        return $this->luuAnhTaiLen($file, 'tau_bay');
+    private function luuAnhTaiLenVaoTauBay(array $file, $idHang = 0) {
+        $thuMuc = 'tau_bay';
+        $idHang = (int) $idHang;
+
+        // Ảnh tàu bay được lưu trong thư mục riêng của hãng khai thác.
+        if ($idHang > 0) {
+            $stmt = $this->db->prepare('SELECT ten_hang FROM hang_hang_khong WHERE id = ? LIMIT 1');
+            if ($stmt) {
+                $stmt->bind_param('i', $idHang);
+                $stmt->execute();
+                $stmt->bind_result($tenHang);
+                if ($stmt->fetch() && trim((string) $tenHang) !== '') {
+                    $thuMuc .= '/' . $this->taoSlugThuMuc($tenHang);
+                }
+                $stmt->close();
+            }
+        }
+
+        return $this->luuAnhTaiLen($file, $thuMuc);
     }
 
     public function getDanhSachTauBay() {
@@ -531,7 +565,7 @@ class BaoTriController {
         $hinh_anh = null;
         if (isset($_FILES['anh_tai_len']) && (int) ($_FILES['anh_tai_len']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             try {
-                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len']);
+                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len'], $id_hang);
             } catch (RuntimeException $e) {
                 $this->setFlash('error', $e->getMessage());
                 $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
@@ -625,7 +659,7 @@ class BaoTriController {
         $hinh_anh = null;
         if (isset($_FILES['anh_tai_len']) && (int) ($_FILES['anh_tai_len']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             try {
-                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len']);
+                $hinh_anh = $this->luuAnhTaiLenVaoTauBay($_FILES['anh_tai_len'], $id_hang);
             } catch (RuntimeException $e) {
                 $this->setFlash('error', $e->getMessage());
                 $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
