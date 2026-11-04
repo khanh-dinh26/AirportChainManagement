@@ -251,36 +251,45 @@ ob_start();
                 <h3 class="card-title">Chuyến bay đã hoàn thành (Chờ lập hóa đơn)</h3>
             </div>
             <div class="card-body table-responsive p-0">
-                <table class="table table-hover text-nowrap align-middle">
-                    <thead>
-                        <tr>
-                            <th>Mã chuyến bay</th>
-                            <th>Trạng thái</th>
-                            <th class="text-end">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if(empty($danh_sach_chuyen_bay)): ?>
-                            <tr><td colspan="3" class="text-center">Không có chuyến bay nào cần lập hóa đơn.</td></tr>
-                        <?php endif; ?>
-                        
-                        <?php foreach ($danh_sach_chuyen_bay as $cb): ?>
-                        <tr>
-                            <td>
-                                <strong>Số hiệu: <?= htmlspecialchars($cb['so_hieu']) ?></strong> 
-                                <br><small class="text-muted">ID: #<?= htmlspecialchars($cb['id']) ?></small>
-                            </td>
-                            <td><span class="badge text-bg-success"><?= htmlspecialchars($cb['trang_thai_tong']) ?></span></td>
-                            <td class="text-end">
-                                <a href="index.php?page=ke_toan&tao_hoa_don=<?= $cb['id'] ?>" 
-                                   class="btn btn-sm btn-outline-primary">
-                                   Tính và lập hóa đơn
-                                </a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+<table class="table table-hover text-nowrap align-middle">
+    <thead>
+        <tr>
+            <th>Chuyến bay</th>
+            <th>Hãng / MTOW</th>
+            <th>Số khách</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if(empty($danh_sach_chuyen_bay)): ?>
+            <tr><td colspan="5" class="text-center">Không có chuyến bay nào cần lập hóa đơn.</td></tr>
+        <?php endif; ?>
+        
+        <?php foreach ($danh_sach_chuyen_bay as $cb): ?>
+        <tr>
+            <td>
+                <strong><?= htmlspecialchars($cb['so_hieu']) ?></strong> 
+                <br><small class="text-muted">ID: #<?= htmlspecialchars($cb['id']) ?></small>
+            </td>
+            <td>
+                <span class="badge text-bg-primary"><?= htmlspecialchars($cb['ten_hang']) ?></span>
+                <br><small class="text-muted">MTOW: <?= htmlspecialchars($cb['tai_trong_cat_canh_mtow']) ?> Tấn</small>
+            </td>
+            <td>
+                <span class="fw-bold"><?= htmlspecialchars($cb['luong_hanh_khach']) ?></span> khách
+            </td>
+            <td><span class="badge text-bg-success"><?= htmlspecialchars($cb['trang_thai_tong']) ?></span></td>
+            <td class="text-end">
+                <a href="index.php?page=ke_toan&tao_hoa_don=<?= $cb['id'] ?>" 
+                   class="btn btn-sm btn-outline-primary">
+                   Tính và lập hóa đơn
+                </a>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
+</table>
             </div>
         </div>
     </div>

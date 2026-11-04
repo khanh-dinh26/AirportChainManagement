@@ -57,7 +57,11 @@ class KeToanController {
 
   //Các chuyến bay đã hoàn thành
     public function ChuyenBayHoanThanh() {
-        $sql = "SELECT * FROM chuyen_bay_ngay WHERE trang_thai_tong = 'Hoan_Thanh'";
+        $sql = "SELECT cb.*, hk.ten_hang, tb.tai_trong_cat_canh_mtow 
+                FROM chuyen_bay_ngay cb 
+                JOIN hang_hang_khong hk ON cb.id_hang_hang_khong = hk.id 
+                JOIN loai_tau_bay tb ON cb.id_loai_tau_bay = tb.id
+                WHERE cb.trang_thai_tong IN ('Hạ cánh')"; 
         $result = mysqli_query($this->conn, $sql);
         $data = [];
         if ($result) {
@@ -69,7 +73,7 @@ class KeToanController {
     }
 
 // Tính toán và tạo hóa đơn cho chuyến bay
-        public function TinhVaTaoHoaDon($id_chuyen_bay) {
+    public function TinhVaTaoHoaDon($id_chuyen_bay) {
         $id_chuyen_bay = (int)$id_chuyen_bay; 
         $sql_info = "SELECT cb.*, tb.tai_trong_cat_canh_mtow 
                      FROM chuyen_bay_ngay cb 
@@ -77,13 +81,13 @@ class KeToanController {
                      WHERE cb.id = $id_chuyen_bay";
         $result_info = mysqli_query($this->conn, $sql_info);
         $cb = mysqli_fetch_assoc($result_info);
+        
         if ($cb) {
             $time_du_kien = strtotime($cb['gio_du_kien']);
             $time_thuc_te = $cb['gio_thuc_te'] ? strtotime($cb['gio_thuc_te']) : time();
             $so_gio_do = ($time_thuc_te - $time_du_kien) / 3600;
             if ($so_gio_do <= 0) $so_gio_do = 1; 
-            $result_gia = mysqli_query($this->conn, "SELECT loai_dich_vu, don_gia 
-                                                     FROM bang_gia_dich_vu");
+            $result_gia = mysqli_query($this->conn, "SELECT loai_dich_vu, don_gia FROM bang_gia_dich_vu");
             $bang_gia = [];
             while ($row = mysqli_fetch_assoc($result_gia)) {
                 $bang_gia[$row['loai_dich_vu']] = $row['don_gia'];
