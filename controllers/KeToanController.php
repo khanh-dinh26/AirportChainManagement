@@ -220,15 +220,43 @@ class KeToanController {
     }
 
 // Thống kê tổng hành khách qua sân bay
-    public function ThongKeHanhKhachSanBay($id_san_bay) {
+    public function ThongKeHanhKhachSanBay($id_san_bay, $tu_nam = null, $den_nam = null) {
         $id_san_bay = (int)$id_san_bay;
         $sql = "SELECT SUM(luong_hanh_khach) as tong_khach 
                 FROM chuyen_bay_ngay 
                 WHERE (id_san_bay_di = $id_san_bay OR id_san_bay_den = $id_san_bay)
                 AND trang_thai_tong = 'Hoan_Thanh'";
+        if ($tu_nam !== null && $den_nam !== null) {
+            $tu_nam = (int)$tu_nam;
+            $den_nam = (int)$den_nam;
+            $sql .= " AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) >= $tu_nam 
+                      AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) <= $den_nam";
+        }
         $result = mysqli_query($this->conn, $sql);
         $row = mysqli_fetch_assoc($result);
         return $row['tong_khach'] ?? 0;
+    }
+
+// Lấy chi tiết sản lượng khách theo tháng của một sân bay
+    public function ChiTietKhachTheoThang($id_san_bay, $tu_nam, $den_nam) {
+        $id_san_bay = (int)$id_san_bay;
+        $tu_nam = (int)$tu_nam;
+        $den_nam = (int)$den_nam;
+        $sql = "SELECT YEAR(COALESCE(gio_thuc_te, gio_du_kien)) as nam, MONTH(COALESCE(gio_thuc_te, gio_du_kien)) as thang, SUM(luong_hanh_khach) as tong_khach 
+                FROM chuyen_bay_ngay 
+                WHERE (id_san_bay_di = $id_san_bay OR id_san_bay_den = $id_san_bay)
+                AND trang_thai_tong = 'Hoan_Thanh'
+                AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) >= $tu_nam AND YEAR(COALESCE(gio_thuc_te, gio_du_kien)) <= $den_nam
+                GROUP BY YEAR(COALESCE(gio_thuc_te, gio_du_kien)), MONTH(COALESCE(gio_thuc_te, gio_du_kien))
+                ORDER BY nam ASC, thang ASC";
+        $result = mysqli_query($this->conn, $sql);
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
     }
 }
 ?>

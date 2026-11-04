@@ -72,9 +72,14 @@ $stats = $keToan->ThongKeNhanh();
 $danh_sach_hoa_don_cho = $keToan->DanhSachHoaDonCho();
 $danh_sach_san_bay = $keToan->DanhSachSanBay();
 $san_bay_chon = isset($_GET['san_bay']) ? (int)$_GET['san_bay'] : 0;
+$nam_hien_tai = date('Y');
+$tu_nam = isset($_GET['tu_nam']) ? (int)$_GET['tu_nam'] : $nam_hien_tai;
+$den_nam = isset($_GET['den_nam']) ? (int)$_GET['den_nam'] : $nam_hien_tai;
 $tong_khach_san_bay = 0;
+$chi_tiet_thang = [];
 if ($san_bay_chon > 0) {
-    $tong_khach_san_bay = $keToan->ThongKeHanhKhachSanBay($san_bay_chon);
+    $tong_khach_san_bay = $keToan->ThongKeHanhKhachSanBay($san_bay_chon, $tu_nam, $den_nam);
+    $chi_tiet_thang = $keToan->ChiTietKhachTheoThang($san_bay_chon, $tu_nam, $den_nam);
 }
 
 // Lấy thông tin khoản phí đang sửa (nếu có)
@@ -409,14 +414,13 @@ ob_start();
                 <h3 class="card-title"><i class="bi bi-people me-2"></i>Thống kê sản lượng hành khách theo Sân bay</h3>
             </div>
             <div class="card-body">
-                <form method="GET" class="row g-3 align-items-center">
+                <form method="GET" class="row g-3 align-items-end mb-4">
                     <input type="hidden" name="page" value="ke_toan">
-                    <div class="col-auto">
-                        <label class="col-form-label fw-bold">Chọn sân bay:</label>
-                    </div>
+                    
                     <div class="col-md-4">
+                        <label class="form-label fw-bold">Chọn sân bay:</label>
                         <select name="san_bay" class="form-select" required>
-                            <option value="">-- Chọn sân bay để thống kê --</option>
+                            <option value="">-- Chọn sân bay --</option>
                             <?php foreach ($danh_sach_san_bay as $sb): ?>
                                 <option value="<?= $sb['id'] ?>" <?= ($san_bay_chon == $sb['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($sb['ten_san_bay']) ?>
@@ -424,16 +428,46 @@ ob_start();
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary">Thống kê</button>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Từ năm:</label>
+                        <input type="number" name="tu_nam" class="form-control" min="2000" max="2050" value="<?= $tu_nam ?>">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Đến năm:</label>
+                        <input type="number" name="den_nam" class="form-control" min="2000" max="2050" value="<?= $den_nam ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-filter"></i> Lọc dữ liệu
+                        </button>
                     </div>
                 </form>
-
                 <?php if ($san_bay_chon > 0): ?>
-                    <div class="alert alert-info mt-4 text-center">
-                        <h4 class="mb-0">Tổng sản lượng hành khách (Đi + Đến): <strong>
-                            <?= number_format($tong_khach_san_bay) ?></strong> lượt khách</h4>
+                    <div class="alert alert-info text-center mb-4">
+                        <h4 class="mb-0">Tổng sản lượng hành khách (Đi + Đến) từ <?= $tu_nam ?> đến <?= $den_nam ?>: <strong class="fs-3"><?= number_format($tong_khach_san_bay) ?></strong> lượt khách</h4>
                     </div>
+                    <?php if (!empty($chi_tiet_thang)): ?>
+                        <table class="table table-bordered table-striped text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Năm</th>
+                                    <th>Tháng</th>
+                                    <th>Số lượng khách</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($chi_tiet_thang as $ct): ?>
+                                <tr>
+                                    <td><?= $ct['nam'] ?></td>
+                                    <td>Tháng <?= $ct['thang'] ?></td>
+                                    <td class="fw-bold text-primary"><?= number_format($ct['tong_khach']) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <div class="alert alert-warning">Không có dữ liệu chuyến bay nào trong khoảng thời gian này.</div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
