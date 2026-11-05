@@ -18,6 +18,7 @@ if (isset($_POST['btn_sua_gia'])) {
     $gia   = (float) ($_POST['don_gia'] ?? 0);
     $donVi = trim((string) ($_POST['don_vi_tinh'] ?? ''));
     $token = (string) ($_POST['csrf'] ?? '');
+    $daLuu = false;
 
     if (!hash_equals($_SESSION['ke_toan_csrf'], $token)) {
         $_SESSION['flash_error'] = 'Phiên làm việc đã hết hạn. Vui lòng thử lại.';
@@ -29,10 +30,18 @@ if (isset($_POST['btn_sua_gia'])) {
         $_SESSION['flash_error'] = 'Đơn vị tính không được để trống (tối đa 50 ký tự).';
     } elseif ($keToan->CapNhatDonGia($id, $gia, $donVi)) {
         $_SESSION['flash_success'] = 'Đã cập nhật đơn giá thành công!';
+        $daLuu = true;
     } else {
         $_SESSION['flash_error'] = 'Không cập nhật được đơn giá. Vui lòng thử lại.';
     }
-    header('Location: ' . $keToanUrl);
+
+    // Sau khi tải lại: mở lại khung biểu phí; nếu lỗi thì mở đúng dòng vừa sửa.
+    $_SESSION['ke_toan_mo_bieu_phi'] = true;
+    $chuyenHuong = $keToanUrl;
+    if (!$daLuu && $id > 0) {
+        $chuyenHuong .= '#sua-gia-' . $id;
+    }
+    header('Location: ' . $chuyenHuong);
     exit();
 }
 
@@ -58,6 +67,10 @@ $flashSuccess = $_SESSION['flash_success'] ?? '';
 $flashError   = $_SESSION['flash_error'] ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
+// Mở sẵn khung "Biểu phí dịch vụ" sau khi lưu (tránh phải bấm lại nút nổi).
+$moBieuPhi = !empty($_SESSION['ke_toan_mo_bieu_phi']);
+unset($_SESSION['ke_toan_mo_bieu_phi']);
+
 // 3. Lấy dữ liệu
 $danh_sach_gia = $keToan->DanhSachDonGia();
 $danh_sach_chuyen_bay = $keToan->ChuyenBayHoanThanh();
@@ -77,11 +90,6 @@ if ($san_bay_chon > 0) {
     $tong_khach_san_bay = $keToan->ThongKeHanhKhachSanBay($san_bay_chon, $tu_nam, $den_nam);
     $chi_tiet_thang = $keToan->ChiTietKhachTheoThang($san_bay_chon, $tu_nam, $den_nam);
     $chi_tiet_chuyen_bay = $keToan->ChiTietKhachTheoChuyenBay($san_bay_chon, $tu_nam, $den_nam);
-}
-
-$giaDangSua = null;
-if (isset($_GET['sua'])) {
-    $giaDangSua = $keToan->LayDonGia((int) $_GET['sua']);
 }
 
 $nhanPhi = [
@@ -271,7 +279,6 @@ ob_start();
         </div>
     </div>
 </div>
-</div>
 
 <!--PHẦN 4: CHUYẾN BAY ĐÃ HOÀN THÀNH-->
 <div class="row mt-3 mb-5">
@@ -320,32 +327,43 @@ ob_start();
 </div>
 
 <div class="floating-price-btn">
-    <details>
+    <details<?= $moBieuPhi ? ' open' : '' ?>>
         <summary class="btn btn-primary shadow" title="Cập nhật biểu phí"><i class="bi bi-tags-fill fs-4"></i></summary>
-        <div class="card card-primary card-outline floating-price-content shadow-lg">
+        <div class="card card-primary card-outline floating-price-content shadow-lg" id="bieu-phi">
             <div class="card-header"><h3 class="card-title">Biểu phí dịch vụ</h3></div>
             <div class="card-body">
-                <?php if ($giaDangSua): ?>
-                    <form method="post" action="index.php?page=ke_toan">
-                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['ke_toan_csrf'], ENT_QUOTES, 'UTF-8') ?>" />
-                        <input type="hidden" name="id" value="<?= (int) $giaDangSua['id'] ?>" />
-                        <div class="mb-2"><label class="form-label small mb-1 fw-bold">Khoản phí</label><input type="text" class="form-control form-control-sm" disabled value="<?= htmlspecialchars($nhanPhi[$giaDangSua['loai_dich_vu']] ?? $giaDangSua['loai_dich_vu'], ENT_QUOTES, 'UTF-8') ?>" /></div>
-                        <div class="mb-2"><label class="form-label small mb-1 fw-bold">Đơn giá (VNĐ)</label><input type="number" min="0.01" step="0.01" name="don_gia" class="form-control form-control-sm" required value="<?= htmlspecialchars((string) $giaDangSua['don_gia'], ENT_QUOTES, 'UTF-8') ?>" /></div>
-                        <div class="mb-2"><label class="form-label small mb-1 fw-bold">Đơn vị tính</label><input type="text" maxlength="50" name="don_vi_tinh" class="form-control form-control-sm" required value="<?= htmlspecialchars($giaDangSua['don_vi_tinh'], ENT_QUOTES, 'UTF-8') ?>" /></div>
-                        <div class="d-flex gap-2 mt-3"><button type="submit" name="btn_sua_gia" class="btn btn-sm btn-primary flex-fill">Lưu thay đổi</button><a href="index.php?page=ke_toan" class="btn btn-sm btn-light border">Hủy</a></div>
-                    </form>
-                <?php else: ?>
-                    <p class="text-muted small mb-3">Bấm <strong>Sửa</strong> ở bảng bên dưới để cập nhật đơn giá.</p>
-                <?php endif; ?>
+                <p class="text-muted small mb-3">Bấm <strong>Sửa</strong> để chỉnh ngay tại dòng, không cần tải lại trang.</p>
                 <hr>
                 <table class="table table-sm table-bordered align-middle mb-0">
                     <thead><tr><th>Tên phí</th><th>Đơn giá</th><th class="text-end">Thao tác</th></tr></thead>
                     <tbody>
                         <?php foreach ($danh_sach_gia as $gia): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($nhanPhi[$gia['loai_dich_vu']] ?? $gia['loai_dich_vu'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <?php $tenPhi = $nhanPhi[$gia['loai_dich_vu']] ?? $gia['loai_dich_vu']; ?>
+                        <tr class="gia-dong">
+                            <td><?= htmlspecialchars($tenPhi, ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= number_format($gia['don_gia']) ?><br><small class="text-muted"><?= htmlspecialchars($gia['don_vi_tinh'], ENT_QUOTES, 'UTF-8') ?></small></td>
-                            <td class="text-end"><a href="index.php?page=ke_toan&sua=<?= (int) $gia['id'] ?>" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+                            <td class="text-end"><a href="#sua-gia-<?= (int) $gia['id'] ?>" class="btn btn-sm btn-outline-primary">Sửa</a></td>
+                        </tr>
+                        <tr class="gia-form" id="sua-gia-<?= (int) $gia['id'] ?>">
+                            <td colspan="3">
+                                <form method="post" action="index.php?page=ke_toan">
+                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['ke_toan_csrf'], ENT_QUOTES, 'UTF-8') ?>" />
+                                    <input type="hidden" name="id" value="<?= (int) $gia['id'] ?>" />
+                                    <div class="fw-bold small mb-2"><?= htmlspecialchars($tenPhi, ENT_QUOTES, 'UTF-8') ?></div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1 fw-bold" for="don-gia-<?= (int) $gia['id'] ?>">Đơn giá (VNĐ)</label>
+                                        <input type="number" min="0.01" step="0.01" id="don-gia-<?= (int) $gia['id'] ?>" name="don_gia" class="form-control form-control-sm" required value="<?= htmlspecialchars((string) $gia['don_gia'], ENT_QUOTES, 'UTF-8') ?>" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1 fw-bold" for="don-vi-<?= (int) $gia['id'] ?>">Đơn vị tính</label>
+                                        <input type="text" maxlength="50" id="don-vi-<?= (int) $gia['id'] ?>" name="don_vi_tinh" class="form-control form-control-sm" required value="<?= htmlspecialchars($gia['don_vi_tinh'], ENT_QUOTES, 'UTF-8') ?>" />
+                                    </div>
+                                    <div class="d-flex gap-2 mt-3">
+                                        <button type="submit" name="btn_sua_gia" class="btn btn-sm btn-primary flex-fill">Lưu thay đổi</button>
+                                        <a href="#bieu-phi" class="btn btn-sm btn-light border">Hủy</a>
+                                    </div>
+                                </form>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -432,6 +450,11 @@ ob_start();
 .floating-price-btn summary { list-style: none; cursor: pointer; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .floating-price-btn summary::-webkit-details-marker { display: none; }
 .floating-price-content { position: absolute; bottom: 70px; right: 0; width: 350px; background: white; }
+
+/* Sửa biểu phí tại chỗ bằng CSS :target — KHÔNG dùng JavaScript, KHÔNG tải lại trang. */
+tr.gia-form { display: none; }
+tr.gia-form:target { display: table-row; }
+tr.gia-dong:has(+ tr.gia-form:target) { display: none; }
 </style>
 
 <script>

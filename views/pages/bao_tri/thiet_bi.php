@@ -172,7 +172,7 @@ $thiet_bi = array_values(array_filter($thiet_bi, static function (array $tb) use
 $soLuongHienThi = count($thiet_bi);
 
 // Phân trang danh sách thiết bị: 5 thiết bị mỗi trang.
-$soThietBiMoiTrang = 5;
+$soThietBiMoiTrang = 10;
 $tongTrang         = max(1, (int) ceil($soLuongHienThi / $soThietBiMoiTrang));
 $trangHienTai      = max(1, (int) ($_GET['trang'] ?? 1));
 $trangHienTai      = min($trangHienTai, $tongTrang);
@@ -222,11 +222,6 @@ $equipPageUrl = static function (int $page) use ($filterQ, $filterSanBay, $filte
     ], static fn($v) => $v !== ''));
 };
 
-/* ------------------------------------------------------------
- * Xác nhận xóa (thuần PHP + CSS, không dùng confirm() của JS):
- * link Xóa trỏ tới ?xac_nhan_xoa=<id>; trang hiện hộp thoại,
- * nút "Xóa" trong hộp thoại mới gửi form POST thật.
- * ------------------------------------------------------------ */
 $idCanXoa      = (int) ($_GET['xac_nhan_xoa'] ?? 0);
 $thietBiCanXoa = null;
 if ($idCanXoa > 0) {
