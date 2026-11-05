@@ -75,6 +75,42 @@ class KeToanController {
         }
     }
 
+    // public function TinhVaTaoHoaDon($id_chuyen_bay) {
+    //     $id_chuyen_bay = (int)$id_chuyen_bay; 
+    //     $sql_info = "SELECT cb.*, tb.tai_trong_cat_canh_mtow 
+    //                  FROM chuyen_bay_ngay cb 
+    //                  JOIN loai_tau_bay tb ON cb.id_loai_tau_bay = tb.id 
+    //                  WHERE cb.id = $id_chuyen_bay";
+    //     $result_info = mysqli_query($this->conn, $sql_info);
+    //     $cb = mysqli_fetch_assoc($result_info);
+        
+    //     if ($cb) {
+    //         $time_du_kien = strtotime($cb['gio_du_kien']);
+    //         $time_thuc_te = $cb['gio_thuc_te'] ? strtotime($cb['gio_thuc_te']) : time();
+    //         $so_gio_do = ($time_thuc_te - $time_du_kien) / 3600;
+    //         if ($so_gio_do <= 0) $so_gio_do = 1; 
+            
+    //         $result_gia = mysqli_query($this->conn, "SELECT loai_dich_vu, don_gia FROM bang_gia_dich_vu");
+    //         $bang_gia = [];
+    //         while ($row = mysqli_fetch_assoc($result_gia)) {
+    //             $bang_gia[$row['loai_dich_vu']] = $row['don_gia'];
+    //         }
+    //         $gia_ha_canh = $bang_gia['Phi_Cat_Ha_Canh'] ?? 0;
+    //         $gia_do = $bang_gia['Phi_Do_Tau_Bay'] ?? 0;
+    //         $phi_psc = $bang_gia['Phi_Phuc_Vu_Hanh_Khach'] ?? 0;
+            
+    //         $phi_cat_ha_canh = $cb['tai_trong_cat_canh_mtow'] * $gia_ha_canh;
+    //         $phi_do_tau_bay = $so_gio_do * $gia_do;
+    //         $phi_phuc_vu_hk = $cb['luong_hanh_khach'] * $phi_psc;
+    //         $tong_tien = $phi_cat_ha_canh + $phi_do_tau_bay + $phi_phuc_vu_hk;
+            
+    //         $id_hang = (int) ($cb['id_hang_hang_khong'] ?? 0);
+    //         $sql_insert = "INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
+    //                        VALUES ($id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien, NOW(), 'Chua_Thanh_Toan')";
+    //         return mysqli_query($this->conn, $sql_insert);
+    //     }
+    //     return false;
+    // }
     public function TinhVaTaoHoaDon($id_chuyen_bay) {
         $id_chuyen_bay = (int)$id_chuyen_bay; 
         $sql_info = "SELECT cb.*, tb.tai_trong_cat_canh_mtow 
@@ -85,29 +121,49 @@ class KeToanController {
         $cb = mysqli_fetch_assoc($result_info);
         
         if ($cb) {
-            $time_du_kien = strtotime($cb['gio_du_kien']);
-            $time_thuc_te = $cb['gio_thuc_te'] ? strtotime($cb['gio_thuc_te']) : time();
-            $so_gio_do = ($time_thuc_te - $time_du_kien) / 3600;
-            if ($so_gio_do <= 0) $so_gio_do = 1; 
+            // Thời gian đỗ mặc định là 1.0 giờ (hoặc lấy từ cột thoi_gian_do_gio nếu CSDL có)
+            $so_gio_do = isset($cb['thoi_gian_do_gio']) && $cb['thoi_gian_do_gio'] > 0 
+                         ? (float)$cb['thoi_gian_do_gio'] 
+                         : 1.0; 
             
+            // Lấy biểu phí dịch vụ
             $result_gia = mysqli_query($this->conn, "SELECT loai_dich_vu, don_gia FROM bang_gia_dich_vu");
             $bang_gia = [];
             while ($row = mysqli_fetch_assoc($result_gia)) {
-                $bang_gia[$row['loai_dich_vu']] = $row['don_gia'];
+                $bang_gia[$row['loai_dich_vu']] = (float)$row['don_gia'];
             }
-            $gia_ha_canh = $bang_gia['Phi_Cat_Ha_Canh'] ?? 0;
-            $gia_do = $bang_gia['Phi_Do_Tau_Bay'] ?? 0;
-            $phi_psc = $bang_gia['Phi_Phuc_Vu_Hanh_Khach'] ?? 0;
+            $gia_ha_canh = $bang_gia['Phi_Cat_Ha_Canh'] ?? 1500000;
+            $gia_do      = $bang_gia['Phi_Do_Tau_Bay'] ?? 50000;
+            $phi_psc     = $bang_gia['Phi_Phuc_Vu_Hanh_Khach'] ?? 100000;
             
-            $phi_cat_ha_canh = $cb['tai_trong_cat_canh_mtow'] * $gia_ha_canh;
-            $phi_do_tau_bay = $so_gio_do * $gia_do;
-            $phi_phuc_vu_hk = $cb['luong_hanh_khach'] * $phi_psc;
+            $mtow = (float)($cb['tai_trong_cat_canh_mtow'] ?? 0);
+            $so_khach = (int)($cb['luong_hanh_khach'] ?? 0);
+
+            // 1. Phí cất hạ cánh: Tính theo lượt (không nhân MTOW)
+            $phi_cat_ha_canh = $gia_ha_canh;
+
+            // 2. Phí đỗ tàu bay: Đơn giá * MTOW (tấn) * Số giờ đỗ
+            $phi_do_tau_bay = $gia_do * $mtow * $so_gio_do;
+
+            // 3. Phí phục vụ hành khách: Số khách * Đơn vị hành khách
+            $phi_phuc_vu_hk = $so_khach * $phi_psc;
+
+            // Tổng tiền
             $tong_tien = $phi_cat_ha_canh + $phi_do_tau_bay + $phi_phuc_vu_hk;
             
             $id_hang = (int) ($cb['id_hang_hang_khong'] ?? 0);
-            $sql_insert = "INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
-                           VALUES ($id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien, NOW(), 'Chua_Thanh_Toan')";
-            return mysqli_query($this->conn, $sql_insert);
+            
+            // Lưu vào CSDL
+            $stmt = mysqli_prepare($this->conn, "
+                INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), 'Chua_Thanh_Toan')
+            ");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, 'iiddds', $id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien);
+                $res = mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+                return $res;
+            }
         }
         return false;
     }

@@ -177,7 +177,7 @@ ob_start();
                             <td class="text-danger fw-bold"><?= number_format($hd['tong_tien']) ?> VNĐ</td>
                             <td><?= date('d/m/Y', strtotime($hd['han_thanh_toan'])) ?></td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalChiTiet" data-id="<?= $hd['id'] ?>"><i class="bi bi-eye"></i> Xem</button>
+                                <a href="views/pages/ke_toan/chi_tiet_hoa_don.php?id=<?= (int) $hd['id'] ?>" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> Xem</a>
                                 <a href="index.php?page=ke_toan&thanh_toan_id=<?= $hd['id'] ?>" class="btn btn-sm btn-outline-success">Xác nhận thu tiền</a>
                             </td>
                         </tr>
