@@ -351,24 +351,26 @@ if ($terminal) {
                 <span><i style="background: #f59e0b"></i> Đang bảo trì</span>
               </div>
 
-              <div class="ht-diagram-gallery-block">
+              <div class="ht-diagram-gallery-block" id="ht-gallery-<?= (int) $terminal['id'] ?>">
                 <?php if ($diagramGallery): ?>
+                  <?php $diagramTotal = count($diagramGallery); ?>
                   <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
                     <div>
                       <div class="ht-eyebrow text-secondary">Ảnh sơ đồ nhà ga</div>
-                      <div class="small text-secondary">Bấm ảnh để xem lớn; có thể thu phóng và chuyển ảnh.</div>
+                      <div class="small text-secondary">Bấm vào ảnh để xem lớn, dùng nút ◀ ▶ để chuyển ảnh.</div>
                     </div>
-                    <span class="badge text-bg-light"><?= count($diagramGallery) ?> ảnh</span>
+                    <span class="badge text-bg-light"><?= $diagramTotal ?> ảnh</span>
                   </div>
                   <div class="ht-diagram-gallery">
                     <?php foreach ($diagramGallery as $diagramIndex => $diagram): ?>
-                      <?php $diagramCaption = $terminal['ma_nha_ga'] . ' · ' . $diagram['caption']; ?>
+                      <?php
+                      $diagramNumber = $diagramIndex + 1;
+                      $diagramCaption = $terminal['ma_nha_ga'] . ' · ' . $diagram['caption'];
+                      ?>
                       <a
-                        href="<?= $e($diagram['image']) ?>"
+                        href="#ht-so-do-<?= (int) $terminal['id'] ?>-<?= (int) $diagramNumber ?>"
                         class="ht-diagram-thumb"
-                        data-ht-index="<?= (int) $diagramIndex ?>"
-                        data-image="<?= $e($diagram['image']) ?>"
-                        data-caption="<?= $e($diagramCaption) ?>"
+                        aria-label="Xem lớn sơ đồ <?= $e($diagram['caption']) ?>"
                       >
                         <span class="ht-diagram-thumb__zoom" aria-hidden="true">
                           <i class="bi bi-arrows-fullscreen"></i>
@@ -392,8 +394,68 @@ if ($terminal) {
                       <?php endif; ?>
                     </div>
                   <?php endif; ?>
+                <?php else: ?>
+                  <div class="ht-eyebrow text-secondary mb-2">Ảnh sơ đồ nhà ga</div>
+                  <div class="ht-gallery-empty">
+                    <i class="bi bi-image"></i>
+                    <strong>Chưa có sơ đồ</strong>
+                    <span>Nhà ga <?= $e($terminal['ma_nha_ga']) ?> chưa có ảnh sơ đồ được cập nhật.</span>
+                  </div>
                 <?php endif; ?>
-              </div> 
+              </div>
+
+              <?php if ($diagramGallery): ?>
+                <?php ob_start(); ?>
+                <?php foreach ($diagramGallery as $diagramIndex => $diagram): ?>
+                  <?php
+                  $diagramNumber = $diagramIndex + 1;
+                  $lightboxId = 'ht-so-do-' . (int) $terminal['id'] . '-' . (int) $diagramNumber;
+                  $lightboxCaption = $terminal['ma_nha_ga'] . ' · ' . $diagram['caption'];
+                  ?>
+                  <div class="ht-lightbox" id="<?= $e($lightboxId) ?>" role="dialog" aria-modal="true" aria-label="<?= $e('Sơ đồ ' . $terminal['ten_nha_ga']) ?>">
+                    <a
+                      href="#ht-gallery-<?= (int) $terminal['id'] ?>"
+                      class="ht-lightbox__backdrop"
+                      aria-label="Đóng ảnh"
+                    ></a>
+                    <div class="ht-lightbox__dialog">
+                      <div class="ht-lightbox__head">
+                        <span class="ht-lightbox__title"><?= $e($lightboxCaption) ?></span>
+                        <span class="ht-lightbox__count"><?= (int) $diagramNumber ?>/<?= (int) $diagramTotal ?></span>
+                        <a href="#ht-gallery-<?= (int) $terminal['id'] ?>" class="ht-lightbox__close" aria-label="Đóng ảnh">
+                          <i class="bi bi-x-lg"></i>
+                        </a>
+                      </div>
+
+                      <?php if ($diagramNumber > 1): ?>
+                        <a
+                          href="#ht-so-do-<?= (int) $terminal['id'] ?>-<?= (int) ($diagramNumber - 1) ?>"
+                          class="ht-lightbox__nav ht-lightbox__nav--prev"
+                          aria-label="Ảnh trước"
+                        ><i class="bi bi-chevron-left"></i></a>
+                      <?php endif; ?>
+                      <?php if ($diagramNumber < $diagramTotal): ?>
+                        <a
+                          href="#ht-so-do-<?= (int) $terminal['id'] ?>-<?= (int) ($diagramNumber + 1) ?>"
+                          class="ht-lightbox__nav ht-lightbox__nav--next"
+                          aria-label="Ảnh tiếp theo"
+                        ><i class="bi bi-chevron-right"></i></a>
+                      <?php endif; ?>
+
+                      <div class="ht-lightbox__stage">
+                        <div class="ht-lightbox__canvas">
+                          <img src="<?= $e($diagram['image']) ?>" alt="<?= $e('Sơ đồ ' . $terminal['ten_nha_ga'] . ' - ' . $diagram['caption']) ?>" />
+                        </div>
+                      </div>
+                      <div class="ht-lightbox__caption">
+                        <?= $e($diagram['caption']) ?>
+                        <small><?= $e($terminal['ten_nha_ga']) ?> · <?= $e($airport['ten_san_bay']) ?></small>
+                      </div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+                <?php $htLightboxHtml = ob_get_clean(); ?>
+              <?php endif; ?>
             </div>
           </div>
         </div>

@@ -29,10 +29,11 @@ $imageExists = static function (string $path) use ($projectRoot): bool {
 };
 
 $imageUrl = static function ($path, $fallback = '') use ($imageExists) {
+    // Không dùng ảnh dự phòng chung nữa: mỗi nhà ga / sân bay phải dùng đúng
+    // ảnh của chính nó, tránh việc nhà ga nào cũng hiện ảnh Tân Sơn Nhất.
     $candidates = [
         trim((string) $path),
         trim((string) $fallback),
-        'assets/img/san_bay/SGN.jpg', // ảnh dự phòng cuối cùng
     ];
 
     $path = '';
@@ -59,6 +60,23 @@ $airportImage = static function ($airport) use ($imageUrl) {
         $airport['hinh_anh'] ?? '',
         'assets/img/san_bay/' . $maIata . '.jpg'
     );
+};
+
+/**
+ * Nền gradient riêng cho từng sân bay khi chưa có ảnh đại diện.
+ * Thay cho việc mượn ảnh của một sân bay khác.
+ */
+$airportImageStyle = static function (string $maIata): string {
+    $palette = [
+        ['#0b1f3a', '#155e75'],
+        ['#1e1b4b', '#0f766e'],
+        ['#111827', '#1d4ed8'],
+        ['#052e16', '#0e7490'],
+    ];
+    $hash = crc32($maIata);
+    $pair = $palette[$hash % count($palette)];
+
+    return 'background: linear-gradient(135deg, ' . $pair[0] . ', ' . $pair[1] . ');';
 };
 
 $statusLabels = [
@@ -157,6 +175,12 @@ $khu = $data['khu'];
 $tab = $data['tab'];
 $flash = $data['flash'];
 
+// Trang quản trị riêng cho danh mục sân bay: tách khỏi trang Hạ tầng và khỏi
+// khu quản lý nhà ga. Chỉ hiển thị danh sách sân bay cùng thêm/sửa/xóa.
+$airportAdmin = $quanTri && $tab === 'san_bay';
+
+$showAirportManagement = !$quanTri && !$airportAdmin && !$selectedAirport && isset($_GET['quan_ly_san_bay']) && $_GET['quan_ly_san_bay'] === '1';
+
 $totalAirports = count($data['airports']);
 $totalTerminals = array_sum(array_column($data['airports'], 'so_nha_ga'));
 $totalGates = array_sum(array_column($data['airports'], 'so_cua_ra'));
@@ -182,9 +206,16 @@ $pageHeader = 'Quản lý hạ tầng';
 $navActive = 'ha_tang';
 $breadcrumb = [
     ['label' => 'Tổng quan', 'url' => BASE_URL . '/index.php'],
-    ['label' => 'Hạ tầng', 'url' => null],
+    ['label' => 'Hạ tầng', 'url' => $url($quanTri && !$airportAdmin ? ['quan_tri' => '1', 'tab' => $tab] : [])],
 ];
-if ($selectedAirport) {
+if ($airportAdmin) {
+    $pageTitle = 'Quản lý sân bay';
+    $pageHeader = 'Quản lý sân bay';
+    $breadcrumb[] = ['label' => 'Quản lý sân bay', 'url' => null];
+} elseif ($selectedAirport) {
+    // Trang riêng của một cảng hàng không: tiêu đề và breadcrumb đổi theo cảng.
+    $pageTitle = $selectedAirport['ten_san_bay'];
+    $pageHeader = $selectedAirport['ten_san_bay'];
     $breadcrumb[] = ['label' => $selectedAirport['ten_ngan'], 'url' => null];
 }
 
@@ -338,6 +369,46 @@ ob_start();
   }
   .ht-page .ht-legend .is-intl { background: var(--ht-intl); }
   .ht-page .ht-legend .is-dom { background: var(--ht-dom); }
+  .ht-page .ht-admin-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.4rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--ht-line);
+    border-radius: 16px;
+    background: var(--bs-body-bg);
+    box-shadow: 0 10px 24px rgba(8, 25, 50, .06);
+  }
+  .ht-page .ht-admin-cta__icon {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    color: #fff;
+    background: linear-gradient(135deg, #1d4ed8, #0e7490);
+    font-size: 1.3rem;
+  }
+  .ht-page .ht-admin-cta__body {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+  .ht-page .ht-admin-cta__body h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--ht-ink);
+  }
+  .ht-page .ht-admin-cta__body p {
+    margin: .2rem 0 0;
+    color: var(--ht-muted);
+    font-size: .82rem;
+  }
+  .ht-page .ht-admin-cta .btn { flex: 0 0 auto; font-weight: 700; }
   .ht-page .ht-airport-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -370,10 +441,6 @@ ob_start();
     outline: 2px solid var(--bs-primary);
     outline-offset: 2px;
   }
-  .ht-page .ht-airport.is-selected {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, .2), 0 14px 26px rgba(8, 25, 50, .16);
-  }
   .ht-page .ht-airport__media {
     position: relative;
     flex: 1 1 auto;
@@ -389,6 +456,20 @@ ob_start();
   }
   .ht-page .ht-airport:hover .ht-airport__media img {
     transform: scale(1.05);
+  }
+  .ht-page .ht-airport__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(255, 255, 255, .78);
+    font-size: 1.7rem;
+  }
+  .ht-page .ht-airport-detail__image .ht-airport__placeholder {
+    position: absolute;
+    inset: 0;
+    font-size: 2.4rem;
   }
   .ht-page .ht-airport__tag {
     position: absolute;
@@ -418,21 +499,6 @@ ob_start();
     font-weight: 900;
     letter-spacing: .05em;
   }
-  .ht-page .ht-airport__check {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 21px;
-    height: 21px;
-    border-radius: 50%;
-    color: #1d4ed8;
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
-  }
-  .ht-page .ht-airport.is-selected .ht-airport__check { display: inline-flex; }
   .ht-page .ht-airport__body {
     flex: 0 0 auto;
     min-width: 0;
@@ -912,155 +978,175 @@ ob_start();
   .ht-page .ht-diagram-source a:hover {
     text-decoration: underline;
   }
-  .ht-page .ht-lightbox {
-    --ht-lightbox-stage-height: min(72vh, 760px);
+  .ht-page .ht-gallery-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    padding: 1.5rem 1rem;
+    border: 1px dashed var(--ht-line);
+    border-radius: 14px;
+    color: var(--ht-muted);
+    background: var(--bs-body-bg);
+    text-align: center;
   }
-  .ht-page .ht-lightbox .modal-content {
-    overflow: hidden;
-    border-color: var(--ht-line);
+  .ht-page .ht-gallery-empty i {
+    font-size: 1.5rem;
+    opacity: .5;
   }
-  .ht-page .ht-lightbox .modal-header {
-    padding: .8rem 1rem;
+  .ht-page .ht-gallery-empty strong {
+    color: var(--ht-ink);
+    font-size: .95rem;
   }
-  .ht-page .ht-lightbox .modal-body {
-    padding: 0;
+  .ht-page .ht-gallery-empty span {
+    font-size: .8rem;
   }
-  .ht-page .ht-lightbox-heading {
-    min-width: 0;
+
+  /* ---------- Lightbox thuần CSS (mở bằng :target) ---------- */
+  .ht-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(4, 10, 20, .88);
   }
-  .ht-page .ht-lightbox-heading .modal-title {
-    font-size: 1rem;
-    line-height: 1.3;
+  .ht-lightbox:target {
+    display: flex;
   }
-  .ht-page .ht-lightbox-viewer {
+  .ht-lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    cursor: zoom-out;
+  }
+  .ht-lightbox__dialog {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 100%);
+    max-height: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 18px;
     background: #0b1220;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, .5);
   }
-  .ht-page .ht-lightbox-stage {
-    height: var(--ht-lightbox-stage-height);
+  .ht-lightbox__head {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem .9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+    color: #fff;
+  }
+  .ht-lightbox__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: .95rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ht-lightbox__count {
+    flex: 0 0 auto;
+    padding: .12rem .45rem;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, .14);
+    font-size: .72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ht-lightbox__close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, .26);
+    border-radius: 9px;
+    color: #fff;
+    text-decoration: none;
+  }
+  .ht-lightbox__close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, .14);
+  }
+  .ht-lightbox__stage {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
     background: #0b1220;
   }
-  .ht-page .ht-lightbox-canvas {
+  .ht-lightbox__canvas {
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
     justify-content: center;
-    min-width: 100%;
-    min-height: 100%;
-    padding: 1rem;
-    box-sizing: border-box;
+    min-height: 42vh;
+    padding: 1rem 4rem;
   }
-  .ht-page .ht-lightbox-canvas.is-zoomed {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-  .ht-page .ht-lightbox-canvas img {
+  .ht-lightbox__canvas img {
     display: block;
     width: auto;
     height: auto;
     max-width: 100%;
-    max-height: calc(var(--ht-lightbox-stage-height) - 2rem);
+    max-height: calc(100vh - 200px);
     border-radius: 10px;
     background: #fff;
     user-select: none;
   }
-  .ht-page .ht-lightbox-canvas img.is-zoomed {
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
+  .ht-lightbox__caption {
+    padding: .7rem 1rem .85rem;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    color: rgba(255, 255, 255, .84);
+    font-size: .86rem;
+    text-align: center;
   }
-  .ht-page .ht-lightbox-nav {
+  .ht-lightbox__caption small {
+    display: block;
+    margin-top: .2rem;
+    color: rgba(255, 255, 255, .55);
+    font-size: .74rem;
+  }
+  .ht-lightbox__nav {
     position: absolute;
     top: 50%;
-    z-index: 2;
+    z-index: 3;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    border: 1px solid rgba(255, 255, 255, .32);
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, .34);
     border-radius: 50%;
     color: #fff;
-    background: rgba(15, 23, 42, .72);
-    font-size: 1.15rem;
+    background: rgba(15, 23, 42, .78);
+    font-size: 1.2rem;
+    text-decoration: none;
     transform: translateY(-50%);
-    transition: background .18s ease, transform .18s ease;
+    transition: background .18s ease;
   }
-  .ht-page .ht-lightbox-nav:hover {
+  .ht-lightbox__nav:hover {
+    color: #fff;
     background: var(--bs-primary);
-    transform: translateY(-50%) scale(1.04);
   }
-  .ht-page .ht-lightbox-nav:focus-visible {
+  .ht-lightbox__nav:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
   }
-  .ht-page .ht-lightbox-nav[hidden] {
-    display: none;
-  }
-  .ht-page .ht-lightbox-nav--prev {
-    left: .65rem;
-  }
-  .ht-page .ht-lightbox-nav--next {
-    right: .65rem;
-  }
-  .ht-page .ht-lightbox-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: .5rem .8rem;
-    padding: .7rem 1rem;
-    border-top: 1px solid var(--ht-line);
-    background: var(--bs-body-bg);
-  }
-  .ht-page .ht-lightbox-zoom {
-    display: inline-flex;
-    align-items: center;
-    padding: .2rem;
-    border: 1px solid var(--ht-line);
-    border-radius: 999px;
-    background: var(--bs-tertiary-bg);
-  }
-  .ht-page .ht-lightbox-zoom button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 30px;
-    padding: 0 .45rem;
-    border: 0;
-    border-radius: 999px;
-    color: var(--ht-ink);
-    background: transparent;
-    font-size: .78rem;
-    font-weight: 700;
-  }
-  .ht-page .ht-lightbox-zoom button:hover:not(:disabled) {
-    background: var(--bs-body-bg);
-  }
-  .ht-page .ht-lightbox-zoom button:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-  }
-  .ht-page .ht-lightbox-zoom [data-ht-zoom-label] {
-    min-width: 48px;
-    font-variant-numeric: tabular-nums;
-  }
-  .ht-page .ht-lightbox-source {
-    flex: 1 1 250px;
-    color: var(--ht-muted);
-    font-size: .7rem;
-    text-align: right;
-  }
-  .ht-page .ht-lightbox-source a {
-    color: var(--bs-primary);
-    text-decoration: none;
-  }
-  .ht-page .ht-lightbox-source a:hover {
-    text-decoration: underline;
-  }
+  .ht-lightbox__nav--prev { left: .75rem; }
+  .ht-lightbox__nav--next { right: .75rem; }
   .ht-page .ht-empty {
     padding: 2.6rem 1rem;
     border: 1px dashed var(--ht-line);
@@ -1238,7 +1324,6 @@ ob_start();
     .ht-page .ht-diagram__grid { grid-template-columns: 1fr; }
     .ht-page .ht-mini-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .ht-page .ht-diagram-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .ht-page .ht-lightbox { --ht-lightbox-stage-height: calc(100vh - 190px); }
   }
   @media (max-width: 767.98px) {
     .ht-page .ht-hero { padding: 1.25rem; border-radius: 18px; }
@@ -1249,13 +1334,14 @@ ob_start();
     .ht-page .ht-mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ht-page .ht-diagram-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .ht-page .ht-diagram-thumb img { height: 70px; }
-    .ht-page .ht-lightbox .modal-header { padding: .7rem .8rem; }
-    .ht-page .ht-lightbox-toolbar { padding: .6rem .7rem; }
-    .ht-page .ht-lightbox-source { flex-basis: 100%; text-align: left; }
-    .ht-page .ht-lightbox-nav { width: 38px; height: 38px; font-size: 1rem; }
+    .ht-lightbox__canvas { padding: .75rem 3rem; }
+    .ht-lightbox__canvas img { max-height: calc(100vh - 230px); }
   }
   @media (max-width: 575.98px) {
     .ht-page .ht-airport-grid { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); }
+    .ht-lightbox { padding: .25rem; }
+    .ht-lightbox__canvas { padding: .5rem 2.75rem; }
+    .ht-lightbox__nav { width: 36px; height: 36px; font-size: 1rem; }
   }
 
   /* Typography: tăng cỡ chữ toàn bộ nội dung trang Hạ tầng */
@@ -1296,10 +1382,11 @@ ob_start();
   .ht-page .ht-diagram__legend { font-size: .82rem; }
   .ht-page .ht-diagram-thumb__caption { font-size: .78rem; }
   .ht-page .ht-diagram-thumb__zoom { font-size: .74rem; }
+  .ht-page .ht-gallery-empty strong { font-size: 1.05rem; }
+  .ht-page .ht-gallery-empty span { font-size: .9rem; }
+  .ht-lightbox__title { font-size: 1.1rem; }
+  .ht-lightbox__caption { font-size: .95rem; }
   .ht-page .ht-diagram-source { font-size: .84rem; }
-  .ht-page .ht-lightbox-heading .modal-title { font-size: 1.15rem; }
-  .ht-page .ht-lightbox-zoom button { font-size: .9rem; }
-  .ht-page .ht-lightbox-source { font-size: .84rem; }
   .ht-page .ht-empty h3 { font-size: 1.2rem; }
   .ht-page .ht-empty p { font-size: .96rem; }
   .ht-page .ht-table { font-size: .94rem; }
@@ -1323,30 +1410,43 @@ ob_start();
     </div>
   <?php endif; ?>
 
+  <?php if (!$airportAdmin): ?>
   <div class="ht-hero">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
       <div>
         <div class="ht-eyebrow"><span class="ht-pulse"></span> Hạ tầng cảng hàng không</div>
-        <h2 class="ht-hero__title">Mạng lưới <?= $totalAirports ?> sân bay</h2>
-        <p class="ht-hero__sub">
-          Chọn một sân bay trên bản đồ để xem chuyến bay, nhà ga và sơ đồ khai thác.
-          <?= $quanTri ? 'Bạn đang ở chế độ quản trị danh mục hạ tầng.' : 'Dữ liệu được đồng bộ từ danh mục sân bay, nhà ga và tài nguyên khai thác.' ?>
-        </p>
+        <?php if ($selectedAirport): ?>
+          <h2 class="ht-hero__title"><?= $e($selectedAirport['ten_san_bay']) ?></h2>
+          <p class="ht-hero__sub">
+            <i class="bi bi-geo-alt me-1"></i><?= $e($selectedAirport['vi_tri']) ?>
+            <?= $quanTri ? ' · Bạn đang ở chế độ quản trị danh mục hạ tầng.' : '' ?>
+          </p>
+        <?php else: ?>
+          <h2 class="ht-hero__title">Mạng lưới <?= $totalAirports ?> sân bay</h2>
+          <p class="ht-hero__sub">
+            Chọn một cảng hàng không để mở trang thông tin riêng: chuyến bay, nhà ga và sơ đồ khai thác.
+            <?= $quanTri ? 'Bạn đang ở chế độ quản trị danh mục hạ tầng.' : 'Dữ liệu được đồng bộ từ danh mục sân bay, nhà ga và tài nguyên khai thác.' ?>
+          </p>
+        <?php endif; ?>
       </div>
     </div>
 
-    <div class="ht-hero__stats">
-      <div class="ht-hero__stat"><strong><?= $totalAirports ?></strong><span>Sân bay</span></div>
-      <div class="ht-hero__stat"><strong><?= $totalTerminals ?></strong><span>Nhà ga</span></div>
-      <div class="ht-hero__stat"><strong><?= $totalGates ?></strong><span>Cửa ra máy bay</span></div>
-      <div class="ht-hero__stat"><strong><?= $totalCheckins ?></strong><span>Quầy check-in</span></div>
-    </div>
+    <?php if (!$selectedAirport): ?>
+      <div class="ht-hero__stats">
+        <div class="ht-hero__stat"><strong><?= $totalAirports ?></strong><span>Sân bay</span></div>
+        <div class="ht-hero__stat"><strong><?= $totalTerminals ?></strong><span>Nhà ga</span></div>
+        <div class="ht-hero__stat"><strong><?= $totalGates ?></strong><span>Cửa ra máy bay</span></div>
+        <div class="ht-hero__stat"><strong><?= $totalCheckins ?></strong><span>Quầy check-in</span></div>
+      </div>
+    <?php endif; ?>
   </div>
+  <?php endif; ?>
 
+  <?php if (!$selectedAirport && !$airportAdmin): ?>
   <div class="ht-section-head">
     <div>
       <h3>Bản đồ chuỗi sân bay</h3>
-      <p>Nhấn vào một ô sân bay để mở khu vực khai thác bên dưới.</p>
+      <p>Nhấn vào một ô cảng hàng không để mở trang thông tin riêng của cảng đó.</p>
     </div>
     <div class="ht-legend">
       <span><i class="is-intl"></i> Quốc tế · CHKQT</span>
@@ -1357,7 +1457,6 @@ ob_start();
   <div class="ht-airport-grid">
     <?php foreach ($airports as $airport): ?>
       <?php
-      $isSelected = $selectedAirport && (int) $selectedAirport['id'] === (int) $airport['id'];
       $isInternational = $airport['phan_cap'] === 'Quoc_Te';
       $airportLinkParams = ['san_bay' => $airport['ma_iata'], 'khu' => 'chuyen_bay'];
       if ($quanTri) {
@@ -1365,25 +1464,28 @@ ob_start();
           $airportLinkParams['quan_tri'] = '1';
           $airportLinkParams['tab'] = $tab;
       }
+      $airportThumb = $airportImage($airport);
       ?>
       <a
         href="<?= $e($url($airportLinkParams)) ?>"
-        class="ht-airport <?= $isSelected ? 'is-selected' : '' ?>"
+        class="ht-airport"
         title="<?= $e($airport['ten_san_bay'] . ' · ' . $airport['vi_tri']) ?>"
-        aria-label="Chọn sân bay <?= $e($airport['ten_san_bay']) ?>"
-        <?= $isSelected ? 'aria-current="true"' : '' ?>
+        aria-label="Mở trang cảng hàng không <?= $e($airport['ten_san_bay']) ?>"
       >
-        <span class="ht-airport__media">
-          <img
-            src="<?= $e($airportImage($airport)) ?>"
-            alt="<?= $e($airport['ten_san_bay']) ?>"
-            loading="lazy"
-          />
+        <span class="ht-airport__media" <?= $airportThumb === '' ? 'style="' . $e($airportImageStyle((string) $airport['ma_iata'])) . '"' : '' ?>>
+          <?php if ($airportThumb !== ''): ?>
+            <img
+              src="<?= $e($airportThumb) ?>"
+              alt="<?= $e($airport['ten_san_bay']) ?>"
+              loading="lazy"
+            />
+          <?php else: ?>
+            <span class="ht-airport__placeholder"><i class="bi bi-airplane"></i></span>
+          <?php endif; ?>
           <span class="ht-airport__tag <?= $isInternational ? 'is-intl' : 'is-dom' ?>">
             <?= $e($capLabels[$airport['phan_cap']] ?? $airport['phan_cap']) ?>
           </span>
           <span class="ht-airport__code"><?= $e($airport['ma_iata']) ?></span>
-          <span class="ht-airport__check"><i class="bi bi-check2"></i></span>
         </span>
         <span class="ht-airport__body">
           <span class="ht-airport__name"><?= $e($airport['ten_ngan']) ?></span>
@@ -1392,16 +1494,95 @@ ob_start();
       </a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
-  <?php if ($selectedAirport): ?>
+  <?php if (!$selectedAirport && !$airportAdmin): ?>
+    <div class="ht-admin-cta">
+      <div class="ht-admin-cta__icon"><i class="bi bi-building-gear"></i></div>
+      <div class="ht-admin-cta__body">
+        <h3>Quản lý danh mục sân bay</h3>
+        <p>Thêm, sửa hoặc xóa sân bay trong chuỗi cảng hàng không.</p>
+      </div>
+      <a href="<?= $e($url(['quan_ly_san_bay' => '1'])) ?>" class="btn btn-primary">
+        <i class="bi bi-building me-1"></i> Quản lí sân bay
+      </a>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($showAirportManagement): ?>
+    <div class="ht-section-head mt-4">
+      <div>
+        <h3>Danh mục sân bay</h3>
+        <p>Thêm, sửa hoặc xóa sân bay trong chuỗi cảng hàng không.</p>
+      </div>
+      <a href="<?= $e($url()) ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại hạ tầng
+      </a>
+    </div>
+    <?php
+    $airportAdminOnly = true;
+    $management = [
+        'tab' => 'san_bay',
+        'editRecord' => null,
+        'formMode' => isset($_GET['them']) && $_GET['them'] === '1' ? 'them' : (isset($_GET['sua']) ? 'sua' : null),
+        'formType' => 'san_bay',
+    ];
+    if ($management['formMode'] === 'sua') {
+        $management['editRecord'] = null;
+        foreach ($airports as $ap) {
+            if ((int) $ap['id'] === (int) $_GET['sua']) {
+                $management['editRecord'] = $ap;
+                break;
+            }
+        }
+    }
+    $returnTab = 'san_bay';
+    $returnSanBay = '';
+    $returnNhaGa = 0;
+    $formMode = $management['formMode'];
+    $formRecord = $management['editRecord'];
+    $formType = $management['formType'];
+    $adminUrl = static function (array $overrides = []) use ($url, $returnTab, $returnSanBay, $returnNhaGa) {
+        $params = ['quan_ly_san_bay' => '1', 'tab' => $returnTab];
+        foreach ($overrides as $key => $value) {
+            if ($value === null || $value === '') {
+                unset($params[$key]);
+            } else {
+                $params[$key] = $value;
+            }
+        }
+        return $url($params);
+    };
+    $listUrl = $adminUrl(['tab' => 'san_bay']);
+    $tabParams = ['quan_ly_san_bay' => '1', 'tab' => 'san_bay'];
+    $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
+    $currentMeta = ['label' => 'Sân bay', 'icon' => 'bi-building', 'desc' => 'Danh mục sân bay, mã nhận diện, phân cấp và trạng thái khai thác.', 'add' => 'Thêm sân bay'];
+    $canUseTab = true;
+    require __DIR__ . '/_quan_tri.php';
+    ?>
+  <?php endif; ?>
+
+  <?php if ($selectedAirport && !$airportAdmin): ?>
+    <div class="ht-section-head mt-4">
+      <div>
+        <h3>Thông tin cảng hàng không</h3>
+        <p>Toàn bộ dữ liệu bên dưới chỉ thuộc cảng <strong><?= $e($selectedAirport['ten_san_bay']) ?></strong> (<?= $e($selectedAirport['ma_iata']) ?>).</p>
+      </div>
+    </div>
+
     <div class="card ht-airport-detail mb-3">
       <div class="row g-0">
         <div class="col-md-3">
-          <div class="ht-airport-detail__image">
-            <img
-              src="<?= $e($airportImage($selectedAirport)) ?>"
-              alt="<?= $e($selectedAirport['ten_san_bay']) ?>"
-            />
+          <?php $selectedAirportThumb = $airportImage($selectedAirport); ?>
+          <div class="ht-airport-detail__image" <?= $selectedAirportThumb === '' ? 'style="' . $e($airportImageStyle((string) $selectedAirport['ma_iata'])) . '"' : '' ?>>
+            <?php if ($selectedAirportThumb !== ''): ?>
+              <img
+                src="<?= $e($selectedAirportThumb) ?>"
+                alt="<?= $e($selectedAirport['ten_san_bay']) ?>"
+              />
+            <?php else: ?>
+              <span class="ht-airport__placeholder"><i class="bi bi-airplane"></i></span>
+            <?php endif; ?>
             <span class="ht-airport-detail__code"><?= $e($selectedAirport['ma_iata']) ?></span>
           </div>
         </div>
@@ -1438,7 +1619,22 @@ ob_start();
     </div>
   <?php endif; ?>
 
-  <?php if ($quanTri): ?>
+  <?php if ($airportAdmin): ?>
+    <div class="ht-section-head mt-4">
+      <div>
+        <h3>Danh mục sân bay</h3>
+        <p>Thêm, sửa hoặc xóa sân bay trong chuỗi cảng hàng không.</p>
+      </div>
+      <a href="<?= $e($url()) ?>" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại hạ tầng
+      </a>
+    </div>
+    <?php
+    // Chế độ chỉ quản lý sân bay: ẩn thanh tab và các khối chọn sân bay / nhà ga.
+    $airportAdminOnly = true;
+    require __DIR__ . '/_quan_tri.php';
+    ?>
+  <?php elseif ($quanTri): ?>
     <div class="ht-section-head mt-4">
       <div>
         <h3>Quản trị hạ tầng</h3>
@@ -1486,14 +1682,14 @@ ob_start();
         <?php require __DIR__ . '/_terminal.php'; ?>
       </div>
     </div>
-  <?php else: ?>
-    <div class="ht-empty mt-4">
-      <i class="bi bi-hand-index-thumb"></i>
-      <h3>Chọn một sân bay để bắt đầu</h3>
-      <p>Nhấn vào một ô sân bay phía trên để xem chuyến bay, danh sách nhà ga và sơ đồ khai thác.</p>
-    </div>
   <?php endif; ?>
 </div>
+
+<?php
+// Lightbox phải nằm ngoài .ht-page: .ht-page có animation transform nên sẽ
+// "nhốt" phần tử position:fixed vào bên trong và bị cắt bởi overflow của thẻ.
+echo $htLightboxHtml ?? '';
+?>
 
 <?php
 /* ------------------------------------------------------------
