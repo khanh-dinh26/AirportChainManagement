@@ -63,15 +63,9 @@ $statusLabels = [
 ];
 
 $statusBadgeClasses = [
-    'Tot'     => 'text-success-emphasis bg-success-subtle border-success-subtle',
-    'Bao_Tri' => 'text-warning-emphasis bg-warning-subtle border-warning-subtle',
-    'Hong'    => 'text-danger-emphasis bg-danger-subtle border-danger-subtle',
-];
-
-$statusDotClasses = [
-    'Tot'     => 'bg-success',
-    'Bao_Tri' => 'bg-warning',
-    'Hong'    => 'bg-danger',
+    'Tot'     => 'text-bg-success',
+    'Bao_Tri' => 'text-bg-warning',
+    'Hong'    => 'text-bg-danger',
 ];
 
 $loaiThietBiLabels = [
@@ -98,12 +92,6 @@ $loaiAvatarClasses = [
     'Khac'               => 'maint-avatar--secondary',
 ];
 
-$statusAccentColors = [
-    'Tot'     => 'var(--bs-success)',
-    'Bao_Tri' => 'var(--bs-warning)',
-    'Hong'    => 'var(--bs-danger)',
-];
-
 $tongThietBi     = count($thiet_bi);
 $soThietBiTot    = 0;
 $soThietBiBaoTri = 0;
@@ -124,10 +112,6 @@ $statusCounts = [
     'Bao_Tri' => $soThietBiBaoTri,
     'Hong'    => $soThietBiHong,
 ];
-
-$tyLeTot = $tongThietBi > 0 ? min(100, (int) round(($soThietBiTot / $tongThietBi) * 100)) : 0;
-$tyLeBaoTri = $tongThietBi > 0 ? min(100, (int) round(($soThietBiBaoTri / $tongThietBi) * 100)) : 0;
-$tyLeHong = $tongThietBi > 0 ? min(100, (int) round(($soThietBiHong / $tongThietBi) * 100)) : 0;
 
 $dsSanBay = [];
 $dsLoai   = [];
@@ -186,12 +170,24 @@ $thiet_bi = array_values(array_filter($thiet_bi, static function (array $tb) use
 }));
 
 $soLuongHienThi = count($thiet_bi);
+
+// Phân trang danh sách thiết bị: 5 thiết bị mỗi trang.
+$soThietBiMoiTrang = 5;
+$tongTrang         = max(1, (int) ceil($soLuongHienThi / $soThietBiMoiTrang));
+$trangHienTai      = max(1, (int) ($_GET['trang'] ?? 1));
+$trangHienTai      = min($trangHienTai, $tongTrang);
+$viTriBatDau       = ($trangHienTai - 1) * $soThietBiMoiTrang;
+$thietBiTrenTrang  = array_slice($thiet_bi, $viTriBatDau, $soThietBiMoiTrang);
+$tuThietBi         = $soLuongHienThi > 0 ? $viTriBatDau + 1 : 0;
+$denThietBi        = min($viTriBatDau + $soThietBiMoiTrang, $soLuongHienThi);
+
 $urlDongModal   = baoTriUrl('thiet_bi.php', array_filter([
     'q'           => $filterQ,
     'san_bay'     => $filterSanBay,
     'loai'        => $filterLoai,
     'trang_thai'  => $filterTrangThai,
     'co_phieu_mo' => $filterCoPhieuMo,
+    'trang'       => $trangHienTai > 1 ? $trangHienTai : '',
 ], static fn($v) => $v !== ''));
 
 $equipQuickUrl = static function (string $status) use ($filterQ, $filterSanBay, $filterLoai, $filterCoPhieuMo): string {
@@ -211,6 +207,18 @@ $equipOpenTicketUrl = static function (string $value) use ($filterQ, $filterSanB
         'loai'        => $filterLoai,
         'trang_thai'  => $filterTrangThai,
         'co_phieu_mo' => $value,
+    ], static fn($v) => $v !== ''));
+};
+
+// Link phân trang: giữ nguyên bộ lọc hiện tại.
+$equipPageUrl = static function (int $page) use ($filterQ, $filterSanBay, $filterLoai, $filterTrangThai, $filterCoPhieuMo): string {
+    return baoTriUrl('thiet_bi.php', array_filter([
+        'q'           => $filterQ,
+        'san_bay'     => $filterSanBay,
+        'loai'        => $filterLoai,
+        'trang_thai'  => $filterTrangThai,
+        'co_phieu_mo' => $filterCoPhieuMo,
+        'trang'       => $page > 1 ? $page : '',
     ], static fn($v) => $v !== ''));
 };
 
@@ -236,94 +244,54 @@ ob_start();
 ?>
 <?php require __DIR__ . '/_flash.php'; ?>
 <div class="maint-page maint-page--equipment">
-<div class="row g-3 mb-3 maint-stat-grid">
-    <div class="col-6 col-xl-3">
-        <div class="card h-100 maint-stat-card maint-stat-card--primary maint-fade-up">
-            <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="maint-stat-icon">
-                    <i class="bi bi-hdd-stack"></i>
-                </span>
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Tổng thiết bị</div>
-                    <h3 class="mb-0 fw-bold maint-stat-value"><?= $tongThietBi ?></h3>
-                    <div class="maint-progress mt-2">
-                        <div class="maint-progress-bar" style="width: 100%"></div>
-                    </div>
-                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1">Toàn bộ danh mục</div>
-                </div>
+<div class="row">
+    <div class="col-lg-3 col-6">
+        <div class="small-box text-bg-primary">
+            <div class="inner">
+                <h3><?= $tongThietBi ?></h3>
+                <p>Tổng thiết bị</p>
             </div>
+            <i class="small-box-icon bi bi-hdd-stack"></i>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="card h-100 maint-stat-card maint-stat-card--success maint-fade-up">
-            <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="maint-stat-icon">
-                    <i class="bi bi-check2-circle"></i>
-                </span>
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Đang hoạt động</div>
-                    <h3 class="mb-0 fw-bold maint-stat-value"><?= $soThietBiTot ?></h3>
-                    <div class="maint-progress mt-2">
-                        <div class="maint-progress-bar" style="width: <?= $tyLeTot ?>%"></div>
-                    </div>
-                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1"><?= $tyLeTot ?>% sẵn sàng khai thác</div>
-                </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box text-bg-success">
+            <div class="inner">
+                <h3><?= $soThietBiTot ?></h3>
+                <p>Đang hoạt động</p>
             </div>
+            <i class="small-box-icon bi bi-check2-circle"></i>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="card h-100 maint-stat-card maint-stat-card--warning maint-fade-up">
-            <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="maint-stat-icon">
-                    <i class="bi bi-tools"></i>
-                </span>
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Đang bảo trì</div>
-                    <h3 class="mb-0 fw-bold maint-stat-value"><?= $soThietBiBaoTri ?></h3>
-                    <div class="maint-progress mt-2">
-                        <div class="maint-progress-bar" style="width: <?= $tyLeBaoTri ?>%"></div>
-                    </div>
-                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1"><?= $tyLeBaoTri ?>% cần theo dõi</div>
-                </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box text-bg-warning">
+            <div class="inner">
+                <h3><?= $soThietBiBaoTri ?></h3>
+                <p>Đang bảo trì</p>
             </div>
+            <i class="small-box-icon bi bi-tools"></i>
         </div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="card h-100 maint-stat-card maint-stat-card--danger maint-fade-up">
-            <div class="card-body d-flex align-items-center gap-2 gap-sm-3">
-                <span class="maint-stat-icon">
-                    <i class="bi bi-exclamation-triangle"></i>
-                </span>
-                <div class="flex-grow-1" style="min-width: 0;">
-                    <div class="maint-stat-label text-secondary text-uppercase fw-semibold">Đang hỏng</div>
-                    <h3 class="mb-0 fw-bold maint-stat-value"><?= $soThietBiHong ?></h3>
-                    <div class="maint-progress mt-2">
-                        <div class="maint-progress-bar" style="width: <?= $tyLeHong ?>%"></div>
-                    </div>
-                    <div class="small text-secondary text-truncate d-none d-sm-block mt-1"><?= $tyLeHong ?>% cần xử lý</div>
-                </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box text-bg-danger">
+            <div class="inner">
+                <h3><?= $soThietBiHong ?></h3>
+                <p>Đang hỏng</p>
             </div>
+            <i class="small-box-icon bi bi-exclamation-triangle"></i>
         </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-12">
-        <div class="card maint-list-card maint-fade-up">
-            <div class="card-header border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2 flex-grow-1">
-                    <span class="maint-section-icon">
-                        <i class="bi bi-hdd-stack"></i>
-                    </span>
-                    <div>
-                        <h3 class="card-title mb-0 float-none">Danh sách thiết bị</h3>
-                        <div class="small text-secondary mt-1">Quản lý trang thiết bị mặt đất trên toàn mạng lưới</div>
-                    </div>
-                </div>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <span class="maint-health-pill">
-                        <span class="maint-pulse bg-success"></span><?= $tyLeTot ?>% sẵn sàng
-                    </span>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    Danh sách thiết bị
+                    <span class="badge text-bg-secondary ms-1" title="Tổng số thiết bị"><?= $tongThietBiGoc ?></span>
+                </h3>
+                <div class="card-tools d-flex flex-wrap align-items-center gap-1">
                     <a href="#themThietBiModal" class="btn btn-sm btn-success">
                         <i class="bi bi-plus-lg me-1"></i>Thêm thiết bị
                     </a>
@@ -331,104 +299,95 @@ ob_start();
             </div>
 
             <?php if ($tongThietBiGoc > 0): ?>
-                <div class="card-body pb-2">
+                <div class="card-body pb-0">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                         <span class="small text-secondary fw-semibold text-uppercase">Lọc nhanh</span>
-                        <a href="<?= htmlspecialchars($equipQuickUrl(''), ENT_QUOTES, 'UTF-8') ?>" class="maint-filter-pill <?= $filterTrangThai === '' ? 'is-active' : '' ?>">
-                            Tất cả <span class="maint-filter-count"><?= $tongThietBiGoc ?></span>
+                        <a href="<?= htmlspecialchars($equipQuickUrl(''), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm <?= $filterTrangThai === '' ? 'btn-primary' : 'btn-outline-secondary' ?>">
+                            Tất cả <span class="badge text-bg-secondary ms-1"><?= $tongThietBiGoc ?></span>
                         </a>
                         <?php foreach ($statusLabels as $key => $label): ?>
-                            <a href="<?= htmlspecialchars($equipQuickUrl($key), ENT_QUOTES, 'UTF-8') ?>" class="maint-filter-pill <?= $filterTrangThai === $key ? 'is-active' : '' ?>">
-                                <?= $label ?> <span class="maint-filter-count"><?= $statusCounts[$key] ?></span>
+                            <a href="<?= htmlspecialchars($equipQuickUrl($key), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm <?= $filterTrangThai === $key ? 'btn-primary' : 'btn-outline-secondary' ?>">
+                                <?= $label ?> <span class="badge text-bg-secondary ms-1"><?= $statusCounts[$key] ?></span>
                             </a>
                         <?php endforeach; ?>
-                        <a href="<?= htmlspecialchars($equipOpenTicketUrl($filterCoPhieuMo === '1' ? '' : '1'), ENT_QUOTES, 'UTF-8') ?>" class="maint-filter-pill <?= $filterCoPhieuMo === '1' ? 'is-active' : '' ?>">
-                            <i class="bi bi-funnel"></i> Có phiếu mở <span class="maint-filter-count"><?= $soThietBiCoPhieuMo ?></span>
+                        <a href="<?= htmlspecialchars($equipOpenTicketUrl($filterCoPhieuMo === '1' ? '' : '1'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm <?= $filterCoPhieuMo === '1' ? 'btn-primary' : 'btn-outline-secondary' ?>">
+                            <i class="bi bi-funnel me-1"></i>Có phiếu mở <span class="badge text-bg-secondary ms-1"><?= $soThietBiCoPhieuMo ?></span>
                         </a>
                     </div>
 
-                    <div class="maint-toolbar">
-                        <form method="get" action="<?= htmlspecialchars(baoTriUrl('thiet_bi.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
-                            <div class="col-12 col-lg-3">
-                                <label for="filterSearch" class="form-label small text-secondary mb-1">Tìm kiếm</label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-body-tertiary"><i class="bi bi-search" aria-hidden="true"></i></span>
-                                    <input type="search" id="filterSearch" name="q" value="<?= htmlspecialchars($filterQ, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên, mã TB, sân bay, loại...">
-                                </div>
-                            </div>
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label for="filterSanBay" class="form-label small text-secondary mb-1">Sân bay</label>
-                                <select id="filterSanBay" name="san_bay" class="form-select form-select-sm">
-                                    <option value="">Tất cả sân bay</option>
-                                    <?php foreach ($dsSanBay as $tenSanBay): ?>
-                                        <option value="<?= htmlspecialchars($tenSanBay, ENT_QUOTES, 'UTF-8') ?>"<?= $filterSanBay === $tenSanBay ? ' selected' : '' ?>><?= htmlspecialchars($tenSanBay, ENT_QUOTES, 'UTF-8') ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-6 col-lg-2">
-                                <label for="filterLoai" class="form-label small text-secondary mb-1">Phân loại</label>
-                                <select id="filterLoai" name="loai" class="form-select form-select-sm">
-                                    <option value="">Tất cả loại</option>
-                                    <?php foreach ($dsLoai as $loai): ?>
-                                        <option value="<?= htmlspecialchars($loai, ENT_QUOTES, 'UTF-8') ?>"<?= $filterLoai === $loai ? ' selected' : '' ?>><?= $loaiThietBiLabels[$loai] ?? htmlspecialchars(str_replace('_', ' ', $loai), ENT_QUOTES, 'UTF-8') ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-6 col-lg-2">
-                                <label for="filterTrangThai" class="form-label small text-secondary mb-1">Trạng thái</label>
-                                <select id="filterTrangThai" name="trang_thai" class="form-select form-select-sm">
-                                    <option value="">Tất cả trạng thái</option>
-                                    <?php foreach ($statusLabels as $key => $label): ?>
-                                        <option value="<?= $key ?>"<?= $filterTrangThai === $key ? ' selected' : '' ?>><?= $label ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label for="filterCoPhieuMo" class="form-label small text-secondary mb-1">Tình trạng phiếu</label>
-                                <select id="filterCoPhieuMo" name="co_phieu_mo" class="form-select form-select-sm">
-                                    <option value="">Tất cả thiết bị</option>
-                                    <option value="1"<?= $filterCoPhieuMo === '1' ? ' selected' : '' ?>>Đang có phiếu mở</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-sm btn-primary">Lọc thiết bị</button>
-                            </div>
-                        </form>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-secondary mt-2">
-                            <span>Hiển thị <strong><?= $soLuongHienThi ?></strong> / <strong><?= $tongThietBiGoc ?></strong> thiết bị</span>
-                            <a href="<?= htmlspecialchars(baoTriUrl('thiet_bi.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+                    <form method="get" action="<?= htmlspecialchars(baoTriUrl('thiet_bi.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2 mb-3">
+                        <div class="col-12 col-lg-3">
+                            <label for="filterSearch" class="visually-hidden">Tìm kiếm thiết bị</label>
+                            <input type="search" id="filterSearch" name="q" value="<?= htmlspecialchars($filterQ, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên, mã TB, sân bay, loại...">
                         </div>
+                        <div class="col-12 col-sm-6 col-lg-2">
+                            <label for="filterSanBay" class="visually-hidden">Sân bay</label>
+                            <select id="filterSanBay" name="san_bay" class="form-select">
+                                <option value="">Tất cả sân bay</option>
+                                <?php foreach ($dsSanBay as $tenSanBay): ?>
+                                    <option value="<?= htmlspecialchars($tenSanBay, ENT_QUOTES, 'UTF-8') ?>"<?= $filterSanBay === $tenSanBay ? ' selected' : '' ?>><?= htmlspecialchars($tenSanBay, ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label for="filterLoai" class="visually-hidden">Phân loại</label>
+                            <select id="filterLoai" name="loai" class="form-select">
+                                <option value="">Tất cả loại</option>
+                                <?php foreach ($dsLoai as $loai): ?>
+                                    <option value="<?= htmlspecialchars($loai, ENT_QUOTES, 'UTF-8') ?>"<?= $filterLoai === $loai ? ' selected' : '' ?>><?= $loaiThietBiLabels[$loai] ?? htmlspecialchars(str_replace('_', ' ', $loai), ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label for="filterTrangThai" class="visually-hidden">Trạng thái</label>
+                            <select id="filterTrangThai" name="trang_thai" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <?php foreach ($statusLabels as $key => $label): ?>
+                                    <option value="<?= $key ?>"<?= $filterTrangThai === $key ? ' selected' : '' ?>><?= $label ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label for="filterCoPhieuMo" class="visually-hidden">Tình trạng phiếu</label>
+                            <select id="filterCoPhieuMo" name="co_phieu_mo" class="form-select">
+                                <option value="">Tất cả thiết bị</option>
+                                <option value="1"<?= $filterCoPhieuMo === '1' ? ' selected' : '' ?>>Đang có phiếu mở</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-lg-1 d-grid">
+                            <button type="submit" class="btn btn-outline-primary" title="Lọc thiết bị" aria-label="Lọc thiết bị">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-secondary mb-2">
+                        <span>Hiển thị <strong><?= $tuThietBi ?>–<?= $denThietBi ?></strong> / <strong><?= $soLuongHienThi ?></strong> thiết bị</span>
+                        <a href="<?= htmlspecialchars(baoTriUrl('thiet_bi.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
                     </div>
                 </div>
             <?php endif; ?>
 
             <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle mb-0 maint-table" id="thietBiTable">
+                <table class="table table-hover align-middle mb-0 maint-equipment-table" id="thietBiTable">
                     <thead>
-                        <tr class="text-uppercase small text-secondary">
-                            <th class="ps-3">Thiết bị</th>
-                            <th>Phân loại</th>
+                        <tr>
+                            <th>Thiết bị</th>
                             <th>Sân bay</th>
                             <th>Trạng thái</th>
-                            <th class="text-center">Số phiếu</th>
-                            <th class="text-end pe-3 text-nowrap">Thao tác</th>
+                            <th class="text-end">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($thiet_bi)): ?>
-                            <?php foreach ($thiet_bi as $item): ?>
+                        <?php if (!empty($thietBiTrenTrang)): ?>
+                            <?php foreach ($thietBiTrenTrang as $item): ?>
                                 <?php
                                 $maThietBi  = 'TB-' . sprintf('%03d', (int) $item['id']);
                                 $soPhieu    = (int) $item['so_phieu'];
-                                $soPhieuMo  = (int) ($item['so_phieu_mo'] ?? 0);
-                                $loaiLabel  = $loaiThietBiLabels[$item['loai_thiet_bi']] ?? htmlspecialchars(str_replace('_', ' ', $item['loai_thiet_bi']), ENT_QUOTES, 'UTF-8');
-                                $loaiIcon   = $loaiThietBiIcons[$item['loai_thiet_bi']] ?? 'bi-hdd-stack';
-                                $statusLabel = $statusLabels[$item['trang_thai']] ?? htmlspecialchars($item['trang_thai'], ENT_QUOTES, 'UTF-8');
-                                $statusClass = $statusBadgeClasses[$item['trang_thai']] ?? 'text-secondary bg-body-tertiary border-secondary-subtle';
-                                $statusDot   = $statusDotClasses[$item['trang_thai']] ?? 'bg-secondary';
+                                $loaiIcon = $loaiThietBiIcons[$item['loai_thiet_bi']] ?? 'bi-hdd-stack';
                                 $loaiAvatarClass = $loaiAvatarClasses[$item['loai_thiet_bi']] ?? 'maint-avatar--secondary';
-                                $statusAccent = $statusAccentColors[$item['trang_thai']] ?? 'var(--bs-secondary)';
-                                $statusPulseClass = $item['trang_thai'] === 'Bao_Tri' ? ' maint-pulse' : '';
+                                $statusLabel = $statusLabels[$item['trang_thai']] ?? htmlspecialchars($item['trang_thai'], ENT_QUOTES, 'UTF-8');
+                                $statusClass = $statusBadgeClasses[$item['trang_thai']] ?? 'text-bg-secondary';
                                 $chiTietUrl = baoTriUrl('chi_tiet_thiet_bi.php', ['id' => (int) $item['id']]);
                                 $suaUrl = baoTriUrl('thiet_bi.php', array_filter([
                                     'q'           => $filterQ,
@@ -436,21 +395,21 @@ ob_start();
                                     'loai'        => $filterLoai,
                                     'trang_thai'  => $filterTrangThai,
                                     'co_phieu_mo' => $filterCoPhieuMo,
+                                    'trang'       => $trangHienTai > 1 ? $trangHienTai : '',
                                     'sua'         => (int) $item['id'],
                                 ], static fn($v) => $v !== ''));
                                 ?>
-                                <tr class="maint-row" style="--row-accent: <?= $statusAccent ?>;"
-                                    data-search="<?= htmlspecialchars($item['ten_thiet_bi'] . ' ' . $maThietBi, ENT_QUOTES, 'UTF-8') ?>"
+                                <tr data-search="<?= htmlspecialchars($item['ten_thiet_bi'] . ' ' . $maThietBi, ENT_QUOTES, 'UTF-8') ?>"
                                     data-san-bay="<?= htmlspecialchars($item['ten_san_bay'], ENT_QUOTES, 'UTF-8') ?>"
                                     data-loai="<?= htmlspecialchars($item['loai_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>"
                                     data-trang-thai="<?= htmlspecialchars($item['trang_thai'], ENT_QUOTES, 'UTF-8') ?>">
-                                    <td class="ps-3" style="min-width: 210px; white-space: normal;">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="maint-avatar <?= $loaiAvatarClass ?>">
+                                    <td>
+                                        <div class="maint-equipment-row__identity">
+                                            <span class="maint-avatar maint-equipment-row__icon <?= $loaiAvatarClass ?>">
                                                 <i class="bi <?= $loaiIcon ?>"></i>
                                             </span>
-                                            <div>
-                                                <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="fw-semibold text-decoration-none" title="Xem chi tiết và lịch sử bảo trì">
+                                            <div class="min-w-0">
+                                                <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="maint-equipment-row__name" title="Xem chi tiết và lịch sử bảo trì">
                                                     <?= htmlspecialchars($item['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
                                                 </a>
                                                 <div class="small text-secondary maint-code"><?= $maThietBi ?></div>
@@ -458,32 +417,12 @@ ob_start();
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge rounded-pill bg-body-tertiary text-body border">
-                                            <i class="bi <?= $loaiIcon ?> me-1"></i><?= $loaiLabel ?>
-                                        </span>
-                                    </td>
-                                    <td style="white-space: normal;">
                                         <i class="bi bi-geo-alt text-secondary me-1"></i><?= htmlspecialchars($item['ten_san_bay'], ENT_QUOTES, 'UTF-8') ?>
                                     </td>
                                     <td>
-                                        <span class="badge rounded-pill border <?= $statusClass ?>">
-                                            <span class="d-inline-block rounded-circle <?= $statusDot ?><?= $statusPulseClass ?> me-1" style="width: 6px; height: 6px;"></span>
-                                            <?= $statusLabel ?>
-                                        </span>
+                                        <span class="badge maint-equipment-row__status <?= $statusClass ?>"><?= $statusLabel ?></span>
                                     </td>
-                                    <td class="text-center">
-                                        <?php if ($soPhieu > 0): ?>
-                                            <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="badge bg-body-tertiary text-body border text-decoration-none" title="Xem lịch sử bảo trì">
-                                                <i class="bi bi-clipboard-check me-1"></i><?= $soPhieu ?>
-                                            </a>
-                                            <?php if ($soPhieuMo > 0): ?>
-                                                <span class="badge rounded-pill text-danger-emphasis bg-danger-subtle border border-danger-subtle ms-1" title="<?= $soPhieuMo ?> phiếu đang mở"><?= $soPhieuMo ?> mở</span>
-                                            <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="text-secondary small">Chưa có</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-end pe-3 text-nowrap" style="min-width: 220px;">
+                                    <td class="text-end text-nowrap">
                                         <div class="d-flex justify-content-end align-items-center gap-1">
                                             <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>"
                                                class="btn btn-sm btn-outline-primary" title="Xem chi tiết và lịch sử bảo trì">
@@ -505,6 +444,7 @@ ob_start();
                                                     'loai'         => $filterLoai,
                                                     'trang_thai'   => $filterTrangThai,
                                                     'co_phieu_mo'  => $filterCoPhieuMo,
+                                                    'trang'        => $trangHienTai > 1 ? $trangHienTai : '',
                                                     'xac_nhan_xoa' => (int) $item['id'],
                                                 ], static fn($v) => $v !== ''));
                                                 ?>
@@ -519,7 +459,7 @@ ob_start();
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="4" class="text-center py-5">
                                     <?php if ($tongThietBiGoc > 0): ?>
                                         <div class="fw-semibold">Không tìm thấy thiết bị phù hợp với bộ lọc.</div>
                                         <div class="small text-secondary mb-3">Hãy xóa bớt điều kiện lọc để xem toàn bộ danh mục.</div>
@@ -538,6 +478,13 @@ ob_start();
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($tongTrang > 1): ?>
+                <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="small text-secondary">Trang <strong><?= $trangHienTai ?></strong> / <?= $tongTrang ?></div>
+                    <?= baoTriPagination($trangHienTai, $tongTrang, $equipPageUrl) ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -579,9 +526,8 @@ ob_start();
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-body-tertiary"><i class="bi bi-hdd-stack"></i></span>
                             <input type="text" name="ten_thiet_bi" id="them_ten_thiet_bi" class="form-control"
-                                   maxlength="100" placeholder="Ví dụ: Xe kéo A1 - Sân bay Nội Bài" required>
+                                   maxlength="100" required>
                         </div>
-                        <div class="form-text">Tên này sẽ hiển thị trong danh mục và phiếu bảo trì.</div>
                     </div>
 
                     <div class="mb-2">
@@ -619,9 +565,6 @@ ob_start();
                 </div>
 
                 <div class="modal-footer border-0 d-flex flex-wrap justify-content-between gap-2 px-3 py-2">
-                    <div class="small text-secondary d-none d-sm-block">
-                        <i class="bi bi-info-circle me-1"></i> Thiết bị mới mặc định ở trạng thái <strong>Tốt</strong>.
-                    </div>
                     <div class="d-flex gap-2 ms-auto">
                         <button type="submit" class="btn btn-sm btn-success px-3" <?= empty($san_bay_list) ? 'disabled' : '' ?>>
                             <i class="bi bi-check2 me-1"></i> Lưu thiết bị
@@ -637,8 +580,7 @@ ob_start();
 <?php if ($thietBiDangSua !== null): ?>
 <?php
 $suaStatusLabel = $statusLabels[$thietBiDangSua['trang_thai']] ?? htmlspecialchars((string) $thietBiDangSua['trang_thai'], ENT_QUOTES, 'UTF-8');
-$suaStatusClass = $statusBadgeClasses[$thietBiDangSua['trang_thai']] ?? 'text-secondary bg-body-tertiary border-secondary-subtle';
-$suaStatusDot   = $statusDotClasses[$thietBiDangSua['trang_thai']] ?? 'bg-secondary';
+$suaStatusClass = $statusBadgeClasses[$thietBiDangSua['trang_thai']] ?? 'text-bg-secondary';
 $suaLoaiLabel   = $loaiThietBiLabels[$thietBiDangSua['loai_thiet_bi']] ?? htmlspecialchars(str_replace('_', ' ', (string) $thietBiDangSua['loai_thiet_bi']), ENT_QUOTES, 'UTF-8');
 ?>
 <!--begin::Modal sửa thiết bị-->
@@ -716,10 +658,7 @@ $suaLoaiLabel   = $loaiThietBiLabels[$thietBiDangSua['loai_thiet_bi']] ?? htmlsp
                     <div class="d-flex align-items-center justify-content-between gap-3 rounded-3 border bg-body-tertiary px-3 py-2">
                         <div>
                             <div class="small text-secondary">Trạng thái hiện tại</div>
-                            <span class="badge rounded-pill border <?= $suaStatusClass ?>">
-                                <span class="d-inline-block rounded-circle <?= $suaStatusDot ?> me-1" style="width: 6px; height: 6px;"></span>
-                                <?= $suaStatusLabel ?>
-                            </span>
+                            <span class="badge <?= $suaStatusClass ?>"><?= $suaStatusLabel ?></span>
                         </div>
                         <div class="small text-secondary text-end">
                             <i class="bi bi-arrow-repeat me-1"></i>Tự động theo phiếu
