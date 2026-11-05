@@ -202,6 +202,16 @@ textarea.form-control {
   letter-spacing: .01em;
 }
 
+.flight-schedule-card .flight-status-badge,
+.flight-history-card .flight-status-badge {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  padding: .45rem 1.05rem;
+  font-size: .85rem;
+}
+
 .flight-status-badge[data-flight-status="Dang_Mo"] {
   color: #1e40af !important;
   background-color: #dbeafe !important;
@@ -308,15 +318,15 @@ textarea.form-control {
 
 .flight-landed-list {
   display: grid;
-  gap: .9rem;
+  gap: 1rem;
 }
 
 .flight-landed-card {
   overflow: hidden;
-  border: 1px solid #dce8f4;
+  border: 2px solid #b8c9dc;
   border-radius: .85rem;
   background: linear-gradient(145deg, #fff 0%, #fbfdff 100%);
-  box-shadow: 0 .15rem .65rem rgba(29, 49, 77, .05);
+  box-shadow: 0 .2rem .75rem rgba(29, 49, 77, .14);
 }
 
 .flight-landed-card-header {
@@ -645,6 +655,68 @@ textarea.form-control {
   background: #f8fafc;
 }
 
+.flight-index-card .flight-schedule-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.35rem;
+  padding: .45rem .6rem;
+  border-radius: .55rem;
+  font-size: .8rem;
+  font-weight: 650;
+  line-height: 1.15;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(29, 49, 77, .08);
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.flight-index-card .flight-schedule-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 .2rem .45rem rgba(29, 49, 77, .16);
+}
+
+@media (min-width: 1200px) {
+  .flight-index-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, 10.5rem);
+    grid-template-areas:
+      "header header"
+      "route actions"
+      "times actions";
+    align-items: center;
+  }
+
+  .flight-index-card > .flight-landed-card-header {
+    grid-area: header;
+  }
+
+  .flight-index-card > .flight-landed-route {
+    grid-area: route;
+    padding: .7rem .65rem .35rem;
+  }
+
+  .flight-index-card > .flight-landed-times {
+    grid-area: times;
+    gap: .5rem;
+    padding: .35rem .65rem .7rem;
+  }
+
+  .flight-index-card > .flight-schedule-actions {
+    grid-area: actions;
+    align-content: center;
+    align-self: stretch;
+    align-items: center;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    padding: .75rem;
+    border-top: 0;
+    border-left: 1px solid #d5e0ec;
+    background: #f7f9fc;
+  }
+}
+
 .flight-log-page .card-body {
   display: flex;
   flex-direction: column;
@@ -926,6 +998,36 @@ textarea.form-control {
   transform: translateY(-1px);
   box-shadow: 0 .2rem .55rem rgba(31, 48, 71, .14);
   filter: brightness(.98);
+}
+
+.flight-add-button {
+  color: #3d8bfd;
+  border-color: #3d8bfd;
+  background-color: transparent;
+}
+
+.flight-add-button:hover:not(:disabled) {
+  color: #fff;
+  border-color: #3d8bfd;
+  background-color: #3d8bfd;
+  filter: none;
+  box-shadow: 0 .25rem .7rem rgba(13, 110, 253, .3);
+}
+
+.flight-popup-page .flight-create-submit:hover:not(:disabled),
+.flight-create-submit:hover:not(:disabled) {
+  color: #fff;
+  border-color: #3d8bfd;
+  background: #3d8bfd;
+  filter: none;
+  box-shadow: 0 .25rem .7rem rgba(13, 110, 253, .3);
+}
+
+.flight-details-button:hover:not(:disabled) {
+  color: #000;
+  border-color: #0dcaf0;
+  background-color: #0dcaf0;
+  filter: none;
 }
 
 .btn:focus-visible {
@@ -1497,7 +1599,7 @@ body.flight-detail-page {
   }
 
   .flight-schedule-actions .btn {
-    flex: 1 1 calc(50% - .4rem);
+    flex: 0 0 auto;
   }
 
   .flight-pending-details {

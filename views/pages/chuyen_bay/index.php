@@ -107,7 +107,7 @@ $breadcrumb = [
 
 ob_start();
 ?>
-            <link rel="stylesheet" href="<?= BASE_URL ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+            <link rel="stylesheet" href="<?= BASE_URL ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=13" />
             <!--begin::Thống kê nhanh-->
             <div class="row">
               <div class="col-lg-3 col-6">
@@ -419,7 +419,7 @@ ob_start();
                       <a href="<?= $escape($historyUrl) ?>" class="btn btn-sm btn-outline-info">
                         <i class="bi bi-journal-text me-1" aria-hidden="true"></i> Lịch sử bay
                       </a>
-                      <a href="<?= BASE_URL ?>/views/pages/chuyen_bay/them.php" class="btn btn-sm btn-primary" data-flight-popup-open data-flight-popup-url="<?= BASE_URL ?>/views/pages/chuyen_bay/them.php?popup=1" data-flight-popup-title="Thêm chuyến bay">
+                      <a href="<?= BASE_URL ?>/views/pages/chuyen_bay/them.php" class="btn btn-sm flight-add-button" data-flight-popup-open data-flight-popup-url="<?= BASE_URL ?>/views/pages/chuyen_bay/them.php?popup=1" data-flight-popup-title="Thêm chuyến bay">
                         <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Thêm chuyến bay
                       </a>
                     </div>
@@ -568,7 +568,7 @@ ob_start();
                             }
                             $flightStatus = (string) ($flight['trang_thai_tong'] ?? '');
                           ?>
-                          <article class="flight-landed-card flight-schedule-card">
+                          <article class="flight-landed-card flight-schedule-card flight-index-card">
                             <div class="flight-landed-card-header">
                               <div class="flight-landed-identity">
                                 <span class="flight-landed-icon" aria-hidden="true"><i class="bi bi-airplane-engines-fill"></i></span>
@@ -637,7 +637,7 @@ ob_start();
                             </div>
 
                             <div class="flight-schedule-actions" aria-label="Thao tác chuyến bay">
-                              <a href="<?= BASE_URL ?>/views/pages/chuyen_bay/chi_tiet.php?id=<?= (int) $flight['id'] ?>" class="btn btn-sm btn-info" style="color:#fff;" data-flight-popup-open data-flight-popup-url="<?= BASE_URL ?>/views/pages/chuyen_bay/chi_tiet.php?popup=1&amp;id=<?= (int) $flight['id'] ?>" data-flight-popup-title="Chi tiết chuyến <?= $escape($flight['so_hieu']) ?>">
+                              <a href="<?= BASE_URL ?>/views/pages/chuyen_bay/chi_tiet.php?id=<?= (int) $flight['id'] ?>" class="btn btn-sm btn-outline-info flight-details-button" data-flight-popup-open data-flight-popup-url="<?= BASE_URL ?>/views/pages/chuyen_bay/chi_tiet.php?popup=1&amp;id=<?= (int) $flight['id'] ?>" data-flight-popup-title="Chi tiết chuyến <?= $escape($flight['so_hieu']) ?>">
                                 <i class="bi bi-eye me-1" aria-hidden="true"></i>Chi tiết
                               </a>
                               <a href="<?= $editUrl($flight['id']) ?>" class="btn btn-sm btn-outline-primary" data-flight-popup-open data-flight-popup-url="<?= BASE_URL ?>/views/pages/chuyen_bay/sua.php?popup=1&amp;id=<?= (int) $flight['id'] ?>" data-flight-popup-title="Sửa chuyến <?= $escape($flight['so_hieu']) ?>">
