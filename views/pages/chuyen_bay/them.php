@@ -70,7 +70,7 @@ $breadcrumb = [
 ob_start();
 ?>
             <?php if (!$popup): ?>
-            <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+            <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=11" />
             <?php endif; ?>
             <div class="card">
               <?php if (!$popup): ?>
@@ -246,7 +246,7 @@ ob_start();
                   <div class="flight-form-actions d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <span class="small text-secondary"><span class="text-danger">*</span> Thông tin bắt buộc</span>
                     <div class="d-flex flex-wrap justify-content-end gap-2">
-                    <button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tạo chuyến bay</button>
+                    <button class="btn btn-primary flight-create-submit" type="submit"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Tạo chuyến bay</button>
                     <?php if (!$popup): ?>
                       <a class="btn btn-outline-secondary" href="<?= $url('chuyen_bay') ?>">Danh sách chuyến bay</a>
                     <?php endif; ?>
@@ -470,7 +470,7 @@ if ($popup) {
     <link rel="stylesheet" href="<?= $e(ADMINLTE_URL) ?>/css/adminlte.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/assets/css/style.css" />
-    <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+    <link rel="stylesheet" href="<?= $e(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=11" />
   </head>
   <body class="flight-popup-page">
 <?= $content ?>
