@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
+require_once __DIR__ . '/../../../controllers/KeToanController.php';
 
 $popup = isset($_GET['popup']) && (string) $_GET['popup'] !== '0';
 
@@ -16,6 +17,10 @@ $escape = static function ($value) {
 };
 $flight = $data['flight'] ?? null;
 $delayHistory = $data['delayHistory'] ?? [];
+
+$keToan = new KeToanController($conn);
+$hoaDonHienTai = ($flight && !empty($flight['id'])) ? $keToan->LayHoaDonTheoChuyenBay((int) $flight['id']) : null;
+
 $statusLabels = [
     'Dang_Mo' => 'Đang mở',
     'Cat_Canh' => 'Cất cánh',
@@ -87,8 +92,56 @@ $navActive = 'chuyen_bay';
 
 ob_start();
 ?>
+            <style>
+              .flight-progress {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: .5rem !important;
+              }
+              .flight-progress-step {
+                position: relative !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: .45rem !important;
+                flex: 1 1 0 !important;
+                min-width: 0 !important;
+                color: #718096;
+                font-size: .82rem;
+                font-weight: 600;
+              }
+              .flight-progress-step:last-child {
+                flex: 0 0 auto !important;
+              }
+              .flight-progress-step > span:not(.flight-progress-dot) {
+                white-space: nowrap !important;
+                position: relative !important;
+                z-index: 2 !important;
+                background: #fff !important;
+                padding: 0 4px !important;
+              }
+              .flight-progress-step::after {
+                display: block !important;
+                content: "" !important;
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                flex: 1 1 auto !important;
+                height: 2px !important;
+                background: #dce5ef !important;
+                margin: 0 .5rem 0 .25rem !important;
+                min-width: .5rem !important;
+              }
+              .flight-progress-step:last-child::after {
+                display: none !important;
+              }
+              .flight-progress-step.is-complete::after {
+                background: #86efac !important;
+              }
+            </style>
             <?php if (!$popup): ?>
-              <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+              <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=<?= time() ?>" />
             <?php endif; ?>
             <?php if ($flight === null): ?>
               <div class="card">
@@ -115,6 +168,22 @@ ob_start();
                             <span class="badge flight-status-badge" data-flight-status="<?= $escape($displayStatus) ?>"><?= $escape($displayLabel) ?></span>
                           </div>
                           <p class="mb-0 mt-1 text-secondary">Thông tin chuyến bay chỉ xem được sau khi máy bay cất cánh để bảo toàn dữ liệu khai thác.</p>
+                          <?php if ($isLanded): ?>
+                            <div class="mt-2 pt-2 border-top d-flex flex-wrap align-items-center gap-2">
+                              <?php if ($hoaDonHienTai): ?>
+                                <a href="<?= BASE_URL ?>/views/pages/ke_toan/chi_tiet_hoa_don.php?id=<?= (int) $hoaDonHienTai['id'] ?>" class="btn btn-sm btn-outline-success" <?= $popup ? 'target="_top"' : '' ?>>
+                                  <i class="bi bi-receipt me-1"></i>Xem hóa đơn #<?= (int) $hoaDonHienTai['id'] ?> (<?= number_format((float) $hoaDonHienTai['tong_tien']) ?> VNĐ)
+                                </a>
+                              <?php else: ?>
+                                <form method="post" action="<?= BASE_URL ?>/index.php?page=ke_toan" class="d-inline" <?= $popup ? 'target="_top"' : '' ?>>
+                                  <input type="hidden" name="tao_hoa_don" value="<?= (int) $flight['id'] ?>">
+                                  <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-file-earmark-plus me-1"></i>Tính &amp; Lập hóa đơn
+                                  </button>
+                                </form>
+                              <?php endif; ?>
+                            </div>
+                          <?php endif; ?>
                         </div>
                       </div>
                     </div>
@@ -249,6 +318,44 @@ ob_start();
                     </div>
                   </section>
 
+                  <?php if (!empty($isLanded)): ?>
+                    <section class="flight-form-section mb-3" aria-labelledby="flight-detail-invoice-title">
+                      <div class="flight-form-section-heading">
+                        <span class="flight-form-section-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                        <div>
+                          <h3 id="flight-detail-invoice-title">Kế toán &amp; Hóa đơn dịch vụ</h3>
+                          <p>Phí cất hạ cánh, đỗ tàu bay và phục vụ hành khách.</p>
+                        </div>
+                      </div>
+                      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 bg-light rounded border">
+                        <div>
+                          <?php if ($hoaDonHienTai): ?>
+                            <span class="badge bg-success me-2"><i class="bi bi-check-circle me-1"></i>Đã lập hóa đơn</span>
+                            <span>Hóa đơn <strong>#<?= (int) $hoaDonHienTai['id'] ?></strong>: <strong class="text-danger"><?= number_format((float) $hoaDonHienTai['tong_tien']) ?> VNĐ</strong></span>
+                            <small class="text-secondary d-block mt-1">Trạng thái: <?= $hoaDonHienTai['trang_thai_thanh_toan'] === 'Da_Thanh_Toan' ? '<span class="text-success fw-bold">Đã thanh toán</span>' : '<span class="text-warning fw-bold">Chờ thanh toán</span>' ?></small>
+                          <?php else: ?>
+                            <span class="badge bg-warning text-dark me-2"><i class="bi bi-hourglass-split me-1"></i>Chờ lập hóa đơn</span>
+                            <span>Chuyến bay đã hoàn tất và sẵn sàng để lập hóa đơn cước dịch vụ cảng.</span>
+                          <?php endif; ?>
+                        </div>
+                        <div>
+                          <?php if ($hoaDonHienTai): ?>
+                            <a href="<?= BASE_URL ?>/views/pages/ke_toan/chi_tiet_hoa_don.php?id=<?= (int) $hoaDonHienTai['id'] ?>" class="btn btn-sm btn-outline-primary" <?= $popup ? 'target="_top"' : '' ?>>
+                              <i class="bi bi-eye me-1"></i>Xem chi tiết hóa đơn
+                            </a>
+                          <?php else: ?>
+                            <form method="post" action="<?= BASE_URL ?>/index.php?page=ke_toan" class="d-inline" <?= $popup ? 'target="_top"' : '' ?>>
+                              <input type="hidden" name="tao_hoa_don" value="<?= (int) $flight['id'] ?>">
+                              <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-file-earmark-plus me-1"></i>Tính và lập hóa đơn
+                              </button>
+                            </form>
+                          <?php endif; ?>
+                        </div>
+                      </div>
+                    </section>
+                  <?php endif; ?>
+
                   <?php if ($displayStatus === 'Delay'): ?>
                     <section class="flight-delay-panel mb-3" role="status" aria-labelledby="flight-delay-title">
                       <div class="flight-delay-heading">
@@ -331,7 +438,7 @@ if ($popup) {
     <link rel="stylesheet" href="<?= $escape(ADMINLTE_URL) ?>/css/adminlte.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/assets/css/style.css" />
-    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=<?= time() ?>" />
   </head>
   <body class="flight-detail-page">
 <?= $content ?>

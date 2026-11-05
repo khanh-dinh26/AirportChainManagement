@@ -225,9 +225,16 @@ CREATE TABLE `hoa_don` (
   `tong_tien` decimal(15,2) DEFAULT 0.00,
   `ngay_xuat` datetime DEFAULT current_timestamp(),
   `trang_thai_thanh_toan` enum('Chua_Thanh_Toan','Da_Thanh_Toan') DEFAULT 'Chua_Thanh_Toan',
-  `thoi_gian_do_gio` decimal(5,2) DEFAULT 1.50 COMMENT 'Số giờ đỗ tàu bay (tự động tính từ lịch bay)',
+  `thoi_gian_do_gio` decimal(6,2) DEFAULT NULL,
+  `don_gia_cat_ha_canh` decimal(15,2) DEFAULT NULL,
+  `don_gia_do` decimal(15,2) DEFAULT NULL,
+  `don_gia_phuc_vu` decimal(15,2) DEFAULT NULL,
+  `mtow_ap_dung` decimal(8,2) DEFAULT NULL,
+  `so_khach_ap_dung` int(11) DEFAULT NULL,
+  `tam_tinh` tinyint(1) NOT NULL DEFAULT 0,
+  `ghi_chu` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `id_chuyen_bay` (`id_chuyen_bay`),
+  UNIQUE KEY `uq_hoa_don_chuyen_bay` (`id_chuyen_bay`),
   KEY `id_hang_hang_khong` (`id_hang_hang_khong`),
   CONSTRAINT `hoa_don_ibfk_1` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE,
   CONSTRAINT `hoa_don_ibfk_2` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`) ON DELETE CASCADE
@@ -238,6 +245,22 @@ LOCK TABLES `hoa_don` WRITE;
 /*!40000 ALTER TABLE `hoa_don` DISABLE KEYS */;
 /*!40000 ALTER TABLE `hoa_don` ENABLE KEYS */;
 UNLOCK TABLES;
+
+DROP TABLE IF EXISTS `hoa_don_dieu_chinh_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `hoa_don_dieu_chinh_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_hoa_don` int(11) NOT NULL,
+  `tong_tien_cu` decimal(15,2) NOT NULL,
+  `tong_tien_moi` decimal(15,2) NOT NULL,
+  `ly_do` varchar(255) NOT NULL,
+  `thoi_diem` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `id_hoa_don` (`id_hoa_don`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 DROP TABLE IF EXISTS `lich_su_chuyen_bay`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;

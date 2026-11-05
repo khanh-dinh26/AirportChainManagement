@@ -115,7 +115,7 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             <summary class="nav-link<?= $isActive('bao_tri') ?>">
               <i class="nav-icon bi bi-tools"></i>
               <p>
-                Bảo trì &amp; khắc phục
+                Kỹ thuật &amp; Bảo trì
                 <i class="nav-arrow bi bi-chevron-right"></i>
               </p>
             </summary>
@@ -130,6 +130,12 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
                 <a href="<?= $baseUrl ?>/views/pages/bao_tri/thiet_bi.php" class="nav-link<?= $isSubActive('equipment') ?>">
                   <i class="nav-icon bi bi-hdd-stack"></i>
                   <p>Quản lý trang thiết bị</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/views/pages/bao_tri/hang_hang_khong.php" class="nav-link<?= $isSubActive('airlines') ?>">
+                  <i class="nav-icon bi bi-buildings"></i>
+                  <p>Quản lý hãng hàng không</p>
                 </a>
               </li>
               <li class="nav-item">

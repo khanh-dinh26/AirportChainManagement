@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../../config/database.php'; 
 require_once __DIR__ . '/../../../controllers/KeToanController.php';
 $keToan = new KeToanController($conn);

@@ -274,9 +274,11 @@ class BaoTriController {
     }
 
     public function getHangHangKhongList() {
-        $sql = "SELECT id, ma_iata, ten_hang, quoc_gia
-                FROM hang_hang_khong
-                ORDER BY ten_hang";
+        $sql = "SELECT h.id, h.ma_iata, h.ten_hang, h.quoc_gia, COUNT(tb.id) AS so_tau_bay
+                FROM hang_hang_khong h
+                LEFT JOIN loai_tau_bay tb ON tb.id_hang_hang_khong = h.id
+                GROUP BY h.id, h.ma_iata, h.ten_hang, h.quoc_gia
+                ORDER BY h.ten_hang";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
@@ -594,6 +596,170 @@ class BaoTriController {
 
         $this->setFlash('success', 'Đã thêm loại tàu bay mới.');
         $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+    }
+
+    public function themHangHangKhong() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect($this->viewUrl('hang_hang_khong.php'));
+        }
+
+        $returnPage = trim((string) ($_POST['return_page'] ?? 'hang_hang_khong.php'));
+        if (!in_array($returnPage, ['hang_hang_khong.php', 'tau_bay.php'], true)) {
+            $returnPage = 'hang_hang_khong.php';
+        }
+
+        $giuLoc = array_filter([
+            'q'       => trim((string) ($_POST['giu_q'] ?? '')),
+            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'trang'   => (int) ($_POST['giu_trang'] ?? 1),
+        ], static fn($v) => $v !== '' && $v !== 0);
+
+        $ma_iata  = strtoupper(trim((string) ($_POST['ma_iata'] ?? '')));
+        $ten_hang = trim((string) ($_POST['ten_hang'] ?? ''));
+        $quoc_gia = trim((string) ($_POST['quoc_gia'] ?? ''));
+        if ($quoc_gia === '') {
+            $quoc_gia = 'Viet Nam';
+        }
+
+        if ($ma_iata === '' || mb_strlen($ma_iata, 'UTF-8') !== 2) {
+            $this->setFlash('error', 'Mã IATA của hãng hàng không phải gồm đúng 2 ký tự (ví dụ: VN, VJ, VU).');
+            $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
+        }
+
+        if ($ten_hang === '') {
+            $this->setFlash('error', 'Tên hãng hàng không không được để trống.');
+            $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
+        }
+
+        // Kiểm tra xem mã IATA đã tồn tại trong CSDL chưa
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM hang_hang_khong WHERE ma_iata = ?");
+        $stmt->bind_param('s', $ma_iata);
+        $stmt->execute();
+        $stmt->bind_result($soHang);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soHang > 0) {
+            $this->setFlash('error', "Mã IATA '{$ma_iata}' đã tồn tại trong hệ thống.");
+            $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                "INSERT INTO hang_hang_khong (ma_iata, ten_hang, quoc_gia) VALUES (?, ?, ?)"
+            );
+            $stmt->bind_param('sss', $ma_iata, $ten_hang, $quoc_gia);
+            $stmt->execute();
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            if ((int) $e->getCode() === 1062) {
+                $this->setFlash('error', "Mã IATA '{$ma_iata}' đã tồn tại.");
+            } else {
+                $this->setFlash('error', 'Lỗi thêm hãng hàng không: ' . $e->getMessage());
+            }
+            $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
+        } catch (Throwable $e) {
+            $this->setFlash('error', 'Lỗi thêm hãng hàng không: ' . $e->getMessage());
+            $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
+        }
+
+        $this->setFlash('success', "Đã thêm hãng hàng không '{$ten_hang}' ({$ma_iata}) thành công!");
+        $this->redirect($this->viewUrl($returnPage, $giuLoc));
+    }
+
+    public function capNhatHangHangKhong() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect($this->viewUrl('hang_hang_khong.php'));
+        }
+
+        $id       = (int) ($_POST['id'] ?? 0);
+        $ma_iata  = strtoupper(trim((string) ($_POST['ma_iata'] ?? '')));
+        $ten_hang = trim((string) ($_POST['ten_hang'] ?? ''));
+        $quoc_gia = trim((string) ($_POST['quoc_gia'] ?? ''));
+        if ($quoc_gia === '') {
+            $quoc_gia = 'Viet Nam';
+        }
+
+        $giuLoc = array_filter([
+            'q'     => trim((string) ($_POST['giu_q'] ?? '')),
+            'trang' => (int) ($_POST['giu_trang'] ?? 1),
+        ], static fn($v) => $v !== '' && $v !== 0);
+
+        if ($id <= 0 || $ma_iata === '' || mb_strlen($ma_iata, 'UTF-8') !== 2 || $ten_hang === '') {
+            $this->setFlash('error', 'Thông tin hãng hàng không không hợp lệ.');
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc + ['sua' => $id]));
+        }
+
+        // Kiểm tra trùng mã IATA với hãng khác
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM hang_hang_khong WHERE ma_iata = ? AND id != ?");
+        $stmt->bind_param('si', $ma_iata, $id);
+        $stmt->execute();
+        $stmt->bind_result($soHang);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soHang > 0) {
+            $this->setFlash('error', "Mã IATA '{$ma_iata}' đã được sử dụng bởi hãng khác.");
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc + ['sua' => $id]));
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                "UPDATE hang_hang_khong SET ma_iata = ?, ten_hang = ?, quoc_gia = ? WHERE id = ?"
+            );
+            $stmt->bind_param('sssi', $ma_iata, $ten_hang, $quoc_gia, $id);
+            $stmt->execute();
+            $stmt->close();
+        } catch (Throwable $e) {
+            $this->setFlash('error', 'Lỗi cập nhật hãng hàng không: ' . $e->getMessage());
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc + ['sua' => $id]));
+        }
+
+        $this->setFlash('success', "Cập nhật hãng hàng không '{$ten_hang}' ({$ma_iata}) thành công!");
+        $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+    }
+
+    public function xoaHangHangKhong() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect($this->viewUrl('hang_hang_khong.php'));
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $giuLoc = array_filter([
+            'q'     => trim((string) ($_POST['giu_q'] ?? '')),
+            'trang' => (int) ($_POST['giu_trang'] ?? 1),
+        ], static fn($v) => $v !== '' && $v !== 0);
+
+        if ($id <= 0) {
+            $this->setFlash('error', 'Hãng hàng không không hợp lệ.');
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        // Kiểm tra ràng buộc loại tàu bay
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM loai_tau_bay WHERE id_hang_hang_khong = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $stmt->bind_result($soTb);
+        $stmt->fetch();
+        $stmt->close();
+
+        if ((int) $soTb > 0) {
+            $this->setFlash('error', "Không thể xóa hãng này vì đang có {$soTb} loại tàu bay trực thuộc.");
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        try {
+            $stmt = $this->db->prepare("DELETE FROM hang_hang_khong WHERE id = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+        } catch (Throwable $e) {
+            $this->setFlash('error', 'Lỗi xóa hãng hàng không: ' . $e->getMessage());
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        $this->setFlash('success', 'Đã xóa hãng hàng không thành công.');
+        $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
     }
 
     public function capNhatTauBay() {

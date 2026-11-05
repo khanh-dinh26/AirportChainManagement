@@ -9,6 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'xoa_t
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'them_tau_bay') {
     $baoTriController->themTauBay();
 }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'them_hang_hang_khong') {
+    $baoTriController->themHangHangKhong();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cap_nhat_tau_bay') {
     $baoTriController->capNhatTauBay();
@@ -43,6 +46,11 @@ foreach ($san_bay_list as $sb) {
 $modalError = null;
 if (isset($_GET['open']) && $_GET['open'] === 'create' && !empty($_SESSION['flash_error'])) {
     $modalError = (string) $_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
+}
+$modalHangError = null;
+if (isset($_GET['open']) && $_GET['open'] === 'create_hang' && !empty($_SESSION['flash_error'])) {
+    $modalHangError = (string) $_SESSION['flash_error'];
     unset($_SESSION['flash_error']);
 }
 $editModalError = null;
@@ -164,7 +172,10 @@ ob_start();
             Danh sách loại tàu bay
             <span class="badge text-bg-secondary ms-1" title="Tổng số loại tàu bay"><?= $tongLoaiTauBayGoc ?></span>
         </h3>
-        <div class="card-tools d-flex flex-wrap align-items-center gap-1">
+        <div class="card-tools d-flex flex-wrap align-items-center gap-2">
+            <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary" title="Quản lý danh sách hãng hàng không">
+                <i class="bi bi-buildings me-1"></i>Quản lý hãng hàng không (<?= count($hang_list) ?>)
+            </a>
             <a href="#themTauBayModal" class="btn btn-sm btn-success">
                 <i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay
             </a>
@@ -295,7 +306,13 @@ ob_start();
                 <div class="maint-empty-icon"><i class="bi bi-airplane"></i></div>
                 <div class="fw-semibold">Chưa có loại tàu bay nào</div>
                 <div class="small text-secondary mb-3">Thêm loại tàu bay đầu tiên để bắt đầu quản lý.</div>
-                <a href="#themTauBayModal" class="btn btn-sm btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay</a>
+                <a href="#danhSachHangModal" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-buildings me-1"></i>Danh sách hãng (<?= count($hang_list) ?>)
+            </a>
+            <a href="#themHangModal" class="btn btn-sm btn-primary">
+                <i class="bi bi-building-add me-1"></i>Thêm hãng hàng không
+            </a>
+            <a href="#themTauBayModal" class="btn btn-sm btn-success"><i class="bi bi-plus-lg me-1"></i>Thêm loại tàu bay</a>
             </div>
         <?php endif; ?>
     </div>
@@ -408,6 +425,88 @@ require __DIR__ . '/_lightbox.php';
 </div>
 <?php endif; ?>
 
+<!--begin::Modal thêm hãng hàng không-->
+<div class="modal fade maint-modal maint-modal--aircraft<?= $modalHangError !== null ? ' is-open' : '' ?>" id="themHangModal" tabindex="-1" aria-labelledby="themHangModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <form action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
+                <input type="hidden" name="action" value="them_hang_hang_khong">
+                <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+                <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
+                <div class="modal-header ps-3 pe-5 py-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="modal-icon text-primary">
+                            <i class="bi bi-building-add"></i>
+                        </span>
+                        <div>
+                            <h5 class="modal-title mb-0 fs-5 text-primary fw-bold" id="themHangModalLabel">Thêm hãng hàng không</h5>
+                            <div class="small text-secondary">Khai báo hãng hàng không mới vào hệ thống</div>
+                        </div>
+                    </div>
+                    <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="acv-close" aria-label="Đóng">&times;</a>
+                </div>
+
+                <div class="modal-body px-3 py-3">
+                    <?php if ($modalHangError !== null): ?>
+                        <div class="alert alert-danger d-flex align-items-start gap-2 py-2 mb-3" role="alert">
+                            <i class="bi bi-exclamation-circle-fill mt-1"></i>
+                            <div class="small"><?= htmlspecialchars($modalHangError, ENT_QUOTES, 'UTF-8') ?></div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="mb-3">
+                        <label for="them_ma_iata_hang" class="form-label fw-semibold">
+                            Mã IATA (2 ký tự) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-tag-fill"></i></span>
+                            <input type="text" name="ma_iata" id="them_ma_iata_hang" class="form-control text-uppercase"
+                                   placeholder="Ví dụ: VU, BL, EK, SQ..." maxlength="2" pattern="[A-Za-z0-9]{2}" required
+                                   oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="form-text text-secondary small">Mã định danh 2 ký tự chuẩn quốc tế IATA (ví dụ: VN, VJ, QH, VU...).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="them_ten_hang_hang_khong" class="form-label fw-semibold">
+                            Tên hãng hàng không <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-building"></i></span>
+                            <input type="text" name="ten_hang" id="them_ten_hang_hang_khong" class="form-control"
+                                   placeholder="Ví dụ: Vietravel Airlines, Pacific Airlines..." maxlength="100" required>
+                        </div>
+                        <div class="form-text text-secondary small">Tên thương mại đầy đủ của hãng hàng không.</div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="them_quoc_gia_hang" class="form-label fw-semibold">
+                            Quốc gia
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-globe-americas"></i></span>
+                            <input type="text" name="quoc_gia" id="them_quoc_gia_hang" class="form-control"
+                                   placeholder="Ví dụ: Viet Nam, Singapore, UAE..." value="Viet Nam" maxlength="50">
+                        </div>
+                        <div class="form-text text-secondary small">Quốc gia đặt trụ sở chính (mặc định: Viet Nam).</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 d-flex flex-wrap justify-content-between gap-2 px-3 py-2">
+                    <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary px-3">
+                        Hủy
+                    </a>
+                    <button type="submit" class="btn btn-sm btn-primary px-3">
+                        <i class="bi bi-check2 me-1"></i> Lưu hãng hàng không
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--end::Modal thêm hãng hàng không-->
+
 <!--begin::Modal thêm loại tàu bay-->
 <div class="modal fade maint-modal maint-modal--aircraft<?= $modalError !== null ? ' is-open' : '' ?>" id="themTauBayModal" tabindex="-1" aria-labelledby="themTauBayModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -467,9 +566,14 @@ require __DIR__ . '/_lightbox.php';
                     </div>
 
                     <div class="mb-2">
-                        <label for="id_hang_hang_khong" class="form-label fw-semibold">
-                            Hãng hàng không khai thác <span class="text-danger">*</span>
-                        </label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="id_hang_hang_khong" class="form-label fw-semibold mb-0">
+                                Hãng hàng không khai thác <span class="text-danger">*</span>
+                            </label>
+                            <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php'), ENT_QUOTES, 'UTF-8') ?>#themHangModal" class="small text-primary text-decoration-none" title="Chuyển sang trang thêm hãng hàng không mới">
+                                <i class="bi bi-plus-circle me-1"></i>Thêm hãng mới
+                            </a>
+                        </div>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-body-tertiary"><i class="bi bi-building"></i></span>
                             <select name="id_hang_hang_khong" id="id_hang_hang_khong" class="form-select" required>
