@@ -1,0 +1,676 @@
+/**
+ * ============================================================
+ * GIAO DIỆN TỔNG QUAN CHỦ ĐẠO TRẮNG - XANH DA TRỜI (SKY BLUE & WHITE)
+ * Hệ thống Quản lý Chuỗi Cảng Hàng không (ACV Airport Chain Management)
+ * File: assets/css/dashboard-sky.css
+ * Tuân thủ nguyên tắc thiết kế chuyên biệt (Aviation Frontend Design)
+ * ============================================================
+ */
+
+:root {
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+  --sky-800: #075985;
+  --sky-900: #0c4a6e;
+  --sky-pure-white: #ffffff;
+  --sky-card-bg: #ffffff;
+  --sky-slate-900: #0f172a;
+  --sky-slate-700: #334155;
+  --sky-slate-600: #475569;
+  --sky-slate-500: #64748b;
+  --sky-border-subtle: #e0f2fe;
+  --sky-border-medium: #bae6fd;
+  --sky-shadow-soft: 0 4px 20px -2px rgba(2, 132, 199, 0.08);
+  --sky-shadow-hover: 0 10px 25px -4px rgba(2, 132, 199, 0.14);
+}
+
+/* ---------- 1. HERO BANNER CHUYÊN NGÀNH HÀNG KHÔNG ---------- */
+.sky-hero {
+  position: relative;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 48%, #ffffff 100%);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: var(--sky-shadow-soft);
+  overflow: hidden;
+}
+
+.sky-hero::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(2, 132, 199, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sky-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-pure-white);
+  color: var(--sky-700);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 9999px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.06);
+}
+
+.sky-hero__title {
+  color: var(--sky-900);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.sky-hero__lead {
+  color: var(--sky-slate-600);
+  font-size: 0.95rem;
+  max-width: 720px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.sky-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--sky-slate-500);
+  padding-top: 14px;
+  border-top: 1px solid rgba(186, 230, 253, 0.6);
+}
+
+.sky-hero__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sky-hero__meta-item i {
+  color: var(--sky-600);
+}
+
+.sky-hero__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.sky-hero__status-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+/* ---------- 2. THẺ CHỈ SỐ NHANH (KPI METRICS) ---------- */
+.sky-metric-card {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 14px;
+  padding: 20px;
+  height: 100%;
+  box-shadow: var(--sky-shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sky-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sky-shadow-hover);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-metric-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--sky-400), var(--sky-600));
+  opacity: 0.85;
+}
+
+.sky-metric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.sky-metric-card__title {
+  color: var(--sky-slate-500);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.sky-metric-card__icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--sky-50);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  border: 1px solid var(--sky-border-subtle);
+}
+
+.sky-metric-card__value {
+  color: var(--sky-900);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.sky-metric-card__subtext {
+  color: var(--sky-slate-500);
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+/* ---------- 3. TRUNG TÂM PHÂN HỆ ĐIỀU HÀNH (PORTALS) ---------- */
+.sky-portal-card {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--sky-shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sky-portal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sky-shadow-hover);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-portal-card__badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sky-portal-card__icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--sky-50), var(--sky-100));
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 1px solid var(--sky-border-medium);
+}
+
+.sky-portal-card__badge {
+  background: var(--sky-50);
+  color: var(--sky-700);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sky-portal-card__title {
+  color: var(--sky-900);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.sky-portal-card__desc {
+  color: var(--sky-slate-600);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+.sky-portal-card__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--sky-border-subtle);
+}
+
+.sky-portal-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  color: var(--sky-slate-600);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.76rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sky-portal-card__tag:hover {
+  background: var(--sky-100);
+  color: var(--sky-700);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-portal-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--sky-600);
+  color: var(--sky-pure-white);
+  border: 1px solid var(--sky-600);
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  width: 100%;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sky-portal-card__btn:hover {
+  background: var(--sky-700);
+  border-color: var(--sky-700);
+  color: var(--sky-pure-white);
+}
+
+/* ---------- 4. KHỐI THÔNG TIN BỔ TRỢ (PANEL BẦU TRỜI) ---------- */
+.sky-panel {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--sky-shadow-soft);
+  height: 100%;
+}
+
+.sky-panel__title {
+  color: var(--sky-900);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sky-panel__title i {
+  color: var(--sky-600);
+}
+
+.sky-airports-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sky-airport-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-50);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  color: var(--sky-slate-700);
+  font-weight: 500;
+}
+
+.sky-airport-chip strong {
+  color: var(--sky-700);
+  font-weight: 700;
+}
+
+.sky-guide-list {
+  padding-left: 0;
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.sky-guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+  color: var(--sky-slate-600);
+}
+
+.sky-guide-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sky-guide-item__num {
+  width: 24px;
+  height: 24px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sky-guide-item strong {
+  color: var(--sky-slate-900);
+}
+
+.sky-section-header {
+  margin-bottom: 18px;
+}
+
+.sky-section-header h2 {
+  color: var(--sky-900);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sky-section-header p {
+  color: var(--sky-slate-500);
+  font-size: 0.88rem;
+  margin: 4px 0 0 0;
+}
+
+/* ---------- 5. ĐỒNG BỘ TOÀN BỘ GIAO DIỆN: TRẮNG - XANH DA TRỜI (LIGHT SKY THEME) ---------- */
+
+/* 5.1. Sidebar nền Trắng - Xanh da trời sáng sủa */
+.app-sidebar,
+aside.app-sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e0f2fe !important;
+  box-shadow: 2px 0 16px rgba(2, 132, 199, 0.05) !important;
+}
+
+/* Thẻ thương hiệu sidebar */
+.sidebar-brand,
+.app-sidebar .sidebar-brand {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e0f2fe !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 56px !important;
+  padding: 0 16px !important;
+}
+
+.sidebar-brand .brand-link {
+  color: #0284c7 !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.sidebar-brand .brand-text {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  font-size: 1.15rem !important;
+}
+
+/* Tiêu đề nhóm menu (PHÂN HỆ CHỨC NĂNG) */
+.sidebar-menu .nav-header {
+  color: #64748b !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  padding: 14px 16px 6px 16px !important;
+  text-transform: uppercase !important;
+}
+
+/* Khung chung của mọi mục menu trong sidebar */
+.sidebar-menu .nav-link,
+.sidebar-menu details.nav-group > summary.nav-link {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  border-radius: 8px !important;
+  margin: 2px 8px !important;
+  padding: 8px 12px !important;
+  min-height: 40px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.sidebar-menu .nav-link > p,
+.sidebar-menu details.nav-group > summary.nav-link > p {
+  display: inline-block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  line-height: 1.5 !important;
+  padding-right: 24px !important;
+  color: #334155 !important;
+}
+
+.sidebar-menu .nav-link i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link i.nav-icon {
+  color: #0284c7 !important;
+  font-size: 1.1rem !important;
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+/* CĂN GIỮA MŨI TÊN CHUẨN XÁC THEO CHIỀU DỌC */
+.sidebar-menu .nav-arrow,
+.sidebar-menu details.nav-group > summary .nav-arrow,
+.sidebar-menu details.nav-group > summary > p > .nav-arrow {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+  transition: transform 0.2s ease, color 0.15s ease !important;
+  pointer-events: none !important;
+}
+
+/* Khi nhóm mở: Mũi tên xoay 90 độ tại đúng tâm giữa */
+.sidebar-menu details.nav-group[open] > summary .nav-arrow,
+.sidebar-menu details.nav-group[open] > summary > p > .nav-arrow {
+  transform: translateY(-50%) rotate(90deg) !important;
+  color: #0284c7 !important;
+}
+
+/* Rê chuột (hover) vào menu cha */
+.sidebar-menu > .nav-item > .nav-link:hover,
+.sidebar-menu details.nav-group > summary.nav-link:hover {
+  background-color: #f0f9ff !important;
+  color: #0284c7 !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link:hover > p,
+.sidebar-menu details.nav-group > summary.nav-link:hover > p {
+  color: #0284c7 !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link:hover i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link:hover i.nav-icon {
+  color: #0284c7 !important;
+}
+
+/* Mục menu cha đang active (ví dụ Tổng quan) */
+.sidebar-menu > .nav-item > .nav-link.active,
+.sidebar-menu > .nav-item > .nav-link.active:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.28) !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link.active > p,
+.sidebar-menu > .nav-item > .nav-link.active:hover > p {
+  color: #ffffff !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link.active i.nav-icon,
+.sidebar-menu > .nav-item > .nav-link.active:hover i.nav-icon {
+  color: #ffffff !important;
+}
+
+/* Khối danh sách menu con bên trong (treeview) */
+.sidebar-menu details.nav-group > .nav-treeview {
+  background-color: #f8fafc !important;
+  border-radius: 8px !important;
+  margin: 4px 8px 6px 8px !important;
+  padding: 4px !important;
+  border: 1px solid #e0f2fe !important;
+  list-style: none !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-item {
+  margin: 0 !important;
+}
+
+/* Menu con bình thường: chữ xám đậm rõ ràng */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link {
+  color: #334155 !important;
+  font-size: 0.85rem !important;
+  margin: 2px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  background-color: transparent !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link > p {
+  color: #334155 !important;
+  padding-right: 0 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link i.nav-icon {
+  color: #0284c7 !important;
+  font-size: 0.95rem !important;
+  margin-right: 8px !important;
+}
+
+/* Rê chuột (hover) vào menu con: Nền xanh mây, chữ xanh navy đậm RẤT NỔI BẬT */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover > p {
+  color: #0369a1 !important;
+  font-weight: 600 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover i.nav-icon {
+  color: #0369a1 !important;
+}
+
+/* MENU CON ĐANG ĐƯỢC CHỌN (ACTIVE): Nền xanh da trời, CHỮ VÀ ICON TRẮNG TINH KHIẾT RỰC RỠ */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active > p,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover > p {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active i.nav-icon,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover i.nav-icon {
+  color: #ffffff !important;
+}
+
+/* 5.2. Navbar trên cùng: Trắng tinh khiết với viền xanh da trời nhẹ */
+.app-header.navbar {
+  background-color: var(--sky-pure-white) !important;
+  border-bottom: 1px solid var(--sky-border-subtle) !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.05);
+}
+
+.app-header.navbar .nav-link {
+  color: #334155 !important;
+}
+
+.app-header.navbar .nav-link:hover {
+  color: #0284c7 !important;
+}
+
+/* 5.3. Nền nội dung chính */
+.app-main {
+  background-color: #f8fafc;
+}
+
+/* 5.4. Breadcrumb trang nhã */
+.breadcrumb-item a {
+  color: var(--sky-600);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--sky-800);
+  text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+  color: var(--sky-slate-500);
+}
+

@@ -79,8 +79,8 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
     <!--end::Required Plugin-->
 
     <!--begin::CSS dùng chung của dự án (nạp sau AdminLTE)-->
-
     <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/style.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/style.css') ?: '1' ?>" />
+    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/dashboard-sky.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/dashboard-sky.css') ?: '1' ?>" />
     <!--end::CSS dùng chung-->
   </head>
 

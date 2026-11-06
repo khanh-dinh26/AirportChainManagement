@@ -33,16 +33,17 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 };
 ?>
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+<aside class="app-sidebar bg-white shadow-sm">
   <!--begin::Sidebar Brand-->
   <div class="sidebar-brand">
     <a href="<?= $baseUrl ?>/index.php" class="brand-link">
       <img
-        src="<?= $adminLteUrl ?>/assets/img/AdminLTELogo.png"
-        alt="Logo"
-        class="brand-image opacity-75 shadow"
+        src="<?= $baseUrl ?>/assets/logo/logo.png"
+        alt="AeroChain Logo"
+        class="brand-image"
+        style="max-height: 34px; width: auto; object-fit: contain;"
       />
-      <span class="brand-text fw-light">ACV Airports</span>
+      <span class="brand-text fw-bold">AeroChain</span>
     </a>
   </div>
   <!--end::Sidebar Brand-->
