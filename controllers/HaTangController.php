@@ -917,9 +917,108 @@ class HaTangController
         }
 
         if ($this->executeWrite($sql, $types, $params, $config['label'])) {
+            if ($type === 'bang_chuyen') {
+                $beltId = $isEdit ? $id : (int) $this->conn->insert_id;
+                $this->dongBoBangChuyenVoiBaoTri($beltId, $terminalId, $so, $khuVuc, $trangThai);
+            }
+
             $context = $this->getTerminalContext($terminalId);
             if ($context) {
                 $this->setReturnContext($context['ma_iata'], $context['id']);
+            }
+        }
+    }
+
+    
+    /**
+     * Đồng bộ hai chiều trạng thái Băng chuyền hành lý sang phân hệ Thiết bị & Bảo trì
+     */
+    private function dongBoBangChuyenVoiBaoTri($idBangChuyen, $terminalId, $soBangChuyen, $khuVuc, $trangThai)
+    {
+        $idBangChuyen = (int) $idBangChuyen;
+        $terminalId   = (int) $terminalId;
+        if ($idBangChuyen <= 0 || $terminalId <= 0) {
+            return;
+        }
+
+        $stmtTerm = $this->prepare("SELECT id_san_bay, ten_nha_ga FROM nha_ga WHERE id = ?");
+        $this->bind($stmtTerm, 'i', [$terminalId]);
+        $stmtTerm->execute();
+        $termRow = $stmtTerm->get_result()->fetch_assoc();
+        $stmtTerm->close();
+
+        if (!$termRow) {
+            return;
+        }
+
+        $idSanBay   = (int) $termRow['id_san_bay'];
+        $tenNhaGa   = trim((string) $termRow['ten_nha_ga']);
+        $tenThietBi = "Băng chuyền " . $soBangChuyen . " - " . $tenNhaGa;
+        if (!empty($khuVuc)) {
+            $tenThietBi .= " (" . trim((string) $khuVuc) . ")";
+        }
+
+        $trangThaiTb = ($trangThai === 'Bao_Tri') ? 'Bao_Tri' : 'Tot';
+
+        $stmtCheck = $this->prepare("SELECT id, trang_thai FROM thiet_bi_san_bay WHERE id_bang_chuyen = ?");
+        $this->bind($stmtCheck, 'i', [$idBangChuyen]);
+        $stmtCheck->execute();
+        $tbRow = $stmtCheck->get_result()->fetch_assoc();
+        $stmtCheck->close();
+
+        $idThietBi = 0;
+        if ($tbRow) {
+            $idThietBi = (int) $tbRow['id'];
+            $stmtUp = $this->prepare(
+                "UPDATE thiet_bi_san_bay
+                 SET ten_thiet_bi = ?, id_san_bay = ?, trang_thai = ?
+                 WHERE id = ?"
+            );
+            $this->bind($stmtUp, 'sisi', [$tenThietBi, $idSanBay, $trangThaiTb, $idThietBi]);
+            $stmtUp->execute();
+            $stmtUp->close();
+        } else {
+            $stmtIns = $this->prepare(
+                "INSERT INTO thiet_bi_san_bay (id_san_bay, ten_thiet_bi, loai_thiet_bi, trang_thai, id_bang_chuyen)
+                 VALUES (?, ?, 'Bang_Chuyen', ?, ?)"
+            );
+            $this->bind($stmtIns, 'issi', [$idSanBay, $tenThietBi, $trangThaiTb, $idBangChuyen]);
+            $stmtIns->execute();
+            $idThietBi = (int) $this->conn->insert_id;
+            $stmtIns->close();
+        }
+
+        if ($idThietBi > 0) {
+            if ($trangThai === 'Bao_Tri') {
+                $stmtCheckTicket = $this->prepare(
+                    "SELECT COUNT(*) AS so_luong FROM yeu_cau_bao_tri
+                     WHERE id_thiet_bi = ? AND trang_thai_xu_ly <> 'Hoan_Thanh'"
+                );
+                $this->bind($stmtCheckTicket, 'i', [$idThietBi]);
+                $stmtCheckTicket->execute();
+                $tRow = $stmtCheckTicket->get_result()->fetch_assoc();
+                $stmtCheckTicket->close();
+
+                if ((int) ($tRow['so_luong'] ?? 0) === 0) {
+                    $moTa = "Yêu cầu bảo trì kỹ thuật cho Băng chuyền " . $soBangChuyen . " (" . $tenNhaGa . ") được khởi tạo từ phân hệ Quản lý hạ tầng";
+                    $stmtTicket = $this->prepare(
+                        "INSERT INTO yeu_cau_bao_tri (id_thiet_bi, mo_ta_su_co, muc_do, trang_thai_xu_ly)
+                         VALUES (?, ?, 'Trung_Binh', 'Dang_Xu_Ly')"
+                    );
+                    $this->bind($stmtTicket, 'is', [$idThietBi, $moTa]);
+                    $stmtTicket->execute();
+                    $stmtTicket->close();
+                }
+            } else {
+                $stmtCloseTicket = $this->prepare(
+                    "UPDATE yeu_cau_bao_tri
+                     SET trang_thai_xu_ly = 'Hoan_Thanh',
+                         ngay_hoan_thanh = COALESCE(ngay_hoan_thanh, CURRENT_TIMESTAMP)
+                     WHERE id_thiet_bi = ? AND trang_thai_xu_ly <> 'Hoan_Thanh'"
+                );
+                $this->bind($stmtCloseTicket, 'i', [$idThietBi]);
+                $stmtCloseTicket->execute();
+                $stmtCloseTicket->close();
             }
         }
     }
@@ -941,6 +1040,30 @@ class HaTangController
         if ($id <= 0) {
             $this->setFlash('danger', 'Không xác định được bản ghi cần xóa.');
             return;
+        }
+
+        if ($type === 'bang_chuyen' && $id > 0) {
+            $stmtTb = $this->prepare("SELECT id FROM thiet_bi_san_bay WHERE id_bang_chuyen = ?");
+            $this->bind($stmtTb, 'i', [$id]);
+            $stmtTb->execute();
+            $tbRow = $stmtTb->get_result()->fetch_assoc();
+            $stmtTb->close();
+
+            if ($tbRow) {
+                $idTb = (int) $tbRow['id'];
+                $stmtCnt = $this->prepare("SELECT COUNT(*) FROM yeu_cau_bao_tri WHERE id_thiet_bi = ?");
+                $this->bind($stmtCnt, 'i', [$idTb]);
+                $stmtCnt->execute();
+                $stmtCnt->bind_result($soPhieu);
+                $stmtCnt->fetch();
+                $stmtCnt->close();
+
+                if ((int) $soPhieu === 0) {
+                    $this->conn->query("DELETE FROM thiet_bi_san_bay WHERE id = {$idTb}");
+                } else {
+                    $this->conn->query("UPDATE thiet_bi_san_bay SET id_bang_chuyen = NULL WHERE id = {$idTb}");
+                }
+            }
         }
 
         $this->executeDelete(

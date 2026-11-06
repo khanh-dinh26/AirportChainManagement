@@ -100,6 +100,11 @@ $actionName = $isEdit ? $config['action_edit'] : $config['action_add'];
           <option value="Hoat_Dong" <?= $formData['trang_thai'] === 'Hoat_Dong' ? 'selected' : '' ?>>Hoạt động</option>
           <option value="Bao_Tri" <?= $formData['trang_thai'] === 'Bao_Tri' ? 'selected' : '' ?>>Bảo trì</option>
         </select>
+        <?php if ($tab === 'bang_chuyen'): ?>
+          <div class="form-text text-muted small mt-1">
+            <i class="bi bi-arrow-repeat me-1"></i> Tự động đồng bộ với phân hệ Kỹ thuật & Bảo trì thiết bị.
+          </div>
+        <?php endif; ?>
       </div>
     </div>
 

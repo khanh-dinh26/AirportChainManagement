@@ -32,11 +32,11 @@ if (isset($_GET['sua']) && !empty($_SESSION['flash_error'])) {
 
 $pageTitle    = 'Quản lý Hãng hàng không';
 $pageHeader   = 'Danh mục Hãng hàng không';
-$navActive    = 'bao_tri';
+$navActive    = 'ha_tang';
 $navSubActive = 'airlines';
 $breadcrumb   = [
     ['label' => 'Tổng quan', 'url' => BASE_URL . '/index.php'],
-    ['label' => 'Bảo trì', 'url' => baoTriUrl('index.php')],
+    ['label' => 'Quản lý hạ tầng', 'url' => BASE_URL . '/index.php?page=ha_tang'],
     ['label' => 'Hãng hàng không', 'url' => null],
 ];
 

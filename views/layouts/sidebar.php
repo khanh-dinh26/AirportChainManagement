@@ -70,10 +70,35 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 
         <!--Thành viên 2 - Hạ tầng-->
         <li class="nav-item">
-          <a href="<?= $baseUrl ?>/index.php?page=ha_tang" class="nav-link<?= $isActive('ha_tang') ?>">
-            <i class="nav-icon bi bi-buildings"></i>
-            <p>Quản lý hạ tầng</p>
-          </a>
+          <details class="nav-group<?= $navActive === 'ha_tang' ? ' is-active' : '' ?>"<?= $navActive === 'ha_tang' ? ' open' : '' ?>>
+            <summary class="nav-link<?= $isActive('ha_tang') ?>">
+              <i class="nav-icon bi bi-buildings"></i>
+              <p>
+                Quản lý hạ tầng
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </summary>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ha_tang" class="nav-link<?= $navActive === 'ha_tang' && ($navSubActive === 'san_bay' || empty($navSubActive)) ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-geo-alt"></i>
+                  <p>Quản lý sân bay</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/views/pages/bao_tri/hang_hang_khong.php" class="nav-link<?= $isSubActive('airlines') ?>">
+                  <i class="nav-icon bi bi-building"></i>
+                  <p>Quản lý hãng hàng không</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/views/pages/bao_tri/tau_bay.php" class="nav-link<?= $isSubActive('aircraft_types') ?>">
+                  <i class="nav-icon bi bi-airplane"></i>
+                  <p>Quản lý loại tàu bay</p>
+                </a>
+              </li>
+            </ul>
+          </details>
         </li>
 
         <!--Thành viên 3 - Chuyến bay-->
@@ -105,18 +130,6 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
                 <a href="<?= $baseUrl ?>/views/pages/bao_tri/thiet_bi.php" class="nav-link<?= $isSubActive('equipment') ?>">
                   <i class="nav-icon bi bi-hdd-stack"></i>
                   <p>Quản lý trang thiết bị</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?= $baseUrl ?>/views/pages/bao_tri/hang_hang_khong.php" class="nav-link<?= $isSubActive('airlines') ?>">
-                  <i class="nav-icon bi bi-buildings"></i>
-                  <p>Quản lý hãng hàng không</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?= $baseUrl ?>/views/pages/bao_tri/tau_bay.php" class="nav-link<?= $isSubActive('aircraft_types') ?>">
-                  <i class="nav-icon bi bi-airplane"></i>
-                  <p>Quản lý loại tàu bay</p>
                 </a>
               </li>
             </ul>

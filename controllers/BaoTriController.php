@@ -5,7 +5,7 @@ class BaoTriController {
     /** Các giá trị hợp lệ theo enum trong CSDL */
     private const MUC_DO_HOP_LE            = ['Thap', 'Trung_Binh', 'Khan_Cap'];
     private const TRANG_THAI_TICKET_HOP_LE = ['Moi', 'Dang_Xu_Ly', 'Hoan_Thanh'];
-    private const LOAI_THIET_BI_HOP_LE     = ['Den_Tin_Hieu', 'Thiet_Bi_Dan_Duong', 'Xe_Thang', 'Xe_Keo', 'Khac'];
+    private const LOAI_THIET_BI_HOP_LE     = ['Den_Tin_Hieu', 'Thiet_Bi_Dan_Duong', 'Xe_Thang', 'Xe_Keo', 'Bang_Chuyen', 'Khac'];
     private const DINH_DANG_ANH_HOP_LE     = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     private const KICH_THUOC_ANH_TOI_DA    = 5242880; // 5 MB
 
@@ -125,12 +125,17 @@ class BaoTriController {
             $where = " WHERE 1=0 ";
         }
 
-        $sql = "SELECT tb.id, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, sb.ten_san_bay, sb.ma_iata,
+        $sql = "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, tb.id_bang_chuyen,
+                       sb.ten_san_bay, sb.ma_iata,
+                       bc.so_bang_chuyen, bc.khu_vuc AS khu_vuc_bang_chuyen,
+                       ng.ten_nha_ga, ng.ma_nha_ga,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y WHERE y.id_thiet_bi = tb.id) AS so_phieu,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y
                         WHERE y.id_thiet_bi = tb.id AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS so_phieu_mo
                 FROM thiet_bi_san_bay tb
                 JOIN san_bay sb ON tb.id_san_bay = sb.id
+                LEFT JOIN bang_chuyen_hanh_ly bc ON tb.id_bang_chuyen = bc.id
+                LEFT JOIN nha_ga ng ON bc.id_nha_ga = ng.id
                 {$where}
                 ORDER BY tb.id DESC";
         $result = $this->db->query($sql);
@@ -147,13 +152,17 @@ class BaoTriController {
         }
 
         $stmt = $this->db->prepare(
-            "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai,
+            "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, tb.id_bang_chuyen,
                     sb.ten_san_bay, sb.ma_iata,
+                    bc.so_bang_chuyen, bc.khu_vuc AS khu_vuc_bang_chuyen,
+                    ng.ten_nha_ga, ng.ma_nha_ga,
                     (SELECT COUNT(*) FROM yeu_cau_bao_tri y WHERE y.id_thiet_bi = tb.id) AS so_phieu,
                     (SELECT COUNT(*) FROM yeu_cau_bao_tri y
                      WHERE y.id_thiet_bi = tb.id AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS so_phieu_mo
              FROM thiet_bi_san_bay tb
              LEFT JOIN san_bay sb ON tb.id_san_bay = sb.id
+             LEFT JOIN bang_chuyen_hanh_ly bc ON tb.id_bang_chuyen = bc.id
+             LEFT JOIN nha_ga ng ON bc.id_nha_ga = ng.id
              WHERE tb.id = ?"
         );
         $stmt->bind_param('i', $id);
@@ -1146,6 +1155,23 @@ class BaoTriController {
         $stmt->bind_param('si', $trang_thai, $id_thiet_bi);
         $stmt->execute();
         $stmt->close();
+
+        // Đồng bộ 2 chiều sang phân hệ Hạ tầng nếu thiết bị liên kết với Băng chuyền hành lý
+        $stmtBc = $this->db->prepare("SELECT id_bang_chuyen FROM thiet_bi_san_bay WHERE id = ?");
+        $stmtBc->bind_param('i', $id_thiet_bi);
+        $stmtBc->execute();
+        $stmtBc->bind_result($id_bang_chuyen);
+        if ($stmtBc->fetch() && !empty($id_bang_chuyen)) {
+            $stmtBc->close();
+            // Nếu thiết bị Tốt -> Băng chuyền Hoạt động. Nếu Bị hỏng hoặc Đang bảo trì -> Băng chuyền Bảo trì.
+            $trangThaiBc = ($trang_thai === 'Tot') ? 'Hoat_Dong' : 'Bao_Tri';
+            $stmtSync = $this->db->prepare("UPDATE bang_chuyen_hanh_ly SET trang_thai = ? WHERE id = ?");
+            $stmtSync->bind_param('si', $trangThaiBc, $id_bang_chuyen);
+            $stmtSync->execute();
+            $stmtSync->close();
+        } else {
+            $stmtBc->close();
+        }
     }
 
     private function viewUrl($file, array $query = []) {

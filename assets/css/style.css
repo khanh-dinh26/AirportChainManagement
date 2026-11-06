@@ -113,6 +113,21 @@ label.acv-sidebar-toggle-btn {
 
 .sidebar-menu details.nav-group[open] > .nav-treeview {
   display: block;
+  padding-left: 0.85rem;
+  margin-left: 0.75rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link {
+  padding-left: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link .nav-icon {
+  font-size: 0.9rem;
+  margin-right: 0.35rem;
 }
 
 .sidebar-menu details.nav-group[open] > summary .nav-arrow {

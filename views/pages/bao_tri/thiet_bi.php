@@ -73,6 +73,7 @@ $loaiThietBiLabels = [
     'Thiet_Bi_Dan_Duong' => 'Thiết bị dẫn đường',
     'Xe_Thang'           => 'Xe thang',
     'Xe_Keo'             => 'Xe kéo',
+    'Bang_Chuyen'        => 'Băng chuyền hành lý',
     'Khac'               => 'Khác',
 ];
 
@@ -81,6 +82,7 @@ $loaiThietBiIcons = [
     'Thiet_Bi_Dan_Duong' => 'bi-broadcast-pin',
     'Xe_Thang'           => 'bi-truck',
     'Xe_Keo'             => 'bi-truck',
+    'Bang_Chuyen'        => 'bi-luggage',
     'Khac'               => 'bi-box-seam',
 ];
 
@@ -89,6 +91,7 @@ $loaiAvatarClasses = [
     'Thiet_Bi_Dan_Duong' => 'maint-avatar--info',
     'Xe_Thang'           => 'maint-avatar--primary',
     'Xe_Keo'             => 'maint-avatar--success',
+    'Bang_Chuyen'        => 'maint-avatar--primary',
     'Khac'               => 'maint-avatar--secondary',
 ];
 
@@ -407,7 +410,17 @@ ob_start();
                                                 <a href="<?= htmlspecialchars($chiTietUrl, ENT_QUOTES, 'UTF-8') ?>" class="maint-equipment-row__name" title="Xem chi tiết và lịch sử bảo trì">
                                                     <?= htmlspecialchars($item['ten_thiet_bi'], ENT_QUOTES, 'UTF-8') ?>
                                                 </a>
-                                                <div class="small text-secondary maint-code"><?= $maThietBi ?></div>
+                                                <div class="small text-secondary maint-code">
+                                                    <?= $maThietBi ?>
+                                                    <?php if (!empty($item['id_bang_chuyen'])): ?>
+                                                        <span class="badge text-bg-info-subtle border border-info-subtle text-info-emphasis ms-1" title="Liên kết băng chuyền hạ tầng">
+                                                            <i class="bi bi-link-45deg"></i> Băng chuyền <?= htmlspecialchars($item['so_bang_chuyen'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                                            <?php if (!empty($item['ten_nha_ga'])): ?>
+                                                                (<?= htmlspecialchars($item['ten_nha_ga'], ENT_QUOTES, 'UTF-8') ?>)
+                                                            <?php endif; ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -606,6 +619,16 @@ $suaLoaiLabel   = $loaiThietBiLabels[$thietBiDangSua['loai_thiet_bi']] ?? htmlsp
                         </div>
                     <?php endif; ?>
 
+                    <?php if (!empty($thietBiDangSua['id_bang_chuyen'])): ?>
+                        <div class="alert alert-info border small py-2 mb-3">
+                            <i class="bi bi-link-45deg me-1"></i>
+                            Thiết bị này liên kết với <strong>Băng chuyền <?= htmlspecialchars($thietBiDangSua['so_bang_chuyen'] ?? '', ENT_QUOTES, 'UTF-8') ?></strong>
+                            <?php if (!empty($thietBiDangSua['ten_nha_ga'])): ?>
+                                (Nhà ga <?= htmlspecialchars($thietBiDangSua['ten_nha_ga'], ENT_QUOTES, 'UTF-8') ?>)
+                            <?php endif; ?>
+                            bên phân hệ Hạ tầng. Trạng thái hoạt động sẽ tự động đồng bộ 2 chiều!
+                        </div>
+                    <?php endif; ?>
                     <div class="maint-form-section"><i class="bi bi-hdd-stack"></i> Thông tin thiết bị</div>
 
                     <div class="mb-2">

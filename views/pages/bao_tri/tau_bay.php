@@ -61,11 +61,11 @@ if (isset($_GET['sua']) && !empty($_SESSION['flash_error'])) {
 
 $pageTitle  = 'Quản lý Loại tàu bay';
 $pageHeader = 'Danh mục Loại tàu bay (MTOW)';
-$navActive    = 'bao_tri';
+$navActive    = 'ha_tang';
 $navSubActive = 'aircraft_types';
 $breadcrumb = [
     ['label' => 'Tổng quan', 'url' => BASE_URL . '/index.php'],
-    ['label' => 'Bảo trì', 'url' => baoTriUrl('index.php')],
+    ['label' => 'Quản lý hạ tầng', 'url' => BASE_URL . '/index.php?page=ha_tang'],
     ['label' => 'Loại tàu bay', 'url' => null],
 ];
 

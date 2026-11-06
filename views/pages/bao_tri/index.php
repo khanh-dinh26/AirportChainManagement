@@ -118,6 +118,7 @@ $loaiThietBiLabels = [
     'Thiet_Bi_Dan_Duong' => 'Thiết bị dẫn đường',
     'Xe_Thang'           => 'Xe thang',
     'Xe_Keo'             => 'Xe kéo',
+    'Bang_Chuyen'        => 'Băng chuyền hành lý',
     'Khac'               => 'Khác',
 ];
 

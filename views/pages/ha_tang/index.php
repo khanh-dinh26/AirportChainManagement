@@ -204,6 +204,7 @@ $airports = $data['airports'];
 $pageTitle = 'Quản lý hạ tầng';
 $pageHeader = 'Quản lý hạ tầng';
 $navActive = 'ha_tang';
+$navSubActive = 'san_bay';
 $breadcrumb = [
     ['label' => 'Tổng quan', 'url' => BASE_URL . '/index.php'],
     ['label' => 'Hạ tầng', 'url' => $url($quanTri && !$airportAdmin ? ['quan_tri' => '1', 'tab' => $tab] : [])],
