@@ -37,6 +37,7 @@ if (isset($_POST['btn_login'])) {
             // Lưu thông tin vào Session
             $_SESSION['user_id']    = $user['id'];
             $_SESSION['ho_ten']     = $user['ho_ten'];
+            $_SESSION['anh_dai_dien']     = !empty($user['anh_dai_dien']) ? $user['anh_dai_dien'] : null;
             $_SESSION['vai_tro']          = $user['vai_tro'];
             $_SESSION['id_san_bay']       = $user['id_san_bay'];
             $_SESSION['san_bay_iata']     = $user['san_bay_iata'] ?? null;

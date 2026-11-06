@@ -232,16 +232,16 @@ ob_start();
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light text-secondary text-uppercase small">
                     <tr>
-                        <th style="width: 75px;" class="text-center">#Mã HĐ</th>
-                        <th>Chuyến bay &amp; Hành trình</th>
-                        <th>Hãng hàng không</th>
-                        <th>Ngày xuất HĐ</th>
-                        <th class="text-end">Phí cất/hạ cánh</th>
-                        <th class="text-end">Phí đỗ tàu</th>
-                        <th class="text-end">Phí khách (PSC)</th>
-                        <th class="text-end text-primary">Tổng tiền</th>
-                        <th class="text-center" style="width: 130px;">Trạng thái</th>
-                        <th class="text-center" style="width: 90px;">Thao tác</th>
+                        <th style="min-width: 85px;" class="text-center">#Mã HĐ</th>
+                        <th style="min-width: 180px;">Chuyến bay &amp; Hành trình</th>
+                        <th style="min-width: 190px;">Hãng hàng không</th>
+                        <th style="min-width: 145px;">Ngày xuất HĐ</th>
+                        <th class="text-end" style="min-width: 165px;">Phí cất/hạ cánh</th>
+                        <th class="text-end" style="min-width: 155px;">Phí đỗ tàu</th>
+                        <th class="text-end" style="min-width: 165px;">Phí khách (PSC)</th>
+                        <th class="text-end text-primary" style="min-width: 185px;">Tổng tiền</th>
+                        <th class="text-center" style="min-width: 140px;">Trạng thái</th>
+                        <th class="text-center" style="min-width: 105px;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>

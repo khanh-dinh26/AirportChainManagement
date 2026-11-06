@@ -92,7 +92,7 @@ class NguoiDung
         }
 
         $whereSql = implode(' AND ', $where);
-        $sql = "SELECT nd.id, nd.ten_dang_nhap, nd.ho_ten, nd.vai_tro, nd.id_san_bay,
+        $sql = "SELECT nd.id, nd.ten_dang_nhap, nd.ho_ten, nd.anh_dai_dien, nd.vai_tro, nd.id_san_bay,
                        sb.ma_iata AS san_bay_iata, sb.ten_san_bay, sb.ten_ngan AS san_bay_ten_ngan, sb.vi_tri AS san_bay_dia_diem
                 FROM nguoi_dung nd
                 LEFT JOIN san_bay sb ON sb.id = nd.id_san_bay
@@ -163,49 +163,96 @@ class NguoiDung
     }
 
     /**
-     * Thêm tài khoản nhân viên mới.
+     * Thêm tài khoản nhân viên mới kèm ảnh đại diện nếu có.
      *
      * @param string $tenDangNhap
      * @param string $matKhau
      * @param string $hoTen
      * @param string $vaiTro
      * @param int|null $idSanBay
+     * @param string|null $anhDaiDien
      * @return bool
      */
-    public function themNguoiDung(string $tenDangNhap, string $matKhau, string $hoTen, string $vaiTro, ?int $idSanBay = null): bool
+    public function themNguoiDung(string $tenDangNhap, string $matKhau, string $hoTen, string $vaiTro, ?int $idSanBay = null, ?string $anhDaiDien = null): bool
     {
         $tenDangNhapSafe = mysqli_real_escape_string($this->conn, trim($tenDangNhap));
         $hoTenSafe = mysqli_real_escape_string($this->conn, trim($hoTen));
         $vaiTroSafe = mysqli_real_escape_string($this->conn, trim($vaiTro));
         $hash = password_hash($matKhau, PASSWORD_DEFAULT);
         $idSanBaySql = ($idSanBay !== null && (int) $idSanBay > 0) ? (int) $idSanBay : "NULL";
+        $anhDaiDienSql = ($anhDaiDien !== null && trim($anhDaiDien) !== '')
+            ? "'" . mysqli_real_escape_string($this->conn, trim($anhDaiDien)) . "'"
+            : "NULL";
 
-        $sql = "INSERT INTO nguoi_dung (ten_dang_nhap, mat_khau_hash, ho_ten, vai_tro, id_san_bay)
-                VALUES ('$tenDangNhapSafe', '$hash', '$hoTenSafe', '$vaiTroSafe', $idSanBaySql)";
+        $sql = "INSERT INTO nguoi_dung (ten_dang_nhap, mat_khau_hash, ho_ten, anh_dai_dien, vai_tro, id_san_bay)
+                VALUES ('$tenDangNhapSafe', '$hash', '$hoTenSafe', $anhDaiDienSql, '$vaiTroSafe', $idSanBaySql)";
 
         return (bool) mysqli_query($this->conn, $sql);
     }
 
     /**
-     * Cập nhật thông tin cơ bản của nhân viên (Họ tên, Vai trò, Sân bay).
+     * Cập nhật thông tin cơ bản của nhân viên (Họ tên, Vai trò, Sân bay, Ảnh đại diện).
      *
      * @param int $id
      * @param string $hoTen
      * @param string $vaiTro
      * @param int|null $idSanBay
+     * @param string|null $anhDaiDien Nếu null thì giữ nguyên ảnh cũ
      * @return bool
      */
-    public function capNhatThongTin(int $id, string $hoTen, string $vaiTro, ?int $idSanBay = null): bool
+    public function capNhatThongTin(int $id, string $hoTen, string $vaiTro, ?int $idSanBay = null, ?string $anhDaiDien = null): bool
     {
         $id = (int) $id;
         $hoTenSafe = mysqli_real_escape_string($this->conn, trim($hoTen));
         $vaiTroSafe = mysqli_real_escape_string($this->conn, trim($vaiTro));
         $idSanBaySql = ($idSanBay !== null && (int) $idSanBay > 0) ? (int) $idSanBay : "NULL";
 
+        $anhSql = "";
+        if ($anhDaiDien !== null) {
+            if (trim($anhDaiDien) === '') {
+                $anhSql = ", anh_dai_dien = NULL";
+            } else {
+                $anhDaiDienSafe = mysqli_real_escape_string($this->conn, trim($anhDaiDien));
+                $anhSql = ", anh_dai_dien = '$anhDaiDienSafe'";
+            }
+        }
+
         $sql = "UPDATE nguoi_dung 
-                SET ho_ten = '$hoTenSafe', vai_tro = '$vaiTroSafe', id_san_bay = $idSanBaySql
+                SET ho_ten = '$hoTenSafe', vai_tro = '$vaiTroSafe', id_san_bay = $idSanBaySql $anhSql
                 WHERE id = $id";
 
+        return (bool) mysqli_query($this->conn, $sql);
+    }
+
+    /**
+     * Cập nhật riêng ảnh đại diện cho tài khoản.
+     *
+     * @param int $id
+     * @param string $anhDaiDien
+     * @return bool
+     */
+    public function capNhatAnhDaiDien(int $id, string $anhDaiDien): bool
+    {
+        $id = (int) $id;
+        if (trim($anhDaiDien) === '') {
+            $sql = "UPDATE nguoi_dung SET anh_dai_dien = NULL WHERE id = $id";
+        } else {
+            $anhSafe = mysqli_real_escape_string($this->conn, trim($anhDaiDien));
+            $sql = "UPDATE nguoi_dung SET anh_dai_dien = '$anhSafe' WHERE id = $id";
+        }
+        return (bool) mysqli_query($this->conn, $sql);
+    }
+
+    /**
+     * Xóa ảnh đại diện đưa về mặc định.
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function xoaAnhDaiDien(int $id): bool
+    {
+        $id = (int) $id;
+        $sql = "UPDATE nguoi_dung SET anh_dai_dien = NULL WHERE id = $id";
         return (bool) mysqli_query($this->conn, $sql);
     }
 

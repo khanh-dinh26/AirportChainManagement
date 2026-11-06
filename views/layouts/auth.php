@@ -52,8 +52,20 @@ if (empty($bgImages)) {
     $bgImages[] = $baseUrl . '/assets/logo/logo.png';
 }
 $soAnhBg = count($bgImages);
-$thoiGianMoiAnh = 6; // Mỗi ảnh hiển thị 6 giây
-$tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
+$thoiGianMoiAnh = 6.0; // Mỗi ảnh hiển thị 6 giây
+$thoiGianFade = 1.2;  // Thời gian chuyển tiếp mượt mà giữa các ảnh (giây)
+$tongThoiGianChuKy = max(6.0, $soAnhBg * $thoiGianMoiAnh);
+
+// Tự động tính toán tỷ lệ % chuyển cảnh chính xác theo số lượng ảnh thực tế
+$animFade = 3.0;
+$animStay = 30.0;
+$animFadeEnd = 35.0;
+if ($soAnhBg > 1) {
+    $p = 100 / $soAnhBg;
+    $animFade = round(($thoiGianFade / $tongThoiGianChuKy) * 100, 2);
+    $animStay = round($p, 2);
+    $animFadeEnd = round($p + $animFade, 2);
+}
 ?>
 <!doctype html>
 <html lang="vi" data-bs-theme="light">
@@ -110,9 +122,10 @@ $tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
         z-index: 0;
         pointer-events: none;
         overflow: hidden;
+        background-color: #0f172a;
       }
 
-      /* Từng tấm ảnh nền có hiệu ứng crossfade & zoom nhẹ (Ken Burns) */
+      /* Từng tấm ảnh nền có hiệu ứng crossfade mượt mà & zoom Ken Burns rõ nét */
       .login-bg-slide {
         position: absolute;
         inset: 0;
@@ -122,45 +135,52 @@ $tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
         background-position: center center;
         background-repeat: no-repeat;
         opacity: 0;
+        will-change: opacity, transform;
+        transform-origin: center center;
         <?php if ($soAnhBg > 1): ?>
-          animation: skyCrossfade <?= $tongThoiGianChuKy ?>s infinite ease-in-out;
-          will-change: opacity, transform;
+          animation-name: skyAuthKenBurns;
+          animation-duration: <?= $tongThoiGianChuKy ?>s;
+          animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
         <?php else: ?>
           opacity: 1 !important;
+          animation: skyAuthSingleKenBurns 20s infinite ease-in-out;
         <?php endif; ?>
       }
 
-      /* Lớp phủ chuyển sắc xanh mây sẫm bảo vệ độ tương phản */
+      /* Góc ngắm camera Ken Burns so le tạo hiệu ứng điện ảnh sinh động */
+      .login-bg-slide:nth-of-type(even) {
+        transform-origin: 65% 45%;
+      }
+      .login-bg-slide:nth-of-type(odd) {
+        transform-origin: 35% 55%;
+      }
+
+      /* Lớp phủ chuyển sắc nhẹ giữ trọn 100% màu sắc thực tế nhưng vẫn tôn bật form đăng nhập */
       .login-bg-overlay {
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.48) 0%, rgba(2, 132, 199, 0.32) 100%);
+        background: radial-gradient(circle at center, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.40) 100%);
         z-index: 1;
       }
 
-      <?php if ($soAnhBg > 1): ?>
-      @keyframes skyCrossfade {
-        0% {
-          opacity: 0;
-          transform: scale(1);
-        }
-        <?= number_format(100 / $soAnhBg * 0.16, 2) ?>% {
-          opacity: 1;
-        }
-        <?= number_format(100 / $soAnhBg * 0.85, 2) ?>% {
-          opacity: 1;
-          transform: scale(1.03);
-        }
-        <?= number_format(100 / $soAnhBg * 1.05, 2) ?>% {
-          opacity: 0;
-          transform: scale(1.05);
-        }
-        100% {
-          opacity: 0;
-          transform: scale(1);
-        }
+      <?php
+      if ($soAnhBg > 1) {
+          echo "@keyframes skyAuthKenBurns {\n";
+          echo "  0% { opacity: 0; transform: scale(1.0); }\n";
+          echo "  {$animFade}% { opacity: 1; transform: scale(1.015); }\n";
+          echo "  {$animStay}% { opacity: 1; transform: scale(1.08); }\n";
+          echo "  {$animFadeEnd}% { opacity: 0; transform: scale(1.095); }\n";
+          echo "  100% { opacity: 0; transform: scale(1.0); }\n";
+          echo "}\n";
+      } else {
+          echo "@keyframes skyAuthSingleKenBurns {\n";
+          echo "  0% { transform: scale(1.0); }\n";
+          echo "  50% { transform: scale(1.08); }\n";
+          echo "  100% { transform: scale(1.0); }\n";
+          echo "}\n";
       }
-      <?php endif; ?>
+      ?>
 
       .login-box {
         position: relative;
@@ -169,32 +189,31 @@ $tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
         max-width: 420px;
         margin: 20px auto;
       }
-      .login-logo {
-        margin-bottom: 24px;
-      }
-      .login-logo img {
-        max-height: 90px;
-        max-width: 240px;
-        width: auto;
-        display: block;
-        margin: 0 auto;
-        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
-        transition: transform 0.25s ease;
-      }
-      .login-logo img:hover {
-        transform: scale(1.04);
-      }
       .login-box .card {
-        background: rgba(255, 255, 255, 0.94) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
         border: 1px solid rgba(255, 255, 255, 0.8) !important;
-        border-radius: 18px !important;
+        border-radius: 20px !important;
         box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.4) !important;
         overflow: hidden;
       }
       .login-card-body {
-        padding: 30px 28px !important;
+        padding: 32px 28px !important;
+      }
+      .auth-card-logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+      .auth-card-logo {
+        max-height: 85px;
+        max-width: 220px;
+        width: auto;
+        display: block;
+        user-select: none;
+        pointer-events: none; /* Tĩnh, không thể hover hay click */
+        filter: drop-shadow(0 6px 14px rgba(2, 132, 199, 0.22));
       }
       .btn-primary {
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
@@ -208,6 +227,101 @@ $tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
         background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
         border-color: #0369a1 !important;
       }
+
+      /* ============================================================
+       * CHUYỂN ĐỔI FORM 100% THUẦN CSS (KHÔNG DÙNG JAVASCRIPT)
+       * ============================================================ */
+      .auth-tab-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+        height: 0;
+        margin: 0;
+      }
+      .auth-panes-wrapper {
+        position: relative;
+        width: 100%;
+      }
+
+      /* Chuyển đổi tiêu đề & phụ đề theo radio thuần CSS */
+      .title-login, .title-forgot, .msg-login, .msg-forgot {
+        transition: opacity 0.25s ease;
+      }
+      #tab-login:checked ~ .auth-title-container .title-login { display: block; }
+      #tab-login:checked ~ .auth-title-container .title-forgot { display: none; }
+      #tab-login:checked ~ .auth-msg-container .msg-login { display: block; }
+      #tab-login:checked ~ .auth-msg-container .msg-forgot { display: none; }
+
+      #tab-forgot:checked ~ .auth-title-container .title-login { display: none; }
+      #tab-forgot:checked ~ .auth-title-container .title-forgot { display: block; }
+      #tab-forgot:checked ~ .auth-msg-container .msg-login { display: none; }
+      #tab-forgot:checked ~ .auth-msg-container .msg-forgot { display: block; }
+
+      /* Khung chứa các pane */
+      .auth-pane-box {
+        width: 100%;
+        transition: opacity 0.26s cubic-bezier(0.4, 0, 0.2, 1), transform 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: opacity, transform;
+      }
+
+      /* Khi Tab Đăng nhập được chọn */
+      #tab-login:checked ~ .auth-pane-login {
+        position: relative;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+        z-index: 2;
+      }
+      #tab-login:checked ~ .auth-pane-forgot {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(10px);
+        z-index: 1;
+      }
+
+      /* Khi Tab Quên mật khẩu được chọn */
+      #tab-forgot:checked ~ .auth-pane-login {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-10px);
+        z-index: 1;
+      }
+      #tab-forgot:checked ~ .auth-pane-forgot {
+        position: relative;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0);
+        z-index: 2;
+      }
+
+      /* Nút nhãn chuyển đổi dạng link / button thuần CSS */
+      .btn-toggle-link {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.15s ease;
+      }
+      .btn-toggle-link:hover {
+        text-decoration: underline;
+        color: #0369a1 !important;
+      }
+      label.btn {
+        cursor: pointer;
+        user-select: none;
+      }
     </style>
     <!--end::Tùy chỉnh-->
   </head>
@@ -216,27 +330,20 @@ $tongThoiGianChuKy = max(6, $soAnhBg * $thoiGianMoiAnh);
     <!--begin::Slideshow chuyển ảnh nền sân bay (Thuần CSS Animation)-->
     <div class="login-bg-slider" aria-hidden="true">
       <?php foreach ($bgImages as $idx => $bgUrl): ?>
-        <div class="login-bg-slide" style="background-image: url('<?= $bgUrl ?>'); animation-delay: <?= $idx * $thoiGianMoiAnh ?>s;"></div>
+        <div class="login-bg-slide" style="background-image: url('<?= htmlspecialchars($bgUrl, ENT_QUOTES, 'UTF-8') ?>'); animation-delay: <?= $idx * $thoiGianMoiAnh ?>s;"></div>
       <?php endforeach; ?>
       <div class="login-bg-overlay"></div>
     </div>
     <!--end::Slideshow chuyển ảnh nền-->
 
     <main class="login-box">
-      <!--begin::Logo (Chỉ có logo to ở giữa, đã xóa chữ AeroChain)-->
-      <div class="login-logo text-center">
-        <a href="<?= $baseUrl ?>/index.php" class="d-inline-block text-decoration-none" title="Trang chủ">
-          <img src="<?= $baseUrl ?>/assets/logo/logo.png" alt="Logo">
-        </a>
-      </div>
-      <!--end::Logo-->
-
       <div class="card">
         <div class="card-body login-card-body">
-          <p class="login-box-msg fw-semibold"><?= htmlspecialchars($authTitle, ENT_QUOTES, 'UTF-8') ?></p>
-          <?php if ($authMsg !== ''): ?>
-            <p class="text-secondary small text-center"><?= htmlspecialchars($authMsg, ENT_QUOTES, 'UTF-8') ?></p>
-          <?php endif; ?>
+          <!--begin::Logo đặt bên trong form (tĩnh, không có link trang chủ, không hover)-->
+          <div class="auth-card-logo-wrap text-center">
+            <img src="<?= $baseUrl ?>/assets/logo/logo.png" alt="AeroChain" class="auth-card-logo">
+          </div>
+          <!--end::Logo-->
 
           <?= $content ?>
         </div>

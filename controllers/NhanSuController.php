@@ -5,8 +5,9 @@
  * Phân hệ: Xác thực & Nhân sự (Thành viên 1)
  * ------------------------------------------------------------
  * Cho phép Admin Tổng công ty quản lý danh sách tài khoản
- * nhân viên, xem thông tin chi tiết, thay đổi mật khẩu trực tiếp,
- * phân quyền vai trò và phân bổ sân bay công tác.
+ * nhân viên, xem thông tin chi tiết, đặt & crop ảnh đại diện,
+ * thay đổi mật khẩu trực tiếp, phân quyền vai trò và
+ * phân bổ sân bay công tác.
  * ============================================================
  */
 
@@ -51,20 +52,22 @@ class NhanSuController
 
         $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
         $isAdminTong = la_admin();
+        $isQuanLySanBay = co_vai_tro('Quan_Ly_San_Bay');
         $phamViSanBay = pham_vi_san_bay();
+        $coQuyenThem = $isAdminTong || ($isQuanLySanBay && $phamViSanBay > 0);
 
         // Xử lý các thao tác POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = trim((string) ($_POST['action'] ?? ''));
 
             if ($action === 'doi_mat_khau') {
-                $this->handleDoiMatKhau($currentUserId, $isAdminTong);
+                $this->handleDoiMatKhau($currentUserId, $isAdminTong, $isQuanLySanBay, $phamViSanBay);
             } elseif ($action === 'them_nhan_vien') {
-                $this->handleThemNhanVien($isAdminTong);
+                $this->handleThemNhanVien($isAdminTong, $isQuanLySanBay, $phamViSanBay);
             } elseif ($action === 'cap_nhat_thong_tin') {
-                $this->handleCapNhatThongTin($currentUserId, $isAdminTong);
+                $this->handleCapNhatThongTin($currentUserId, $isAdminTong, $isQuanLySanBay, $phamViSanBay);
             } elseif ($action === 'xoa_nhan_vien') {
-                $this->handleXoaNhanVien($currentUserId, $isAdminTong);
+                $this->handleXoaNhanVien($currentUserId, $isAdminTong, $isQuanLySanBay, $phamViSanBay);
             }
         }
 
@@ -84,6 +87,16 @@ class NhanSuController
         $thongKe = $this->nguoiDungModel->thongKeNhanSu();
         $danhSachSanBay = $this->nguoiDungModel->layDanhSachSanBay();
 
+        $tenSanBayPhuTrach = '';
+        if ($phamViSanBay > 0) {
+            foreach ($danhSachSanBay as $sb) {
+                if ((int) $sb['id'] === $phamViSanBay) {
+                    $tenSanBayPhuTrach = $sb['ma_iata'] . ' – ' . $sb['ten_san_bay'];
+                    break;
+                }
+            }
+        }
+
         // Đọc flash message
         $flash = null;
         if (!empty($_SESSION['nhan_su_flash'])) {
@@ -92,35 +105,42 @@ class NhanSuController
         }
 
         return [
-            'danhSach'        => $danhSach,
-            'thongKe'         => $thongKe,
-            'danhSachSanBay'  => $danhSachSanBay,
-            'filters'         => $filters,
-            'isAdminTong'     => $isAdminTong,
-            'currentUserId'   => $currentUserId,
-            'vaiTroMap'       => self::VAI_TRO,
-            'flash'           => $flash,
+            'danhSach'          => $danhSach,
+            'thongKe'           => $thongKe,
+            'danhSachSanBay'    => $danhSachSanBay,
+            'filters'           => $filters,
+            'isAdminTong'       => $isAdminTong,
+            'isQuanLySanBay'    => $isQuanLySanBay,
+            'coQuyenThem'       => $coQuyenThem,
+            'phamViSanBay'      => $phamViSanBay,
+            'tenSanBayPhuTrach' => $tenSanBayPhuTrach,
+            'currentUserId'     => $currentUserId,
+            'vaiTroMap'         => self::VAI_TRO,
+            'flash'             => $flash,
         ];
     }
 
     /**
-     * Xử lý Admin Tổng hoặc cá nhân đổi mật khẩu nhân viên.
+     * Xử lý Admin Tổng, Quản lý sân bay hoặc cá nhân đổi mật khẩu nhân viên.
      */
-    private function handleDoiMatKhau(int $currentUserId, bool $isAdminTong): void
+    private function handleDoiMatKhau(int $currentUserId, bool $isAdminTong, bool $isQuanLySanBay, int $phamViSanBay): void
     {
         $id = (int) ($_POST['id_nguoi_dung'] ?? 0);
         $matKhauMoi = (string) ($_POST['mat_khau_moi'] ?? '');
         $xacNhanMatKhau = (string) ($_POST['xac_nhan_mat_khau'] ?? '');
 
-        // Kiểm tra quyền: Chỉ Admin Tổng hoặc chính chủ mới được đổi
-        if (!$isAdminTong && $id !== $currentUserId) {
-            $this->setFlash('danger', 'Bạn không có quyền thay đổi mật khẩu của nhân viên khác!');
-            $this->redirectBack();
-        }
-
         $targetUser = $this->nguoiDungModel->layTheoId($id);
         if (!$targetUser) {
             $this->setFlash('danger', 'Không tìm thấy tài khoản nhân viên cần đổi mật khẩu.');
+            $this->redirectBack();
+        }
+
+        $canManage = $isAdminTong
+            || ($id === $currentUserId)
+            || ($isQuanLySanBay && $phamViSanBay > 0 && (int) ($targetUser['id_san_bay'] ?? 0) === $phamViSanBay && $targetUser['vai_tro'] !== 'Admin_Tong_Cong_Ty');
+
+        if (!$canManage) {
+            $this->setFlash('danger', 'Bạn không có quyền thay đổi mật khẩu của nhân viên này!');
             $this->redirectBack();
         }
 
@@ -145,12 +165,12 @@ class NhanSuController
     }
 
     /**
-     * Xử lý Admin Tổng thêm tài khoản nhân viên mới.
+     * Xử lý thêm tài khoản nhân viên mới (Admin Tổng hoặc Quản lý sân bay).
      */
-    private function handleThemNhanVien(bool $isAdminTong): void
+    private function handleThemNhanVien(bool $isAdminTong, bool $isQuanLySanBay, int $phamViSanBay): void
     {
-        if (!$isAdminTong) {
-            $this->setFlash('danger', 'Chỉ Quản trị viên Tổng công ty mới có quyền tạo tài khoản nhân viên mới!');
+        if (!$isAdminTong && !($isQuanLySanBay && $phamViSanBay > 0)) {
+            $this->setFlash('danger', 'Bạn không có quyền tạo tài khoản nhân viên mới!');
             $this->redirectBack();
         }
 
@@ -158,7 +178,20 @@ class NhanSuController
         $matKhau = (string) ($_POST['mat_khau'] ?? '');
         $hoTen = trim((string) ($_POST['ho_ten'] ?? ''));
         $vaiTro = trim((string) ($_POST['vai_tro'] ?? ''));
-        $idSanBay = isset($_POST['id_san_bay']) && $_POST['id_san_bay'] !== '' ? (int) $_POST['id_san_bay'] : null;
+
+        if ($isAdminTong) {
+            $idSanBay = isset($_POST['id_san_bay']) && $_POST['id_san_bay'] !== '' ? (int) $_POST['id_san_bay'] : null;
+            if ($vaiTro === 'Admin_Tong_Cong_Ty') {
+                $idSanBay = null;
+            }
+        } else {
+            // Quản lý sân bay: Tự động gán thuộc sân bay mình quản lý
+            $idSanBay = $phamViSanBay;
+            if ($vaiTro === 'Admin_Tong_Cong_Ty') {
+                $this->setFlash('danger', 'Quản lý sân bay không được phép tạo tài khoản Admin Tổng công ty!');
+                $this->redirectBack();
+            }
+        }
 
         if ($tenDangNhap === '' || $matKhau === '' || $hoTen === '' || $vaiTro === '') {
             $this->setFlash('danger', 'Vui lòng điền đầy đủ các thông tin bắt buộc.');
@@ -185,12 +218,10 @@ class NhanSuController
             $this->redirectBack();
         }
 
-        // Nếu là Admin tổng công ty thì không gắn với sân bay cụ thể
-        if ($vaiTro === 'Admin_Tong_Cong_Ty') {
-            $idSanBay = null;
-        }
+        // Bỏ chỉnh ảnh trong quản lý nhân sự - nhân sự tạo mới mặc định dùng avatar chữ cái, cá nhân tự đặt trong Hồ sơ
+        $anhDaiDien = null;
 
-        if ($this->nguoiDungModel->themNguoiDung($tenDangNhap, $matKhau, $hoTen, $vaiTro, $idSanBay)) {
+        if ($this->nguoiDungModel->themNguoiDung($tenDangNhap, $matKhau, $hoTen, $vaiTro, $idSanBay, $anhDaiDien)) {
             $tenSafe = htmlspecialchars($hoTen, ENT_QUOTES, 'UTF-8');
             $this->setFlash('success', "Thêm tài khoản nhân viên <strong>{$tenSafe}</strong> thành công!");
         } else {
@@ -201,23 +232,27 @@ class NhanSuController
     }
 
     /**
-     * Xử lý Admin Tổng cập nhật thông tin nhân viên (họ tên, vai trò, sân bay).
+     * Xử lý cập nhật thông tin nhân viên (họ tên, vai trò, sân bay).
      */
-    private function handleCapNhatThongTin(int $currentUserId, bool $isAdminTong): void
+    private function handleCapNhatThongTin(int $currentUserId, bool $isAdminTong, bool $isQuanLySanBay, int $phamViSanBay): void
     {
         $id = (int) ($_POST['id_nguoi_dung'] ?? 0);
         $hoTen = trim((string) ($_POST['ho_ten'] ?? ''));
         $vaiTro = trim((string) ($_POST['vai_tro'] ?? ''));
         $idSanBay = isset($_POST['id_san_bay']) && $_POST['id_san_bay'] !== '' ? (int) $_POST['id_san_bay'] : null;
 
-        if (!$isAdminTong && $id !== $currentUserId) {
-            $this->setFlash('danger', 'Bạn không có quyền chỉnh sửa thông tin của nhân viên khác!');
-            $this->redirectBack();
-        }
-
         $targetUser = $this->nguoiDungModel->layTheoId($id);
         if (!$targetUser) {
             $this->setFlash('danger', 'Không tìm thấy tài khoản nhân viên cần sửa.');
+            $this->redirectBack();
+        }
+
+        $canManage = $isAdminTong
+            || ($id === $currentUserId)
+            || ($isQuanLySanBay && $phamViSanBay > 0 && (int) ($targetUser['id_san_bay'] ?? 0) === $phamViSanBay && $targetUser['vai_tro'] !== 'Admin_Tong_Cong_Ty');
+
+        if (!$canManage) {
+            $this->setFlash('danger', 'Bạn không có quyền chỉnh sửa thông tin của nhân viên này!');
             $this->redirectBack();
         }
 
@@ -226,20 +261,31 @@ class NhanSuController
             $this->redirectBack();
         }
 
-        // Nếu không phải admin tổng thì giữ nguyên vai trò và sân bay cũ
-        if (!$isAdminTong) {
-            $vaiTro = $targetUser['vai_tro'];
-            $idSanBay = $targetUser['id_san_bay'];
-        } else {
+        if ($isAdminTong) {
             if (!isset(self::VAI_TRO[$vaiTro])) {
                 $vaiTro = $targetUser['vai_tro'];
             }
             if ($vaiTro === 'Admin_Tong_Cong_Ty') {
                 $idSanBay = null;
             }
+        } elseif ($isQuanLySanBay && $id !== $currentUserId) {
+            $idSanBay = $phamViSanBay;
+            if (!isset(self::VAI_TRO[$vaiTro]) || $vaiTro === 'Admin_Tong_Cong_Ty') {
+                $vaiTro = $targetUser['vai_tro'];
+            }
+        } else {
+            $vaiTro = $targetUser['vai_tro'];
+            $idSanBay = $targetUser['id_san_bay'];
         }
 
-        if ($this->nguoiDungModel->capNhatThongTin($id, $hoTen, $vaiTro, $idSanBay)) {
+        // Bỏ chỉnh ảnh trong quản lý nhân sự - giữ nguyên ảnh đại diện hiện tại
+        $anhDaiDien = null;
+
+        if ($this->nguoiDungModel->capNhatThongTin($id, $hoTen, $vaiTro, $idSanBay, $anhDaiDien)) {
+            if ($id === $currentUserId) {
+                $_SESSION['ho_ten'] = $hoTen;
+            }
+
             $tenSafe = htmlspecialchars($hoTen, ENT_QUOTES, 'UTF-8');
             $this->setFlash('success', "Cập nhật thông tin nhân viên <strong>{$tenSafe}</strong> thành công!");
         } else {
@@ -250,15 +296,23 @@ class NhanSuController
     }
 
     /**
-     * Xử lý Admin Tổng xóa tài khoản nhân viên.
+     * Xóa tệp ảnh vật lý trên đĩa máy chủ nếu xóa tài khoản.
      */
-    private function handleXoaNhanVien(int $currentUserId, bool $isAdminTong): void
+    private function xoaFileAnhVatLy(string $rawAvatar): void
     {
-        if (!$isAdminTong) {
-            $this->setFlash('danger', 'Chỉ Quản trị viên Tổng công ty mới có quyền xóa tài khoản nhân viên!');
-            $this->redirectBack();
+        if (trim($rawAvatar) === '') return;
+        $relPath = explode('|', $rawAvatar)[0];
+        $absPath = __DIR__ . '/../' . $relPath;
+        if (file_exists($absPath) && is_file($absPath)) {
+            @unlink($absPath);
         }
+    }
 
+    /**
+     * Xử lý Admin Tổng hoặc Quản lý sân bay xóa tài khoản nhân viên.
+     */
+    private function handleXoaNhanVien(int $currentUserId, bool $isAdminTong, bool $isQuanLySanBay, int $phamViSanBay): void
+    {
         $id = (int) ($_POST['id_nguoi_dung'] ?? 0);
 
         if ($id === $currentUserId) {
@@ -271,6 +325,16 @@ class NhanSuController
             $this->setFlash('danger', 'Tài khoản nhân viên không tồn tại.');
             $this->redirectBack();
         }
+
+        $canDelete = $isAdminTong
+            || ($isQuanLySanBay && $phamViSanBay > 0 && (int) ($targetUser['id_san_bay'] ?? 0) === $phamViSanBay && $targetUser['vai_tro'] !== 'Admin_Tong_Cong_Ty');
+
+        if (!$canDelete) {
+            $this->setFlash('danger', 'Bạn không có quyền xóa tài khoản nhân viên này!');
+            $this->redirectBack();
+        }
+
+        $this->xoaFileAnhVatLy($targetUser['anh_dai_dien'] ?? '');
 
         if ($this->nguoiDungModel->xoaNguoiDung($id, $currentUserId)) {
             $tenSafe = htmlspecialchars($targetUser['ho_ten'], ENT_QUOTES, 'UTF-8');

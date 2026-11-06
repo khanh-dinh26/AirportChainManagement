@@ -33,7 +33,7 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 };
 ?>
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-white shadow-sm">
+<aside class="app-sidebar shadow-sm">
   <!--begin::Sidebar Brand-->
   <div class="sidebar-brand">
     <a href="<?= $baseUrl ?>/index.php" class="brand-link">
@@ -41,7 +41,7 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
         src="<?= $baseUrl ?>/assets/logo/logo.png"
         alt="AeroChain Logo"
         class="brand-image"
-        style="max-height: 34px; width: auto; object-fit: contain;"
+        style="max-height: 50px; width: auto; object-fit: contain;"
       />
       <span class="brand-text fw-bold">AeroChain</span>
     </a>

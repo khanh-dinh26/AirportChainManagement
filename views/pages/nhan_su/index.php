@@ -72,7 +72,7 @@ ob_start();
     background: #dcfce7;
     color: #16a34a;
   }
-  /* Style nút thao tác mềm mại, hiện đại */
+  /* Style nút thao tác */
   .ns-action-btn {
     width: 32px;
     height: 32px;
@@ -84,7 +84,7 @@ ob_start();
     border: 1px solid transparent;
     font-size: 0.9rem;
     transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
+    text-decoration: none !important;
   }
   .ns-action-btn:hover {
     transform: translateY(-1.5px);
@@ -92,7 +92,6 @@ ob_start();
   .ns-action-btn:active {
     transform: translateY(0);
   }
-  /* Nút xem chi tiết */
   .ns-btn-view {
     background: #eff6ff;
     color: #2563eb;
@@ -104,7 +103,6 @@ ob_start();
     border-color: #2563eb;
     box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
   }
-  /* Nút đổi mật khẩu */
   .ns-btn-key {
     background: #fefce8;
     color: #ca8a04;
@@ -116,7 +114,6 @@ ob_start();
     border-color: #eab308;
     box-shadow: 0 3px 8px rgba(234, 179, 8, 0.28);
   }
-  /* Nút sửa thông tin */
   .ns-btn-edit {
     background: #eef2ff;
     color: #4f46e5;
@@ -128,7 +125,6 @@ ob_start();
     border-color: #4f46e5;
     box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
   }
-  /* Nút xóa nhân viên */
   .ns-btn-delete {
     background: #fef2f2;
     color: #dc2626;
@@ -140,7 +136,6 @@ ob_start();
     border-color: #dc2626;
     box-shadow: 0 3px 8px rgba(220, 38, 38, 0.25);
   }
-  /* Nút xóa bị vô hiệu hóa (tài khoản chính mình) */
   .ns-btn-disabled {
     background: #f8fafc;
     color: #94a3b8;
@@ -148,13 +143,8 @@ ob_start();
     cursor: not-allowed;
     opacity: 0.6;
   }
-  .ns-btn-disabled:hover {
-    transform: none;
-    box-shadow: none;
-    background: #f8fafc;
-    color: #94a3b8;
-  }
-  /* Modal CSS độc lập không phụ thuộc JS bên ngoài */
+
+  /* MODAL THUẦN CSS BẰNG :TARGET */
   .custom-modal-backdrop {
     display: none;
     position: fixed;
@@ -170,7 +160,6 @@ ob_start();
     padding: 1rem;
     overflow-y: auto;
   }
-  .custom-modal-backdrop.is-open,
   .custom-modal-backdrop:target {
     display: flex !important;
   }
@@ -194,11 +183,6 @@ ob_start();
       transform: translateY(0) scale(1);
     }
   }
-  .ns-filter-card {
-    border-radius: 0.85rem;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-  }
 </style>
 
 <!-- THÔNG BÁO FLASH -->
@@ -208,11 +192,11 @@ ob_start();
       <i class="bi <?= $data['flash']['type'] === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' ?> fs-5 me-2"></i>
       <div><?= $data['flash']['message'] ?></div>
     </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng" onclick="this.closest('.alert').remove();"></button>
+    <a href="<?= BASE_URL ?>/index.php?page=nhan_su" class="btn-close" aria-label="Đóng"></a>
   </div>
 <?php endif; ?>
 
-<!-- THỐNG KÊ NHÂN SỰ (4 STAT CARDS) -->
+<!-- THỐNG KÊ NHÂN SỰ -->
 <div class="row g-3 mb-4">
   <div class="col-12 col-sm-6 col-xl-3">
     <div class="card ns-stat-card shadow-sm h-100">
@@ -282,15 +266,18 @@ ob_start();
         <span class="small text-secondary">
           <?php if ($data['isAdminTong']): ?>
             <span class="badge text-bg-danger me-1"><i class="bi bi-shield-check me-1"></i>Toàn quyền quản trị</span>
-            Bạn có thể quản lý, xem thông tin và đổi mật khẩu của toàn bộ nhân viên trong chuỗi cảng hàng không.
+            Quản lý tài khoản, phân quyền vai trò và nhân sự toàn hệ thống.
+          <?php elseif ($data['isQuanLySanBay']): ?>
+            <span class="badge text-bg-primary me-1"><i class="bi bi-person-badge me-1"></i>Quản lý sân bay</span>
+            Quản lý và thêm tài khoản nhân viên thuộc sân bay phụ trách (<strong><?= $escape($data['tenSanBayPhuTrach']) ?></strong>).
           <?php else: ?>
-            <span class="badge text-bg-primary me-1"><i class="bi bi-person-check me-1"></i>Xem danh sách</span>
+            <span class="badge text-bg-secondary me-1"><i class="bi bi-person-check me-1"></i>Xem danh sách</span>
             Xem thông tin nhân sự thuộc phạm vi phụ trách.
           <?php endif; ?>
         </span>
       </div>
 
-      <?php if ($data['isAdminTong']): ?>
+      <?php if ($data['coQuyenThem']): ?>
         <div>
           <a href="#modalThemNhanVien" class="btn btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-3">
             <i class="bi bi-person-plus-fill fs-6"></i>
@@ -351,23 +338,24 @@ ob_start();
     </form>
   </div>
 
-  <!-- BẢNG NHÂN VIÊN -->
+  <!-- BẢNG NHÂN VIÊN: CÓ CỘT ẢNH ĐẠI DIỆN RIÊNG -->
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light text-secondary text-uppercase small">
         <tr>
-          <th style="width: 50px;" class="text-center">#</th>
-          <th>Nhân sự</th>
+          <th style="width: 45px;" class="text-center">#</th>
+          <th style="width: 80px;" class="text-center">Ảnh</th>
+          <th>Họ và tên</th>
           <th>Tên đăng nhập</th>
           <th>Vai trò</th>
           <th>Sân bay công tác</th>
-          <th style="width: 175px;" class="text-center">Thao tác</th>
+          <th style="width: 185px;" class="text-center">Thao tác</th>
         </tr>
       </thead>
       <tbody>
         <?php if (empty($data['danhSach'])): ?>
           <tr>
-            <td colspan="6" class="text-center py-5 text-secondary">
+            <td colspan="7" class="text-center py-5 text-secondary">
               <i class="bi bi-person-x fs-1 d-block mb-2 text-muted"></i>
               Không tìm thấy nhân viên nào phù hợp với điều kiện tìm kiếm.
             </td>
@@ -382,30 +370,51 @@ ob_start();
               elseif ($nv['vai_tro'] === 'Ke_Toan') $avatarClass .= ' accountant';
 
               $isSelf = (int) $nv['id'] === $data['currentUserId'];
+
+              $rawAvatar = $nv['anh_dai_dien'] ?? '';
+              $avatarRelPath = explode('|', $rawAvatar)[0];
+              $coAnh = !empty($avatarRelPath) && file_exists(__DIR__ . '/../../../' . $avatarRelPath);
+              $anhUrl = $coAnh ? (BASE_URL . '/' . htmlspecialchars($avatarRelPath, ENT_QUOTES, 'UTF-8')) : '';
             ?>
             <tr>
               <td class="text-center text-muted small"><?= $idx + 1 ?></td>
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="<?= $avatarClass ?> me-2">
-                    <?= $escape($initials) ?>
-                  </div>
-                  <div>
-                    <strong class="d-block text-dark"><?= $escape($nv['ho_ten']) ?></strong>
-                    <?php if ($isSelf): ?>
-                      <span class="badge bg-secondary-subtle text-secondary border small">Bạn</span>
-                    <?php endif; ?>
-                  </div>
+              
+              <!-- CỘT ẢNH ĐẠI DIỆN (CHỈ HIỂN THỊ TĨNH) -->
+              <td class="text-center">
+                <div class="d-inline-block">
+                  <?php if ($coAnh): ?>
+                    <img src="<?= $anhUrl ?>" alt="<?= $escape($nv['ho_ten']) ?>"
+                         class="rounded-circle shadow-sm border border-2 border-primary-subtle"
+                         style="width: 44px; height: 44px; object-fit: cover;">
+                  <?php else: ?>
+                    <div class="<?= $avatarClass ?>" style="width: 44px; height: 44px; font-size: 1.1rem;">
+                      <?= $escape($initials) ?>
+                    </div>
+                  <?php endif; ?>
                 </div>
               </td>
+
+              <!-- HỌ VÀ TÊN -->
+              <td>
+                <strong class="d-block text-dark"><?= $escape($nv['ho_ten']) ?></strong>
+                <?php if ($isSelf): ?>
+                  <span class="badge bg-secondary-subtle text-secondary border small">Bạn</span>
+                <?php endif; ?>
+              </td>
+
+              <!-- TÊN ĐĂNG NHẬP -->
               <td>
                 <code class="fw-semibold text-primary"><?= $escape($nv['ten_dang_nhap']) ?></code>
               </td>
+
+              <!-- VAI TRÒ -->
               <td>
                 <span class="<?= $roleBadgeClass[$nv['vai_tro']] ?? 'badge bg-light text-dark' ?>">
                   <?= $escape($data['vaiTroMap'][$nv['vai_tro']] ?? $nv['vai_tro']) ?>
                 </span>
               </td>
+
+              <!-- SÂN BAY CÔNG TÁC -->
               <td>
                 <?php if (!empty($nv['san_bay_iata'])): ?>
                   <span class="fw-semibold text-dark"><?= $escape($nv['san_bay_iata']) ?></span>
@@ -416,46 +425,42 @@ ob_start();
                   </span>
                 <?php endif; ?>
               </td>
+
+              <!-- THAO TÁC -->
               <td class="text-center">
+                <?php
+                  $canManageThis = $data['isAdminTong'] || ($data['isQuanLySanBay'] && (int)($nv['id_san_bay'] ?? 0) === $data['phamViSanBay'] && $nv['vai_tro'] !== 'Admin_Tong_Cong_Ty');
+                ?>
                 <div class="d-flex align-items-center justify-content-center gap-1">
                   <!-- XEM CHI TIẾT -->
-                  <?php
-                    $tenSbHienThi = !empty($nv['san_bay_iata']) ? $nv['san_bay_iata'] . ' – ' . ($nv['ten_san_bay'] ?: $nv['san_bay_ten_ngan']) : 'Toàn quốc / Trụ sở chính';
-                    $vaiTroHienThi = $data['vaiTroMap'][$nv['vai_tro']] ?? $nv['vai_tro'];
-                    $hasSb = !empty($nv['san_bay_iata']) ? 1 : 0;
-                  ?>
-                  <button type="button" class="ns-action-btn ns-btn-view" title="Xem chi tiết nhân viên"
-                          onclick="moModalXem(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>', '<?= $escape(addslashes($vaiTroHienThi)) ?>', '<?= $escape(addslashes($tenSbHienThi)) ?>', '<?= $escape(addslashes($nv['san_bay_dia_diem'] ?? '')) ?>', <?= $hasSb ?>)">
+                  <a href="#modalXem_<?= $nv['id'] ?>" class="ns-action-btn ns-btn-view" title="Xem chi tiết nhân viên">
                     <i class="bi bi-eye"></i>
-                  </button>
+                  </a>
 
-                  <!-- ĐỔI MẬT KHẨU (ADMIN TỔNG HOẶC CHÍNH BẢN THÂN) -->
-                  <?php if ($data['isAdminTong'] || $isSelf): ?>
-                    <button type="button" class="ns-action-btn ns-btn-key" title="Đổi mật khẩu cho nhân viên"
-                            onclick="moModalDoiMatKhau(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>')">
+                  <!-- ĐỔI MẬT KHẨU -->
+                  <?php if ($canManageThis || $isSelf): ?>
+                    <a href="#modalPass_<?= $nv['id'] ?>" class="ns-action-btn ns-btn-key" title="Đổi mật khẩu cho nhân viên">
                       <i class="bi bi-key-fill"></i>
-                    </button>
+                    </a>
                   <?php endif; ?>
 
-                  <!-- SỬA THÔNG TIN (CHỈ ADMIN TỔNG) -->
-                  <?php if ($data['isAdminTong']): ?>
-                    <button type="button" class="ns-action-btn ns-btn-edit" title="Sửa thông tin nhân viên"
-                            onclick="moModalSua(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>', '<?= $escape(addslashes($nv['vai_tro'])) ?>', <?= (int) ($nv['id_san_bay'] ?? 0) ?>)">
+                  <!-- SỬA THÔNG TIN -->
+                  <?php if ($canManageThis): ?>
+                    <a href="#modalSua_<?= $nv['id'] ?>" class="ns-action-btn ns-btn-edit" title="Sửa thông tin nhân viên">
                       <i class="bi bi-pencil-square"></i>
-                    </button>
+                    </a>
                   <?php endif; ?>
 
-                  <!-- XÓA NHÂN VIÊN (CHỈ ADMIN TỔNG, KHÔNG XÓA CHÍNH MÌNH) -->
-                  <?php if ($data['isAdminTong']): ?>
+                  <!-- XÓA NHÂN VIÊN -->
+                  <?php if ($canManageThis): ?>
                     <?php if (!$isSelf): ?>
-                      <button type="button" class="ns-action-btn ns-btn-delete" title="Xóa tài khoản nhân viên"
-                              onclick="moModalXoa(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>')">
+                      <a href="#modalXoa_<?= $nv['id'] ?>" class="ns-action-btn ns-btn-delete" title="Xóa tài khoản nhân viên">
                         <i class="bi bi-trash3"></i>
-                      </button>
+                      </a>
                     <?php else: ?>
-                      <button type="button" class="ns-action-btn ns-btn-disabled" disabled title="Không thể tự xóa tài khoản của chính mình">
+                      <span class="ns-action-btn ns-btn-disabled" title="Không thể tự xóa tài khoản của chính mình">
                         <i class="bi bi-trash3"></i>
-                      </button>
+                      </span>
                     <?php endif; ?>
                   <?php endif; ?>
                 </div>
@@ -469,117 +474,9 @@ ob_start();
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL 1: XEM CHI TIẾT THÔNG TIN NHÂN VIÊN -->
+<!-- MODAL THÊM NHÂN VIÊN MỚI (ADMIN HOẶC QUẢN LÝ SÂN BAY) -->
 <!-- ============================================================ -->
-<div id="modalXemNhanVien" class="custom-modal-backdrop">
-  <div class="custom-modal-content">
-    <div class="modal-header bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
-      <h5 class="modal-title fw-bold text-primary mb-0">
-        <i class="bi bi-person-bounding-box me-2"></i>Hồ sơ nhân viên
-      </h5>
-      <button type="button" class="btn-close" onclick="dongModal('modalXemNhanVien')"></button>
-    </div>
-    <div class="modal-body p-4">
-      <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
-        <div id="xemAvatar" class="ns-avatar-circle me-3" style="width: 3.5rem; height: 3.5rem; font-size: 1.4rem;"></div>
-        <div>
-          <h4 id="xemHoTen" class="fw-bold mb-1 text-dark"></h4>
-          <span class="text-secondary small">Tên đăng nhập: <code id="xemTenDangNhap" class="text-primary fw-bold"></code></span>
-        </div>
-      </div>
-
-      <div class="row g-3">
-        <div class="col-6">
-          <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Mã ID nhân sự</label>
-          <span id="xemId" class="fw-bold text-dark"></span>
-        </div>
-        <div class="col-6">
-          <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Vai trò hệ thống</label>
-          <span id="xemVaiTro"></span>
-        </div>
-        <div class="col-12">
-          <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Cảng hàng không trực thuộc</label>
-          <div id="xemSanBay" class="fw-semibold text-dark"></div>
-        </div>
-        <div class="col-12" id="xemDiaDiemRow">
-          <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Địa điểm / Khu vực</label>
-          <div id="xemDiaDiem" class="text-secondary"></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-end">
-      <button type="button" class="btn btn-secondary px-4" onclick="dongModal('modalXemNhanVien')">Đóng</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- MODAL 2: ĐỔI MẬT KHẨU NHÂN VIÊN (DÀNH CHO ADMIN TỔNG) -->
-<!-- ============================================================ -->
-<div id="modalDoiMatKhau" class="custom-modal-backdrop">
-  <div class="custom-modal-content">
-    <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
-      <input type="hidden" name="action" value="doi_mat_khau">
-      <input type="hidden" name="id_nguoi_dung" id="doiMatKhauId">
-
-      <div class="modal-header bg-warning-subtle border-bottom border-warning-subtle px-4 py-3 d-flex justify-content-between align-items-center">
-        <h5 class="modal-title fw-bold text-dark mb-0">
-          <i class="bi bi-key-fill text-warning me-2"></i>Thay đổi mật khẩu nhân viên
-        </h5>
-        <button type="button" class="btn-close" onclick="dongModal('modalDoiMatKhau')"></button>
-      </div>
-
-      <div class="modal-body p-4">
-        <div class="alert alert-info py-2 px-3 small mb-3">
-          <i class="bi bi-info-circle me-1"></i>
-          Đổi mật khẩu cho: <strong id="doiMatKhauTen" class="text-dark"></strong>
-          (Tài khoản: <code id="doiMatKhauUser" class="text-primary fw-bold"></code>)
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold" for="matKhauMoi">
-            Mật khẩu mới <span class="text-danger">*</span>
-          </label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="matKhauMoi" name="mat_khau_moi" required minlength="6" placeholder="Nhập tối thiểu 6 ký tự">
-            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('matKhauMoi', this)">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-          <small class="text-secondary">Nên kết hợp chữ cái và số để đảm bảo tính an toàn.</small>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold" for="xacNhanMatKhau">
-            Xác nhận mật khẩu mới <span class="text-danger">*</span>
-          </label>
-          <div class="input-group">
-            <input type="password" class="form-control" id="xacNhanMatKhau" name="xac_nhan_mat_khau" required minlength="6" placeholder="Nhập lại mật khẩu mới">
-            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('xacNhanMatKhau', this)">
-              <i class="bi bi-eye"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-text text-muted small">
-          <i class="bi bi-shield-lock me-1"></i>Mật khẩu sẽ được mã hóa an toàn và có hiệu lực ngay lập tức cho lần đăng nhập tiếp theo của nhân viên.
-        </div>
-      </div>
-
-      <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" onclick="dongModal('modalDoiMatKhau')">Hủy</button>
-        <button type="submit" class="btn btn-warning fw-bold text-dark px-4">
-          <i class="bi bi-check2-circle me-1"></i>Lưu mật khẩu mới
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- MODAL 3: THÊM NHÂN VIÊN MỚI (CHỈ ADMIN TỔNG) -->
-<!-- ============================================================ -->
-<?php if ($data['isAdminTong']): ?>
+<?php if ($data['coQuyenThem']): ?>
 <div id="modalThemNhanVien" class="custom-modal-backdrop">
   <div class="custom-modal-content">
     <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
@@ -588,8 +485,11 @@ ob_start();
       <div class="modal-header bg-primary text-white px-4 py-3 d-flex justify-content-between align-items-center">
         <h5 class="modal-title fw-bold mb-0 text-white">
           <i class="bi bi-person-plus-fill me-2"></i>Thêm nhân viên mới
+          <?php if (!$data['isAdminTong'] && !empty($data['tenSanBayPhuTrach'])): ?>
+            <span class="fs-6 fw-normal d-block opacity-75 mt-1"><?= $escape($data['tenSanBayPhuTrach']) ?></span>
+          <?php endif; ?>
         </h5>
-        <a href="#" class="btn-close btn-close-white" onclick="dongModal('modalThemNhanVien')"></a>
+        <a href="#" class="btn-close btn-close-white" aria-label="Đóng"></a>
       </div>
 
       <div class="modal-body p-4">
@@ -621,32 +521,48 @@ ob_start();
           <label class="form-label fw-bold" for="themVaiTro">
             Vai trò phân quyền <span class="text-danger">*</span>
           </label>
-          <select class="form-select" id="themVaiTro" name="vai_tro" required onchange="xuLyDoiVaiTro(this, 'themSanBayContainer')">
+          <?php
+            $vaiTroThemList = $data['isAdminTong'] ? $data['vaiTroMap'] : [
+              'Nhan_Vien_Dieu_Hanh' => 'Nhân viên điều hành',
+              'Nhan_Vien_Bao_Tri'   => 'Nhân viên bảo trì',
+              'Ke_Toan'             => 'Kế toán',
+              'Quan_Ly_San_Bay'     => 'Quản lý sân bay',
+            ];
+          ?>
+          <select class="form-select" id="themVaiTro" name="vai_tro" required>
             <option value="">-- Chọn vai trò nhân sự --</option>
-            <?php foreach ($data['vaiTroMap'] as $key => $label): ?>
+            <?php foreach ($vaiTroThemList as $key => $label): ?>
               <option value="<?= $escape($key) ?>"><?= $escape($label) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
 
-        <div class="mb-3" id="themSanBayContainer">
-          <label class="form-label fw-bold" for="themIdSanBay">
-            Sân bay làm việc / phụ trách
-          </label>
-          <select class="form-select" id="themIdSanBay" name="id_san_bay">
-            <option value="">-- Toàn quốc / Trụ sở chính --</option>
-            <?php foreach ($data['danhSachSanBay'] as $sb): ?>
-              <option value="<?= (int) $sb['id'] ?>">
-                <?= $escape($sb['ma_iata'] . ' – ' . $sb['ten_san_bay']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-          <small class="text-secondary">Admin Tổng không cần gắn sân bay; Quản lý/Điều hành/Kế toán cần chọn sân bay công tác.</small>
-        </div>
+        <?php if ($data['isAdminTong']): ?>
+          <div class="mb-3">
+            <label class="form-label fw-bold" for="themIdSanBay">
+              Sân bay làm việc / phụ trách
+            </label>
+            <select class="form-select" id="themIdSanBay" name="id_san_bay">
+              <option value="">-- Toàn quốc / Trụ sở chính --</option>
+              <?php foreach ($data['danhSachSanBay'] as $sb): ?>
+                <option value="<?= (int) $sb['id'] ?>">
+                  <?= $escape($sb['ma_iata'] . ' – ' . $sb['ten_san_bay']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        <?php else: ?>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sân bay trực thuộc</label>
+            <input type="hidden" name="id_san_bay" value="<?= (int) $data['phamViSanBay'] ?>">
+            <input type="text" class="form-control bg-light" value="<?= $escape($data['tenSanBayPhuTrach']) ?>" readonly>
+            <small class="text-secondary">Tài khoản nhân sự mới sẽ tự động trực thuộc cảng hàng không bạn đang quản lý.</small>
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" onclick="dongModal('modalThemNhanVien')">Hủy</button>
+        <a href="#" class="btn btn-outline-secondary">Hủy</a>
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-plus-circle me-1"></i>Tạo tài khoản
         </button>
@@ -654,221 +570,230 @@ ob_start();
     </form>
   </div>
 </div>
-
-<!-- ============================================================ -->
-<!-- MODAL 4: SỬA THÔNG TIN NHÂN VIÊN (CHỈ ADMIN TỔNG) -->
-<!-- ============================================================ -->
-<div id="modalSuaNhanVien" class="custom-modal-backdrop">
-  <div class="custom-modal-content">
-    <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
-      <input type="hidden" name="action" value="cap_nhat_thong_tin">
-      <input type="hidden" name="id_nguoi_dung" id="suaId">
-
-      <div class="modal-header bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
-        <h5 class="modal-title fw-bold text-primary mb-0">
-          <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa thông tin nhân viên
-        </h5>
-        <button type="button" class="btn-close" onclick="dongModal('modalSuaNhanVien')"></button>
-      </div>
-
-      <div class="modal-body p-4">
-        <div class="alert alert-light border py-2 px-3 small mb-3">
-          Tài khoản: <code id="suaTenDangNhap" class="fw-bold text-primary"></code> (Tên đăng nhập không thể thay đổi).
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold" for="suaHoTen">
-            Họ và tên nhân viên <span class="text-danger">*</span>
-          </label>
-          <input type="text" class="form-control" id="suaHoTen" name="ho_ten" required>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label fw-bold" for="suaVaiTro">
-            Vai trò phân quyền <span class="text-danger">*</span>
-          </label>
-          <select class="form-select" id="suaVaiTro" name="vai_tro" required onchange="xuLyDoiVaiTro(this, 'suaSanBayContainer')">
-            <?php foreach ($data['vaiTroMap'] as $key => $label): ?>
-              <option value="<?= $escape($key) ?>"><?= $escape($label) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-
-        <div class="mb-3" id="suaSanBayContainer">
-          <label class="form-label fw-bold" for="suaIdSanBay">
-            Sân bay làm việc / phụ trách
-          </label>
-          <select class="form-select" id="suaIdSanBay" name="id_san_bay">
-            <option value="">-- Toàn quốc / Trụ sở chính --</option>
-            <?php foreach ($data['danhSachSanBay'] as $sb): ?>
-              <option value="<?= (int) $sb['id'] ?>">
-                <?= $escape($sb['ma_iata'] . ' – ' . $sb['ten_san_bay']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" onclick="dongModal('modalSuaNhanVien')">Hủy</button>
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-save me-1"></i>Lưu thay đổi
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- MODAL 5: XÁC NHẬN XÓA NHÂN VIÊN (CHỈ ADMIN TỔNG) -->
-<!-- ============================================================ -->
-<div id="modalXoaNhanVien" class="custom-modal-backdrop">
-  <div class="custom-modal-content" style="max-width: 450px;">
-    <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
-      <input type="hidden" name="action" value="xoa_nhan_vien">
-      <input type="hidden" name="id_nguoi_dung" id="xoaId">
-
-      <div class="modal-body text-center p-4">
-        <div class="text-danger mb-3">
-          <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem;"></i>
-        </div>
-        <h4 class="fw-bold mb-2">Xóa tài khoản nhân viên?</h4>
-        <p class="text-secondary mb-3">
-          Bạn có chắc chắn muốn xóa tài khoản của <strong id="xoaHoTen" class="text-dark"></strong> (<code id="xoaTenDangNhap"></code>)?
-        </p>
-        <div class="alert alert-warning py-2 small mb-0 text-start">
-          <i class="bi bi-info-circle me-1"></i>Hành động này không thể hoàn tác. Các dữ liệu lịch sử nhật ký sẽ lưu giữ lại dưới tên người dùng cũ.
-        </div>
-      </div>
-
-      <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-secondary" onclick="dongModal('modalXoaNhanVien')">Hủy bỏ</button>
-        <button type="submit" class="btn btn-danger px-4 fw-bold">
-          <i class="bi bi-trash-fill me-1"></i>Xác nhận xóa
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
 <?php endif; ?>
 
-<!-- SCRIPT ĐIỀU KHIỂN MODAL & THAO TÁC -->
-<script>
-  function moModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) {
-      el.classList.add('is-open');
-    }
-  }
+<!-- ============================================================ -->
+<!-- CÁC MODAL THEO TỪNG NHÂN VIÊN (XEM, ĐỔI MK, SỬA, XÓA) -->
+<!-- ============================================================ -->
+<?php foreach ($data['danhSach'] as $nv): ?>
+  <?php
+    $nvId = (int) $nv['id'];
+    $isSelf = $nvId === $data['currentUserId'];
+    $canManageThis = $data['isAdminTong'] || ($data['isQuanLySanBay'] && (int)($nv['id_san_bay'] ?? 0) === $data['phamViSanBay'] && $nv['vai_tro'] !== 'Admin_Tong_Cong_Ty');
 
-  function dongModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) {
-      el.classList.remove('is-open');
-    }
-    // Xóa hash trên URL nếu có
-    if (window.location.hash) {
-      history.replaceState(null, null, ' ');
-    }
-  }
+    $rawAvatar = $nv['anh_dai_dien'] ?? '';
+    $avatarRelPath = explode('|', $rawAvatar)[0];
+    $coAnh = !empty($avatarRelPath) && file_exists(__DIR__ . '/../../../' . $avatarRelPath);
+    $anhUrl = $coAnh ? (BASE_URL . '/' . htmlspecialchars($avatarRelPath, ENT_QUOTES, 'UTF-8')) : '';
+    $initials = mb_substr(trim($nv['ho_ten']), 0, 1, 'UTF-8');
+    $tenSbHienThi = !empty($nv['san_bay_iata']) ? $nv['san_bay_iata'] . ' – ' . ($nv['ten_san_bay'] ?: $nv['san_bay_ten_ngan']) : 'Toàn quốc / Trụ sở chính';
+    $vaiTroHienThi = $data['vaiTroMap'][$nv['vai_tro']] ?? $nv['vai_tro'];
+  ?>
 
-  // Đóng modal khi bấm ra ngoài vùng nội dung modal
-  document.querySelectorAll('.custom-modal-backdrop').forEach(backdrop => {
-    backdrop.addEventListener('click', function(e) {
-      if (e.target === this) {
-        this.classList.remove('is-open');
-        if (window.location.hash) {
-          history.replaceState(null, null, ' ');
-        }
-      }
-    });
-  });
+  <!-- 1. MODAL XEM CHI TIẾT -->
+  <div id="modalXem_<?= $nvId ?>" class="custom-modal-backdrop">
+    <div class="custom-modal-content">
+      <div class="modal-header bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
+        <h5 class="modal-title fw-bold text-primary mb-0">
+          <i class="bi bi-person-bounding-box me-2"></i>Hồ sơ nhân viên #<?= $nvId ?>
+        </h5>
+        <a href="#" class="btn-close" aria-label="Đóng"></a>
+      </div>
+      <div class="modal-body p-4">
+        <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+          <div class="me-3">
+            <?php if ($coAnh): ?>
+              <img src="<?= $anhUrl ?>" class="rounded-circle shadow-sm border border-2 border-primary-subtle" style="width: 64px; height: 64px; object-fit: cover;" alt="Avatar">
+            <?php else: ?>
+              <div class="ns-avatar-circle" style="width: 64px; height: 64px; font-size: 1.6rem;">
+                <?= $escape($initials) ?>
+              </div>
+            <?php endif; ?>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-1 text-dark"><?= $escape($nv['ho_ten']) ?></h4>
+            <span class="text-secondary small">Tên đăng nhập: <code class="text-primary fw-bold"><?= $escape($nv['ten_dang_nhap']) ?></code></span>
+          </div>
+        </div>
 
-  // Bấm Escape để đóng modal đang mở
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.custom-modal-backdrop.is-open').forEach(m => m.classList.remove('is-open'));
-      if (window.location.hash) {
-        history.replaceState(null, null, ' ');
-      }
-    }
-  });
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Mã ID nhân sự</label>
+            <span class="fw-bold text-dark">#<?= $nvId ?></span>
+          </div>
+          <div class="col-6">
+            <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Vai trò hệ thống</label>
+            <span class="badge text-bg-primary"><?= $escape($vaiTroHienThi) ?></span>
+          </div>
+          <div class="col-12">
+            <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Cảng hàng không trực thuộc</label>
+            <div class="fw-semibold text-dark"><?= $escape($tenSbHienThi) ?></div>
+          </div>
+          <?php if (!empty($nv['san_bay_dia_diem'])): ?>
+            <div class="col-12">
+              <label class="text-secondary small text-uppercase fw-semibold d-block mb-1">Địa điểm / Khu vực</label>
+              <div class="text-secondary"><?= $escape($nv['san_bay_dia_diem']) ?></div>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-end">
+        <a href="#" class="btn btn-secondary px-4">Đóng</a>
+      </div>
+    </div>
+  </div>
 
-  // 1. Mở modal Xem chi tiết nhân viên (Không dùng JSON)
-  function moModalXem(id, hoTen, tenDangNhap, vaiTroHienThi, tenSbHienThi, diaDiem, hasSb) {
-    document.getElementById('xemId').textContent = '#' + id;
-    document.getElementById('xemHoTen').textContent = hoTen;
-    document.getElementById('xemTenDangNhap').textContent = tenDangNhap;
-    document.getElementById('xemAvatar').textContent = (hoTen || 'A').trim().charAt(0);
+  <!-- 2. MODAL ĐỔI MẬT KHẨU -->
+  <?php if ($canManageThis || $isSelf): ?>
+  <div id="modalPass_<?= $nvId ?>" class="custom-modal-backdrop">
+    <div class="custom-modal-content">
+      <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
+        <input type="hidden" name="action" value="doi_mat_khau">
+        <input type="hidden" name="id_nguoi_dung" value="<?= $nvId ?>">
 
-    document.getElementById('xemVaiTro').innerHTML = `<span class="badge text-bg-primary">${vaiTroHienThi}</span>`;
+        <div class="modal-header bg-warning-subtle border-bottom border-warning-subtle px-4 py-3 d-flex justify-content-between align-items-center">
+          <h5 class="modal-title fw-bold text-dark mb-0">
+            <i class="bi bi-key-fill text-warning me-2"></i>Đổi mật khẩu: <?= $escape($nv['ho_ten']) ?>
+          </h5>
+          <a href="#" class="btn-close" aria-label="Đóng"></a>
+        </div>
 
-    if (hasSb) {
-      document.getElementById('xemSanBay').textContent = tenSbHienThi;
-      document.getElementById('xemDiaDiemRow').style.display = '';
-      document.getElementById('xemDiaDiem').textContent = diaDiem || 'Chưa cập nhật';
-    } else {
-      document.getElementById('xemSanBay').innerHTML = '<span class="text-secondary"><i class="bi bi-building me-1"></i>Toàn quốc / Trụ sở chính</span>';
-      document.getElementById('xemDiaDiemRow').style.display = 'none';
-    }
+        <div class="modal-body p-4">
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            Tài khoản: <code class="text-primary fw-bold"><?= $escape($nv['ten_dang_nhap']) ?></code>
+          </div>
 
-    moModal('modalXemNhanVien');
-  }
+          <div class="mb-3">
+            <label class="form-label fw-bold">Mật khẩu mới <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" name="mat_khau_moi" required minlength="6" placeholder="Nhập tối thiểu 6 ký tự">
+          </div>
 
-  // 2. Mở modal Đổi mật khẩu nhân viên
-  function moModalDoiMatKhau(id, hoTen, tenDangNhap) {
-    document.getElementById('doiMatKhauId').value = id;
-    document.getElementById('doiMatKhauTen').textContent = hoTen;
-    document.getElementById('doiMatKhauUser').textContent = tenDangNhap;
-    document.getElementById('matKhauMoi').value = '';
-    document.getElementById('xacNhanMatKhau').value = '';
+          <div class="mb-3">
+            <label class="form-label fw-bold">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" name="xac_nhan_mat_khau" required minlength="6" placeholder="Nhập lại mật khẩu mới">
+          </div>
+        </div>
 
-    moModal('modalDoiMatKhau');
-  }
+        <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-between">
+          <a href="#" class="btn btn-outline-secondary">Hủy</a>
+          <button type="submit" class="btn btn-warning fw-bold text-dark px-4">
+            <i class="bi bi-check2-circle me-1"></i>Lưu mật khẩu mới
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <?php endif; ?>
 
-  // 3. Mở modal Sửa thông tin nhân viên (Không dùng JSON)
-  function moModalSua(id, hoTen, tenDangNhap, vaiTro, idSanBay) {
-    document.getElementById('suaId').value = id;
-    document.getElementById('suaTenDangNhap').textContent = tenDangNhap;
-    document.getElementById('suaHoTen').value = hoTen;
-    document.getElementById('suaVaiTro').value = vaiTro;
-    document.getElementById('suaIdSanBay').value = (idSanBay && idSanBay > 0) ? idSanBay : '';
+  <!-- 3. MODAL SỬA THÔNG TIN NHÂN VIÊN -->
+  <?php if ($canManageThis): ?>
+  <div id="modalSua_<?= $nvId ?>" class="custom-modal-backdrop">
+    <div class="custom-modal-content">
+      <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
+        <input type="hidden" name="action" value="cap_nhat_thong_tin">
+        <input type="hidden" name="id_nguoi_dung" value="<?= $nvId ?>">
 
-    xuLyDoiVaiTro(document.getElementById('suaVaiTro'), 'suaSanBayContainer');
-    moModal('modalSuaNhanVien');
-  }
+        <div class="modal-header bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
+          <h5 class="modal-title fw-bold text-primary mb-0">
+            <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa: <?= $escape($nv['ho_ten']) ?>
+          </h5>
+          <a href="#" class="btn-close" aria-label="Đóng"></a>
+        </div>
 
-  // 4. Mở modal Xác nhận xóa nhân viên
-  function moModalXoa(id, hoTen, tenDangNhap) {
-    document.getElementById('xoaId').value = id;
-    document.getElementById('xoaHoTen').textContent = hoTen;
-    document.getElementById('xoaTenDangNhap').textContent = tenDangNhap;
+        <div class="modal-body p-4">
+          <div class="alert alert-light border py-2 px-3 small mb-3">
+            Tài khoản: <code class="fw-bold text-primary"><?= $escape($nv['ten_dang_nhap']) ?></code> (Cố định).
+          </div>
 
-    moModal('modalXoaNhanVien');
-  }
+          <div class="mb-3">
+            <label class="form-label fw-bold">Họ và tên nhân viên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="ho_ten" value="<?= $escape($nv['ho_ten']) ?>" required>
+          </div>
 
-  // Ẩn/hiện mật khẩu
-  function togglePasswordVisibility(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const isPass = input.type === 'password';
-    input.type = isPass ? 'text' : 'password';
-    btn.innerHTML = `<i class="bi bi-eye${isPass ? '-slash' : ''}"></i>`;
-  }
+          <div class="mb-3">
+            <label class="form-label fw-bold">Vai trò phân quyền <span class="text-danger">*</span></label>
+            <?php
+              $vaiTroSuaList = $data['isAdminTong'] ? $data['vaiTroMap'] : [
+                'Nhan_Vien_Dieu_Hanh' => 'Nhân viên điều hành',
+                'Nhan_Vien_Bao_Tri'   => 'Nhân viên bảo trì',
+                'Ke_Toan'             => 'Kế toán',
+                'Quan_Ly_San_Bay'     => 'Quản lý sân bay',
+              ];
+            ?>
+            <select class="form-select" name="vai_tro" required>
+              <?php foreach ($vaiTroSuaList as $key => $label): ?>
+                <option value="<?= $escape($key) ?>" <?= $nv['vai_tro'] === $key ? 'selected' : '' ?>>
+                  <?= $escape($label) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
 
-  // Ẩn chọn sân bay nếu chọn vai trò Admin Tổng công ty
-  function xuLyDoiVaiTro(selectEl, containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    if (selectEl.value === 'Admin_Tong_Cong_Ty') {
-      container.style.opacity = '0.5';
-      const sbSelect = container.querySelector('select');
-      if (sbSelect) sbSelect.value = '';
-    } else {
-      container.style.opacity = '1';
-    }
-  }
-</script>
+          <?php if ($data['isAdminTong']): ?>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Sân bay làm việc / phụ trách</label>
+              <select class="form-select" name="id_san_bay">
+                <option value="">-- Toàn quốc / Trụ sở chính --</option>
+                <?php foreach ($data['danhSachSanBay'] as $sb): ?>
+                  <option value="<?= (int) $sb['id'] ?>" <?= ((int) ($nv['id_san_bay'] ?? 0) === (int) $sb['id']) ? 'selected' : '' ?>>
+                    <?= $escape($sb['ma_iata'] . ' – ' . $sb['ten_san_bay']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          <?php else: ?>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Sân bay trực thuộc</label>
+              <input type="hidden" name="id_san_bay" value="<?= (int) $data['phamViSanBay'] ?>">
+              <input type="text" class="form-control bg-light" value="<?= $escape($data['tenSanBayPhuTrach']) ?>" readonly>
+              <small class="text-secondary">Cố định theo phạm vi quản lý của bạn.</small>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <div class="modal-footer bg-light border-top px-4 py-2 d-flex justify-content-between">
+          <a href="#" class="btn btn-outline-secondary">Hủy</a>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save me-1"></i>Lưu thay đổi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <!-- 4. MODAL XÁC NHẬN XÓA NHÂN VIÊN -->
+  <?php if ($canManageThis && !$isSelf): ?>
+  <div id="modalXoa_<?= $nvId ?>" class="custom-modal-backdrop">
+    <div class="custom-modal-content" style="max-width: 450px;">
+      <form method="post" action="<?= BASE_URL ?>/index.php?page=nhan_su">
+        <input type="hidden" name="action" value="xoa_nhan_vien">
+        <input type="hidden" name="id_nguoi_dung" value="<?= $nvId ?>">
+
+        <div class="modal-body text-center p-4">
+          <div class="text-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill" style="font-size: 3.5rem;"></i>
+          </div>
+          <h4 class="fw-bold mb-2">Xóa tài khoản nhân viên?</h4>
+          <p class="text-secondary mb-3">
+            Bạn có chắc chắn muốn xóa tài khoản của <strong><?= $escape($nv['ho_ten']) ?></strong> (<code><?= $escape($nv['ten_dang_nhap']) ?></code>)?
+          </p>
+          <div class="alert alert-warning py-2 small mb-0 text-start">
+            <i class="bi bi-info-circle me-1"></i>Hành động này không thể hoàn tác.
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-between">
+          <a href="#" class="btn btn-outline-secondary">Hủy bỏ</a>
+          <button type="submit" class="btn btn-danger px-4 fw-bold">
+            <i class="bi bi-trash-fill me-1"></i>Xác nhận xóa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <?php endif; ?>
+<?php endforeach; ?>
 
 <?php
 $content = ob_get_clean();

@@ -47,6 +47,17 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
 } elseif ($daDangNhap && la_admin()) {
     $vaiTroHienThi .= ' (Toàn quốc)';
 }
+
+$avatarUrl = $adminLteUrl . '/assets/img/user2-160x160.jpg';
+$avatarPos = 'center center';
+if ($daDangNhap && !empty($_SESSION['anh_dai_dien'])) {
+    $avatarParts = explode('|', $_SESSION['anh_dai_dien'], 2);
+    $relFile = $avatarParts[0];
+    if (file_exists(__DIR__ . '/../../' . $relFile)) {
+        $avatarUrl = $baseUrl . '/' . $relFile;
+        $avatarPos = $avatarParts[1] ?? 'center center';
+    }
+}
 ?>
 <!doctype html>
 <html lang="vi" data-bs-theme="light">
@@ -56,7 +67,7 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
-    <meta name="description" content="Hệ thống quản lý điều hành khai thác chuỗi cảng hàng không (ACV)" />
+    <meta name="description" content="Hệ thống quản lý điều hành khai thác chuỗi cảng hàng không (AeroChain)" />
 
     <!--begin::Fonts-->
     <link
@@ -120,8 +131,9 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
             <li class="nav-item dropdown user-menu">
               <a href="<?= $daDangNhap ? $baseUrl . '/index.php?page=ho_so' : '#user-menu' ?>" class="nav-link dropdown-toggle" title="Xem thông tin cá nhân & đổi mật khẩu" aria-haspopup="true">
                 <img
-                  src="<?= $adminLteUrl ?>/assets/img/user2-160x160.jpg"
+                  src="<?= $avatarUrl ?>"
                   class="user-image rounded-circle shadow"
+                  style="object-fit: cover; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
                   alt="Ảnh người dùng"
                 />
                 <span class="d-none d-xl-inline"><?= htmlspecialchars($tenHienThi, ENT_QUOTES, 'UTF-8') ?></span>
@@ -129,8 +141,9 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
               <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end" id="user-menu">
                 <li class="user-header text-bg-primary">
                   <img
-                    src="<?= $adminLteUrl ?>/assets/img/user2-160x160.jpg"
+                    src="<?= $avatarUrl ?>"
                     class="rounded-circle shadow"
+                    style="object-fit: cover; width: 90px; height: 90px; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
                     alt="Ảnh người dùng"
                   />
                   <p>

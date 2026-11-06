@@ -642,14 +642,14 @@ ob_start();
         <table class="table table-hover align-middle mb-0 text-center">
             <thead class="table-light text-secondary text-uppercase small">
                 <tr>
-                    <th style="width: 110px;">Tháng</th>
-                    <th style="width: 110px;">Số hóa đơn</th>
-                    <th class="text-end">Phí cất / hạ cánh</th>
-                    <th class="text-end">Phí đỗ tàu bay</th>
-                    <th class="text-end">Phí phục vụ khách</th>
-                    <th class="text-end text-primary">Tổng doanh thu</th>
-                    <th style="width: 90px;">Tỷ trọng</th>
-                    <th style="width: 120px;">Hành động</th>
+                    <th style="min-width: 125px;">Tháng</th>
+                    <th style="min-width: 120px;">Số hóa đơn</th>
+                    <th class="text-end" style="min-width: 175px;">Phí cất / hạ cánh</th>
+                    <th class="text-end" style="min-width: 175px;">Phí đỗ tàu bay</th>
+                    <th class="text-end" style="min-width: 185px;">Phí phục vụ khách</th>
+                    <th class="text-end text-primary" style="min-width: 200px;">Tổng doanh thu</th>
+                    <th style="min-width: 100px;">Tỷ trọng</th>
+                    <th style="min-width: 130px;">Hành động</th>
                 </tr>
             </thead>
             <tbody>

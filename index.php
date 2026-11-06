@@ -314,148 +314,91 @@ foreach ($rawModules as $m) {
     $modules[] = $m;
 }
 
+// Quét ảnh sân bay cho slideshow thu nhỏ trong Hero Banner
+$heroBgDir = __DIR__ . '/assets/img/bg';
+$heroImages = [];
+if (is_dir($heroBgDir)) {
+    $scannedFiles = scandir($heroBgDir);
+    foreach ($scannedFiles as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            $heroImages[] = BASE_URL . '/assets/img/bg/' . rawurlencode($file);
+        }
+    }
+}
+$soAnhHero = count($heroImages);
+$thoiGianMoiAnh = 5; // Thời gian hiển thị mỗi ảnh (giây)
+$thoiGianChuyen = 1.0; // Thời gian fade chuyển tiếp (giây)
+$chuKyHero = max(5, $soAnhHero * $thoiGianMoiAnh);
+
+// Tự động tính toán tỷ lệ % chuyển cảnh theo đúng số lượng ảnh thực tế
+$animFade = 3;
+$animStay = 30;
+$animFadeEnd = 35;
+if ($soAnhHero > 1) {
+    $p = 100 / $soAnhHero;
+    $animFade = round(($thoiGianChuyen / $chuKyHero) * 100, 2);
+    $animStay = round($p, 2);
+    $animFadeEnd = round($p + $animFade, 2);
+}
+
 ob_start();
 ?>
 <!--begin::Aviation Hero Banner (Trắng & Xanh da trời)-->
 <div class="sky-hero">
-  <div class="row align-items-center">
-    <div class="col-lg-8">
-      <div class="sky-hero__badge">
-        <i class="bi bi-airplane-fill"></i>
-        <span>HỆ THỐNG ĐIỀU HÀNH CHUỖI CẢNG HÀNG KHÔNG (AeroChain)</span>
+  <?php if (!empty($heroImages)): ?>
+  <?php
+    echo "<style>\n";
+    if ($soAnhHero > 1) {
+        echo "@keyframes skyHeroDynamicFade {\n";
+        echo "  0% { opacity: 0; transform: scale(1); }\n";
+        echo "  {$animFade}% { opacity: 1; transform: scale(1.01); }\n";
+        echo "  {$animStay}% { opacity: 1; transform: scale(1.06); }\n";
+        echo "  {$animFadeEnd}% { opacity: 0; transform: scale(1.07); }\n";
+        echo "  100% { opacity: 0; transform: scale(1); }\n";
+        echo "}\n";
+        echo ".sky-hero__bg-slide {\n";
+        echo "  animation-name: skyHeroDynamicFade !important;\n";
+        echo "  animation-timing-function: ease-in-out !important;\n";
+        echo "  animation-iteration-count: infinite !important;\n";
+        echo "  transform-origin: center center !important;\n";
+        echo "}\n";
+    } else {
+        echo ".sky-hero__bg-slide {\n";
+        echo "  opacity: 1 !important;\n";
+        echo "  animation: none !important;\n";
+        echo "}\n";
+    }
+    echo "</style>\n";
+  ?>
+  <!-- Lớp ảnh nền 100% màu sắc thực tế -->
+  <div class="sky-hero__bg-slider" aria-hidden="true">
+    <?php foreach ($heroImages as $idx => $imgUrl): ?>
+      <div class="sky-hero__bg-slide" style="background-image: url('<?= htmlspecialchars($imgUrl, ENT_QUOTES, 'UTF-8') ?>'); animation-delay: <?= $idx * $thoiGianMoiAnh ?>s; animation-duration: <?= $chuKyHero ?>s;"></div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+
+  <!-- Hộp thông tin sát góc trái nền trắng theo yêu cầu -->
+  <div class="sky-hero__info-card p-3 p-md-4 rounded-4 shadow" style="max-width: 440px; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.95); position: relative; z-index: 5;">
+    <h2 class="h4 fw-bold text-primary mb-2 mb-md-3 d-flex align-items-center gap-2">
+      <i class="bi bi-person-circle fs-3 text-primary"></i>
+      <span>Chào mừng, <?= htmlspecialchars($userHoTen, ENT_QUOTES, 'UTF-8') ?>!</span>
+    </h2>
+    <div class="d-flex flex-column gap-2" style="font-size: 0.95rem; color: #334155;">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check text-primary fs-5"></i>
+        <span>Vai trò: <strong class="text-dark"><?= htmlspecialchars($vaiTroHienThi, ENT_QUOTES, 'UTF-8') ?></strong></span>
       </div>
-      <h1 class="sky-hero__title">
-        Chào mừng, <?= htmlspecialchars($userHoTen, ENT_QUOTES, 'UTF-8') ?>!
-      </h1>
-      <p class="sky-hero__lead">
-        Trung tâm giám sát và điều hành tập trung mạng lưới cảng hàng không. Theo dõi hoạt động khai thác chuyến bay, hệ thống hạ tầng đường băng - nhà ga, kỹ thuật bảo trì và quản trị doanh thu thời gian thực.
-      </p>
-      <div class="sky-hero__meta">
-        <div class="sky-hero__meta-item">
-          <i class="bi bi-shield-check"></i>
-          <span>Vai trò: <strong><?= htmlspecialchars($vaiTroHienThi, ENT_QUOTES, 'UTF-8') ?></strong></span>
-        </div>
-        <div class="sky-hero__meta-item">
-          <i class="bi bi-geo-alt-fill"></i>
-          <span>Phạm vi: <strong><?= $isQuanLySb && $tenSbHienTai !== '' ? htmlspecialchars($tenSbHienTai, ENT_QUOTES, 'UTF-8') : 'Toàn mạng lưới cảng hàng không' ?></strong></span>
-        </div>
-        <div class="sky-hero__meta-item">
-          <i class="bi bi-calendar3"></i>
-          <span><?= date('d/m/Y') ?></span>
-        </div>
-        <div class="sky-hero__status-pill">
-          <span class="sky-hero__status-dot"></span>
-          <span>Hệ thống trực tuyến</span>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
-      <div class="d-inline-flex flex-column gap-2 text-start bg-white p-3 rounded-3 border border-info-subtle shadow-sm">
-        <div class="small text-secondary fw-semibold text-uppercase">
-          <i class="bi bi-broadcast text-primary me-1"></i>Kênh điều hành trực tiếp
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <a href="index.php?page=chuyen_bay" class="btn btn-sm btn-primary px-3">
-            <i class="bi bi-airplane-engines me-1"></i>Lịch bay hôm nay
-          </a>
-          <a href="index.php?page=bao_tri" class="btn btn-sm btn-outline-primary px-3">
-            <i class="bi bi-tools me-1"></i>Bảo trì
-          </a>
-        </div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-geo-alt-fill text-primary fs-5"></i>
+        <span>Phạm vi: <strong class="text-dark"><?= $isQuanLySb && $tenSbHienTai !== '' ? htmlspecialchars($tenSbHienTai, ENT_QUOTES, 'UTF-8') : 'Toàn mạng lưới cảng hàng không' ?></strong></span>
       </div>
     </div>
   </div>
 </div>
 <!--end::Aviation Hero Banner-->
-
-<!--begin::Hàng chỉ số KPI then chốt-->
-<div class="row g-3 mb-4">
-  <!-- Thẻ 1: Mạng lưới cảng hàng không -->
-  <div class="col-sm-6 col-xl-3">
-    <div class="sky-metric-card">
-      <div class="sky-metric-card__header">
-        <span class="sky-metric-card__title"><?= $isQuanLySb ? 'Sân bay phụ trách' : 'Mạng lưới sân bay' ?></span>
-        <span class="sky-metric-card__icon-box"><i class="bi bi-buildings"></i></span>
-      </div>
-      <div class="sky-metric-card__value"><?= $soSanBay ?></div>
-      <p class="sky-metric-card__subtext">
-        <i class="bi bi-check-circle-fill text-success"></i>
-        <span><?= $isQuanLySb ? ($tenSbHienTai ?: 'Cảng đang quản lý') : 'Toàn bộ cảng đang vận hành' ?></span>
-      </p>
-    </div>
-  </div>
-
-  <!-- Thẻ 2: Chuyến bay hôm nay -->
-  <div class="col-sm-6 col-xl-3">
-    <div class="sky-metric-card">
-      <div class="sky-metric-card__header">
-        <span class="sky-metric-card__title">Chuyến bay hôm nay</span>
-        <span class="sky-metric-card__icon-box"><i class="bi bi-airplane-engines"></i></span>
-      </div>
-      <div class="sky-metric-card__value"><?= number_format($soChuyenBayHomNay) ?></div>
-      <p class="sky-metric-card__subtext">
-        <i class="bi bi-arrow-down-circle text-primary"></i>
-        <span>Đã hoàn thành: <strong><?= number_format($soChuyenBayDaHa) ?></strong> chuyến</span>
-      </p>
-    </div>
-  </div>
-
-  <!-- Thẻ 3: Thiết bị & An toàn bảo trì -->
-  <div class="col-sm-6 col-xl-3">
-    <div class="sky-metric-card">
-      <div class="sky-metric-card__header">
-        <span class="sky-metric-card__title">Thiết bị & Bảo trì</span>
-        <span class="sky-metric-card__icon-box"><i class="bi bi-tools"></i></span>
-      </div>
-      <div class="sky-metric-card__value"><?= number_format($tongThietBi) ?></div>
-      <p class="sky-metric-card__subtext">
-        <?php if ($phieuBaoTriMo > 0): ?>
-          <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-          <span>Phiếu đang mở: <strong class="text-danger"><?= $phieuBaoTriMo ?></strong></span>
-        <?php else: ?>
-          <i class="bi bi-shield-check text-success"></i>
-          <span>100% thiết bị vận hành tốt</span>
-        <?php endif; ?>
-      </p>
-    </div>
-  </div>
-
-  <!-- Thẻ 4: Doanh thu tháng hoặc Tàu bay liên kết -->
-  <div class="col-sm-6 col-xl-3">
-    <div class="sky-metric-card">
-      <div class="sky-metric-card__header">
-        <span class="sky-metric-card__title"><?= $hienThiDoanhThu ? 'Doanh thu tháng ' . date('n') : 'Dòng tàu bay & Hãng' ?></span>
-        <span class="sky-metric-card__icon-box">
-          <i class="bi <?= $hienThiDoanhThu ? 'bi-cash-coin' : 'bi-airplane' ?>"></i>
-        </span>
-      </div>
-      <?php if ($hienThiDoanhThu): ?>
-        <div class="sky-metric-card__value" title="<?= number_format($doanhThuThang, 0, ',', '.') ?> VNĐ">
-          <?php
-          if ($doanhThuThang >= 1000000000) {
-              echo number_format($doanhThuThang / 1000000000, 2) . ' <small style="font-size: 0.95rem;">tỷ</small>';
-          } elseif ($doanhThuThang >= 1000000) {
-              echo number_format($doanhThuThang / 1000000, 1) . ' <small style="font-size: 0.95rem;">tr</small>';
-          } else {
-              echo number_format($doanhThuThang) . ' <small style="font-size: 0.85rem;">đ</small>';
-          }
-          ?>
-        </div>
-        <p class="sky-metric-card__subtext">
-          <i class="bi bi-check2-circle text-primary"></i>
-          <span>Đã thực thu trong tháng <?= date('n/Y') ?></span>
-        </p>
-      <?php else: ?>
-        <div class="sky-metric-card__value"><?= $soLoaiTauBay ?></div>
-        <p class="sky-metric-card__subtext">
-          <i class="bi bi-buildings text-primary"></i>
-          <span>Liên kết <strong><?= $soHang ?></strong> hãng hàng không</span>
-        </p>
-      <?php endif; ?>
-    </div>
-  </div>
-</div>
-<!--end::Hàng chỉ số KPI then chốt-->
 
 <!--begin::Khu vực phân hệ chức năng-->
 <div class="sky-section-header">

@@ -4,7 +4,9 @@
  * XUẤT BÁO CÁO DOANH THU RA FILE EXCEL (.XLS)
  * views/pages/ke_toan/xuat_excel.php
  * Phân hệ: Kế toán & Doanh thu
- * Viền mảnh tinh tế (0.5pt), tiêu đề cột cao thoáng rộng rãi (44px)
+ * Căn chuẩn 100% trang in A4: Tự động vừa vặn trang giấy,
+ * chiều cao tiêu đề thoáng đãng, các cột phí ưu tiên độ rộng lớn
+ * không bao giờ bị cắt mất hoặc tràn lề khi in.
  * ============================================================
  */
 
@@ -115,10 +117,9 @@ echo "\xEF\xBB\xBF";
                             <x:CenterHorizontal/>
                         </x:Print>
                         <x:PageSetup>
-                            <x:CenterHorizontal/>
-                            <x:Header x:Margin="0.2"/>
-                            <x:Footer x:Margin="0.2"/>
-                            <x:PageMargins x:Bottom="0.4" x:Left="0.4" x:Right="0.4" x:Top="0.4"/>
+                            <x:Header x:Margin="0.1"/>
+                            <x:Footer x:Margin="0.1"/>
+                            <x:PageMargins x:Bottom="0.25" x:Left="0.2" x:Right="0.2" x:Top="0.25"/>
                         </x:PageSetup>
                     </x:WorksheetOptions>
                 </x:ExcelWorksheet>
@@ -128,17 +129,18 @@ echo "\xEF\xBB\xBF";
     <![endif]-->
     <style>
         @page {
-            margin: 0.4in 0.4in 0.4in 0.4in;
+            margin: 0.25in;
             mso-horizontal-page-align: center;
         }
         body {
             font-family: 'Times New Roman', Arial, sans-serif;
-            font-size: 11pt;
+            font-size: 10pt;
             color: #000000;
         }
         table {
             border-collapse: collapse;
             width: 100%;
+            max-width: 100%;
             margin-left: auto;
             margin-right: auto;
         }
@@ -149,67 +151,72 @@ echo "\xEF\xBB\xBF";
             color: #000000;
         }
         .agency {
-            font-size: 10pt;
+            font-size: 9.5pt;
             font-weight: bold;
             text-transform: uppercase;
             color: #000000;
         }
         .meta-info {
-            font-size: 9.5pt;
+            font-size: 9pt;
             font-style: italic;
             color: #000000;
         }
         .table-data {
             border-collapse: collapse;
             width: 100%;
+            max-width: 100%;
             margin-top: 6px;
+            table-layout: fixed;
         }
         .table-data th {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #ffffff !important;
+            color: #000000 !important;
             font-weight: bold;
             border: 0.5pt solid #555555;
             text-align: center;
             vertical-align: middle;
-            padding: 8px 6px;
-            font-size: 9.5pt;
-            height: 44px;
-            mso-height-source: userset;
+            font-size: 9pt;
+            line-height: 1.25;
+            word-wrap: break-word;
         }
         .table-data td {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #ffffff !important;
+            color: #000000 !important;
             border: 0.5pt solid #666666;
-            padding: 5px 6px;
-            font-size: 9.5pt;
+            font-size: 9pt;
             vertical-align: middle;
+            line-height: 1.25;
+            padding: 5px 3px;
         }
         .num {
             mso-number-format: "\#\,\#\#0";
             text-align: right;
+            white-space: nowrap;
         }
-        .text-c { text-align: center; }
-        .text-l { text-align: left; }
+        .text-c { text-align: center; white-space: nowrap; }
+        .text-l { text-align: left; word-wrap: break-word; }
         .fw-bold { font-weight: bold; }
         .total-row td {
-            background-color: #ffffff;
+            background-color: #ffffff !important;
             font-weight: bold;
             border-top: 1pt solid #000000;
             border-bottom: 1.5pt solid #000000;
+            padding-top: 7px;
+            padding-bottom: 7px;
         }
     </style>
 </head>
 <body>
 
     <!-- PHẦN ĐẦU TIÊU ĐỀ BÁO CÁO (ĐEN TRẮNG CHUẨN HÀNH CHÍNH) -->
-    <table style="width: 100%;">
+    <table style="width: 100%; max-width: 100%;">
         <tr>
             <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>" class="agency">TỔNG CÔNG TY CẢNG HÀNG KHÔNG VIỆT NAM</td>
             <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" class="agency" style="text-align: right;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</td>
         </tr>
         <tr>
-            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>" style="font-weight: bold; font-size: 9.5pt;">PHÒNG TÀI CHÍNH - KẾ TOÁN</td>
-            <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" style="text-align: right; font-style: italic; font-size: 9.5pt;">Độc lập - Tự do - Hạnh phúc</td>
+            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>" style="font-weight: bold; font-size: 9pt;">PHÒNG TÀI CHÍNH - KẾ TOÁN</td>
+            <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" style="text-align: right; font-style: italic; font-size: 9pt;">Độc lập - Tự do - Hạnh phúc</td>
         </tr>
         <tr>
             <td colspan="<?= $kieu === 'nam' ? 7 : 11 ?>">&nbsp;</td>
@@ -226,11 +233,11 @@ echo "\xEF\xBB\xBF";
             <td colspan="<?= $kieu === 'nam' ? 7 : 11 ?>">&nbsp;</td>
         </tr>
         <tr>
-            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>"><strong>Phạm vi sân bay:</strong> <?= htmlspecialchars($tenSanBayLoc) ?></td>
-            <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" style="text-align: right;"><strong>Hãng hàng không:</strong> <?= htmlspecialchars($tenHangLoc) ?></td>
+            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>"><strong>Phạm vi:</strong> <?= htmlspecialchars($tenSanBayLoc) ?></td>
+            <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" style="text-align: right;"><strong>Hãng:</strong> <?= htmlspecialchars($tenHangLoc) ?></td>
         </tr>
         <tr>
-            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>"><strong>Trạng thái doanh thu:</strong> <?= htmlspecialchars($nhanTrangThai) ?></td>
+            <td colspan="<?= $kieu === 'nam' ? 3 : 5 ?>"><strong>Trạng thái:</strong> <?= htmlspecialchars($nhanTrangThai) ?></td>
             <td colspan="<?= $kieu === 'nam' ? 4 : 6 ?>" style="text-align: right;"><strong>Kỳ thống kê:</strong> <?= $kieu === 'nam' ? "Cả năm {$nam}" : "Tháng {$thang}/{$nam}" ?></td>
         </tr>
     </table>
@@ -238,21 +245,34 @@ echo "\xEF\xBB\xBF";
     <br/>
 
     <?php if ($kieu === 'thang'): ?>
-        <!-- ================= BẢNG HÓA ĐƠN CHI TIẾT THÁNG (11 CỘT VIỀN MẢNH 0.5pt, CAO 44px) ================= -->
-        <table class="table-data" style="width: 100%;">
+        <!-- ================= BẢNG HÓA ĐƠN CHI TIẾT THÁNG (11 CỘT TỔNG 100%, ƯU TIÊN ĐỘ RỘNG PHÍ) ================= -->
+        <table class="table-data" style="width: 100%; max-width: 100%;">
+            <colgroup>
+                <col style="width: 3.5%;">
+                <col style="width: 5%;">
+                <col style="width: 7%;">
+                <col style="width: 8%;">
+                <col style="width: 15%;">
+                <col style="width: 9.5%;">
+                <col style="width: 11.5%;">
+                <col style="width: 11.5%;">
+                <col style="width: 11.5%;">
+                <col style="width: 12.5%;">
+                <col style="width: 5%;">
+            </colgroup>
             <thead>
-                <tr style="height: 44px;">
-                    <th style="width: 4%; vertical-align: middle;">STT</th>
-                    <th style="width: 6%; vertical-align: middle;">Mã HĐ</th>
-                    <th style="width: 8%; vertical-align: middle;">Số hiệu</th>
-                    <th style="width: 9%; vertical-align: middle;">Chặng bay</th>
-                    <th style="width: 15%; vertical-align: middle;">Hãng hàng không</th>
-                    <th style="width: 11%; vertical-align: middle;">Ngày xuất HĐ</th>
-                    <th style="width: 11.5%; vertical-align: middle;">Phí cất / hạ cánh</th>
-                    <th style="width: 11.5%; vertical-align: middle;">Phí đỗ tàu bay</th>
-                    <th style="width: 11.5%; vertical-align: middle;">Phí phục vụ HK</th>
-                    <th style="width: 12.5%; vertical-align: middle;">Tổng tiền</th>
-                    <th style="width: 9%; vertical-align: middle;">Trạng thái</th>
+                <tr style="height: 48px; mso-height-source: userset;">
+                    <th style="width: 3.5%; height: 48px;">STT</th>
+                    <th style="width: 5%; height: 48px;">Mã<br/>HĐ</th>
+                    <th style="width: 7%; height: 48px;">Số<br/>hiệu</th>
+                    <th style="width: 8%; height: 48px;">Chặng<br/>bay</th>
+                    <th style="width: 15%; height: 48px;">Hãng hàng không</th>
+                    <th style="width: 9.5%; height: 48px;">Ngày xuất<br/>hóa đơn</th>
+                    <th style="width: 11.5%; height: 48px;">Phí cất /<br/>hạ cánh</th>
+                    <th style="width: 11.5%; height: 48px;">Phí đỗ<br/>tàu bay</th>
+                    <th style="width: 11.5%; height: 48px;">Phí phục vụ<br/>hành khách</th>
+                    <th style="width: 12.5%; height: 48px;">Tổng tiền<br/>(VNĐ)</th>
+                    <th style="width: 5%; height: 48px;">Trạng<br/>thái</th>
                 </tr>
             </thead>
             <tbody>
@@ -274,15 +294,15 @@ echo "\xEF\xBB\xBF";
                             <td class="text-l">
                                 <?= htmlspecialchars($hd['ten_hang'] ?? '') ?> (<?= htmlspecialchars($hd['ma_hang'] ?? '') ?>)
                             </td>
-                            <td class="text-c">
-                                <?= !empty($hd['ngay_xuat']) ? date('d/m/Y H:i', strtotime($hd['ngay_xuat'])) : '' ?>
+                            <td class="text-c" style="font-size: 8.5pt;">
+                                <?= !empty($hd['ngay_xuat']) ? date('d/m/Y', strtotime($hd['ngay_xuat'])) : '' ?>
                             </td>
-                            <td class="num"><?= (float) $hd['phi_cat_ha_canh'] ?></td>
-                            <td class="num"><?= (float) $hd['phi_do_tau_bay'] ?></td>
-                            <td class="num"><?= (float) $hd['phi_phuc_vu_hk'] ?></td>
-                            <td class="num fw-bold"><?= (float) $hd['tong_tien'] ?></td>
-                            <td class="text-c">
-                                <?= ($hd['trang_thai_thanh_toan'] ?? '') === 'Da_Thanh_Toan' ? 'Đã thu tiền' : 'Chờ thanh toán' ?>
+                            <td class="num"><?= number_format((float) $hd['phi_cat_ha_canh'], 0, ',', '.') ?></td>
+                            <td class="num"><?= number_format((float) $hd['phi_do_tau_bay'], 0, ',', '.') ?></td>
+                            <td class="num"><?= number_format((float) $hd['phi_phuc_vu_hk'], 0, ',', '.') ?></td>
+                            <td class="num fw-bold"><?= number_format((float) $hd['tong_tien'], 0, ',', '.') ?></td>
+                            <td class="text-c" style="font-size: 8pt;">
+                                <?= ($hd['trang_thai_thanh_toan'] ?? '') === 'Da_Thanh_Toan' ? 'Đã thu' : 'Chờ thu' ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -291,10 +311,10 @@ echo "\xEF\xBB\xBF";
             <tfoot>
                 <tr class="total-row">
                     <td colspan="6" class="text-c fw-bold">TỔNG CỘNG THÁNG <?= $thang ?>/<?= $nam ?>:</td>
-                    <td class="num fw-bold"><?= $tongPhiCatHaCanh ?></td>
-                    <td class="num fw-bold"><?= $tongPhiDo ?></td>
-                    <td class="num fw-bold"><?= $tongPhiKhach ?></td>
-                    <td class="num fw-bold"><?= $tongDoanhThuThang ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $tongPhiCatHaCanh, 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $tongPhiDo, 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $tongPhiKhach, 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $tongDoanhThuThang, 0, ',', '.') ?></td>
                     <td class="text-c fw-bold"><?= count($hoaDonThang) ?> HĐ</td>
                 </tr>
             </tfoot>
@@ -302,55 +322,54 @@ echo "\xEF\xBB\xBF";
 
         <br/><br/>
 
-        <!-- ================= KHỐI 3 Ô CHỮ KÝ THÁNG (CÂN XỨNG, KHÔNG HIỆN TÊN) ================= -->
-        <table style="width: 100%;">
+        <!-- ================= KHỐI 2 Ô CHỮ KÝ THÁNG (1 SÁT MÉP TRÁI - KHOẢNG TRỐNG GIỮA - 1 SÁT MÉP PHẢI) ================= -->
+        <table style="width: 100%; max-width: 100%;">
             <tr>
-                <td colspan="3" class="text-c fw-bold" style="font-size: 10.5pt; width: 30%;">
-                    NGƯỜI LẬP BIỂU
+                <td colspan="4" class="text-c fw-bold" style="font-size: 10pt;">
+                    NGƯỜI LẬP BÁO CÁO
                 </td>
-                <td style="width: 5%;">&nbsp;</td>
-                <td colspan="3" class="text-c fw-bold" style="font-size: 10.5pt; width: 30%;">
-                    KẾ TOÁN TRƯỞNG
-                </td>
-                <td style="width: 5%;">&nbsp;</td>
-                <td colspan="3" class="text-c fw-bold" style="font-size: 10.5pt; width: 30%;">
-                    THỦ TRƯỞNG ĐƠN VỊ
+                <td colspan="3">&nbsp;</td>
+                <td colspan="4" class="text-c fw-bold" style="font-size: 10pt;">
+                    QUẢN LÝ SÂN BAY
                 </td>
             </tr>
             <tr>
-                <td colspan="3" class="text-c meta-info">
+                <td colspan="4" class="text-c meta-info">
                     (Ký, ghi rõ họ tên)
                 </td>
-                <td>&nbsp;</td>
-                <td colspan="3" class="text-c meta-info">
-                    (Ký, ghi rõ họ tên)
-                </td>
-                <td>&nbsp;</td>
-                <td colspan="3" class="text-c meta-info">
+                <td colspan="3">&nbsp;</td>
+                <td colspan="4" class="text-c meta-info">
                     (Ký, đóng dấu)
                 </td>
             </tr>
             <tr>
-                <td colspan="3" style="height: 75px;">&nbsp;</td>
-                <td>&nbsp;</td>
-                <td colspan="3" style="height: 75px;">&nbsp;</td>
-                <td>&nbsp;</td>
-                <td colspan="3" style="height: 75px;">&nbsp;</td>
+                <td colspan="4" style="height: 70px;">&nbsp;</td>
+                <td colspan="3">&nbsp;</td>
+                <td colspan="4" style="height: 70px;">&nbsp;</td>
             </tr>
         </table>
 
     <?php else: ?>
-        <!-- ================= BẢNG TỔNG HỢP NĂM (7 CỘT VIỀN MẢNH 0.5pt, CAO 44px) ================= -->
-        <table class="table-data" style="width: 100%;">
+        <!-- ================= BẢNG TỔNG HỢP NĂM (7 CỘT TỔNG 100%, ƯU TIÊN ĐỘ RỘNG CÁC PHÍ) ================= -->
+        <table class="table-data" style="width: 100%; max-width: 100%;">
+            <colgroup>
+                <col style="width: 9%;">
+                <col style="width: 10%;">
+                <col style="width: 18%;">
+                <col style="width: 18%;">
+                <col style="width: 18%;">
+                <col style="width: 19%;">
+                <col style="width: 8%;">
+            </colgroup>
             <thead>
-                <tr style="height: 44px;">
-                    <th style="width: 10%; vertical-align: middle;">Tháng</th>
-                    <th style="width: 11%; vertical-align: middle;">Số hóa đơn</th>
-                    <th style="width: 17%; vertical-align: middle;">Phí cất / hạ cánh</th>
-                    <th style="width: 17%; vertical-align: middle;">Phí đỗ tàu bay</th>
-                    <th style="width: 18%; vertical-align: middle;">Phí phục vụ khách</th>
-                    <th style="width: 17%; vertical-align: middle;">Tổng doanh thu</th>
-                    <th style="width: 10%; vertical-align: middle;">Tỷ trọng</th>
+                <tr style="height: 48px; mso-height-source: userset;">
+                    <th style="width: 9%; height: 48px;">Tháng</th>
+                    <th style="width: 10%; height: 48px;">Số hóa đơn</th>
+                    <th style="width: 18%; height: 48px;">Phí cất /<br/>hạ cánh</th>
+                    <th style="width: 18%; height: 48px;">Phí đỗ<br/>tàu bay</th>
+                    <th style="width: 18%; height: 48px;">Phí phục vụ<br/>hành khách</th>
+                    <th style="width: 19%; height: 48px;">Tổng<br/>doanh thu</th>
+                    <th style="width: 8%; height: 48px;">Tỷ trọng</th>
                 </tr>
             </thead>
             <tbody>
@@ -363,10 +382,10 @@ echo "\xEF\xBB\xBF";
                     <tr>
                         <td class="text-c fw-bold">Tháng <?= $t['thang'] ?></td>
                         <td class="text-c"><?= $t['so_hoa_don'] ?></td>
-                        <td class="num"><?= (float) $t['phi_cat_ha_canh'] ?></td>
-                        <td class="num"><?= (float) $t['phi_do_tau_bay'] ?></td>
-                        <td class="num"><?= (float) $t['phi_phuc_vu_hk'] ?></td>
-                        <td class="num fw-bold"><?= (float) $t['tong_doanh_thu'] ?></td>
+                        <td class="num"><?= number_format((float) $t['phi_cat_ha_canh'], 0, ',', '.') ?></td>
+                        <td class="num"><?= number_format((float) $t['phi_do_tau_bay'], 0, ',', '.') ?></td>
+                        <td class="num"><?= number_format((float) $t['phi_phuc_vu_hk'], 0, ',', '.') ?></td>
+                        <td class="num fw-bold"><?= number_format((float) $t['tong_doanh_thu'], 0, ',', '.') ?></td>
                         <td class="text-c"><?= $tyTrong ?>%</td>
                     </tr>
                 <?php endforeach; ?>
@@ -375,33 +394,42 @@ echo "\xEF\xBB\xBF";
                 <tr class="total-row">
                     <td class="text-c fw-bold">TỔNG CỘNG:</td>
                     <td class="text-c fw-bold"><?= $kpi['tong_so_hd'] ?> HĐ</td>
-                    <td class="num fw-bold"><?= $kpi['phi_cat_ha_canh'] ?></td>
-                    <td class="num fw-bold"><?= $kpi['phi_do_tau_bay'] ?></td>
-                    <td class="num fw-bold"><?= $kpi['phi_phuc_vu_hk'] ?></td>
-                    <td class="num fw-bold"><?= $tongNam ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $kpi['phi_cat_ha_canh'], 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $kpi['phi_do_tau_bay'], 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $kpi['phi_phuc_vu_hk'], 0, ',', '.') ?></td>
+                    <td class="num fw-bold"><?= number_format((float) $tongNam, 0, ',', '.') ?></td>
                     <td class="text-c fw-bold">100%</td>
                 </tr>
             </tfoot>
         </table>
 
         <br/>
-        <!-- BẢNG THEO HÃNG HÀNG KHÔNG (VIỀN MẢNH 0.5pt, CAO 44px) -->
-        <table style="width: 100%;">
+        <!-- BẢNG THEO HÃNG HÀNG KHÔNG (CÂN ĐỐI 100%) -->
+        <table style="width: 100%; max-width: 100%;">
             <tr>
-                <td colspan="7" style="font-size: 10.5pt; font-weight: bold; padding-bottom: 4px;">
+                <td colspan="7" style="font-size: 10pt; font-weight: bold; padding-bottom: 4px;">
                     TỔNG HỢP DOANH THU THEO HÃNG HÀNG KHÔNG:
                 </td>
             </tr>
         </table>
-        <table class="table-data" style="width: 100%;">
+        <table class="table-data" style="width: 100%; max-width: 100%;">
+            <colgroup>
+                <col style="width: 6%;">
+                <col style="width: 19%;">
+                <col style="width: 19%;">
+                <col style="width: 12%;">
+                <col style="width: 14%;">
+                <col style="width: 20%;">
+                <col style="width: 10%;">
+            </colgroup>
             <thead>
-                <tr style="height: 44px;">
-                    <th style="width: 7%; vertical-align: middle;">STT</th>
-                    <th colspan="2" style="width: 34%; vertical-align: middle;">Hãng hàng không</th>
-                    <th style="width: 14%; vertical-align: middle;">Mã IATA</th>
-                    <th style="width: 14%; vertical-align: middle;">Số chuyến bay</th>
-                    <th style="width: 19%; vertical-align: middle;">Tổng doanh thu</th>
-                    <th style="width: 12%; vertical-align: middle;">Tỷ trọng</th>
+                <tr style="height: 44px; mso-height-source: userset;">
+                    <th style="width: 6%; height: 44px;">STT</th>
+                    <th colspan="2" style="width: 38%; height: 44px;">Hãng hàng không</th>
+                    <th style="width: 12%; height: 44px;">Mã IATA</th>
+                    <th style="width: 14%; height: 44px;">Số chuyến bay</th>
+                    <th style="width: 20%; height: 44px;">Tổng doanh thu</th>
+                    <th style="width: 10%; height: 44px;">Tỷ trọng</th>
                 </tr>
             </thead>
             <tbody>
@@ -415,7 +443,7 @@ echo "\xEF\xBB\xBF";
                             <td colspan="2" class="fw-bold" style="padding-left: 8px;"><?= htmlspecialchars($h['ten_hang']) ?></td>
                             <td class="text-c"><?= htmlspecialchars($h['ma_iata'] ?? $h['ma_hang'] ?? '') ?></td>
                             <td class="text-c"><?= $h['so_hoa_don'] ?></td>
-                            <td class="num fw-bold"><?= (float) $h['doanh_thu'] ?></td>
+                            <td class="num fw-bold"><?= number_format((float) $h['doanh_thu'], 0, ',', '.') ?></td>
                             <td class="text-c"><?= $pct ?>%</td>
                         </tr>
                     <?php endforeach; ?>
@@ -425,40 +453,30 @@ echo "\xEF\xBB\xBF";
 
         <br/><br/>
 
-        <!-- ================= KHỐI 3 Ô CHỮ KÝ NĂM (CÂN XỨNG TUYỆT ĐỐI) ================= -->
-        <table style="width: 100%;">
+        <!-- ================= KHỐI 2 Ô CHỮ KÝ NĂM (1 SÁT MÉP TRÁI - KHOẢNG TRỐNG GIỮA - 1 SÁT MÉP PHẢI) ================= -->
+        <table style="width: 100%; max-width: 100%;">
             <tr>
-                <td colspan="2" class="text-c fw-bold" style="font-size: 10.5pt;">
-                    NGƯỜI LẬP BIỂU
+                <td colspan="3" class="text-c fw-bold" style="font-size: 10pt;">
+                    NGƯỜI LẬP BÁO CÁO
                 </td>
-                <td>&nbsp;</td>
-                <td class="text-c fw-bold" style="font-size: 10.5pt;">
-                    KẾ TOÁN TRƯỞNG
-                </td>
-                <td>&nbsp;</td>
-                <td colspan="2" class="text-c fw-bold" style="font-size: 10.5pt;">
-                    THỦ TRƯỞNG ĐƠN VỊ
+                <td colspan="1">&nbsp;</td>
+                <td colspan="3" class="text-c fw-bold" style="font-size: 10pt;">
+                    QUẢN LÝ SÂN BAY
                 </td>
             </tr>
             <tr>
-                <td colspan="2" class="text-c meta-info">
+                <td colspan="3" class="text-c meta-info">
                     (Ký, ghi rõ họ tên)
                 </td>
-                <td>&nbsp;</td>
-                <td class="text-c meta-info">
-                    (Ký, ghi rõ họ tên)
-                </td>
-                <td>&nbsp;</td>
-                <td colspan="2" class="text-c meta-info">
+                <td colspan="1">&nbsp;</td>
+                <td colspan="3" class="text-c meta-info">
                     (Ký, đóng dấu)
                 </td>
             </tr>
             <tr>
-                <td colspan="2" style="height: 75px;">&nbsp;</td>
-                <td>&nbsp;</td>
-                <td style="height: 75px;">&nbsp;</td>
-                <td>&nbsp;</td>
-                <td colspan="2" style="height: 75px;">&nbsp;</td>
+                <td colspan="3" style="height: 70px;">&nbsp;</td>
+                <td colspan="1">&nbsp;</td>
+                <td colspan="3" style="height: 70px;">&nbsp;</td>
             </tr>
         </table>
     <?php endif; ?>

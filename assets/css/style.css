@@ -90,19 +90,57 @@ label.acv-sidebar-toggle-btn {
 }
 
 /* Giữ đúng màu chữ của sidebar tối */
+/* Biến chuẩn White & Sky Blue cho sidebar */
+.app-sidebar {
+  --lte-sidebar-color: #334155;
+  --lte-sidebar-hover-color: #0284c7;
+  --lte-sidebar-hover-bg: #f0f9ff;
+  --lte-sidebar-menu-active-color: #ffffff;
+  --lte-sidebar-menu-active-bg: #0284c7;
+  --lte-sidebar-submenu-color: #334155;
+  --lte-sidebar-submenu-hover-color: #0284c7;
+  --lte-sidebar-submenu-hover-bg: #e0f2fe;
+  --lte-sidebar-submenu-active-color: #ffffff;
+  --lte-sidebar-submenu-active-bg: #0284c7;
+  --lte-sidebar-header-color: #64748b;
+}
+
 .sidebar-menu details.nav-group > summary.nav-link {
-  color: var(--lte-sidebar-color);
+  color: #334155 !important;
 }
 
 .sidebar-menu details.nav-group > summary.nav-link:hover,
 .sidebar-menu details.nav-group > summary.nav-link:focus {
-  color: var(--lte-sidebar-hover-color);
-  background-color: var(--lte-sidebar-hover-bg);
+  color: #0284c7 !important;
+  background-color: #f0f9ff !important;
 }
 
 .sidebar-menu details.nav-group.is-active > summary.nav-link {
-  color: var(--lte-sidebar-menu-active-color);
-  background-color: var(--lte-sidebar-menu-active-bg);
+  color: #0284c7 !important;
+  background-color: #f0f9ff !important;
+  font-weight: 600 !important;
+}
+
+/* Đảm bảo toàn bộ mục active trên sidebar (cả cha lẫn con) chữ và icon LUÔN TRẮNG TINH KHIẾT */
+.app-sidebar .nav-link.active,
+.app-sidebar .nav-link.active *,
+.sidebar-wrapper .nav-link.active,
+.sidebar-wrapper .nav-link.active *,
+.sidebar-menu .nav-link.active,
+.sidebar-menu .nav-link.active *,
+.nav-treeview .nav-link.active,
+.nav-treeview .nav-link.active * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.app-sidebar .nav-link.active,
+.sidebar-wrapper .nav-link.active,
+.sidebar-menu .nav-link.active,
+.nav-treeview .nav-link.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
 }
 
 /* AdminLTE ẩn .nav-treeview, chỉ mở khi có .menu-open.
