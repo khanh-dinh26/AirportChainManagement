@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: HỦY / XÓA CHUYẾN BAY  —  views/pages/chuyen_bay/huy.php
- * Nhận id qua query string: huy.php?id=123
- * (vẫn chấp nhận huy.php?edit=123 để tương thích)
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
@@ -37,7 +31,7 @@ if ($popup && isset($_GET['saved'])) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'flight-popup-saved' }, window.location.origin);
         } else {
-          window.location.replace(<?= json_encode(BASE_URL . '/index.php?page=chuyen_bay') ?>);
+          window.location.replace('<?= BASE_URL ?>/index.php?page=chuyen_bay');
         }
       })();
     </script>

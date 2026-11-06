@@ -1,9 +1,5 @@
 <?php
-/**
- * Hiển thị thông báo flash riêng cho phân hệ Bảo trì.
- * Controller ghi $_SESSION['flash_success'] / flash_error / flash_info,
- * sau khi hiển thị sẽ xóa khỏi session để không lặp lại.
- */
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

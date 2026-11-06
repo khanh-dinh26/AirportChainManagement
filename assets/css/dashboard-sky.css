@@ -1,0 +1,978 @@
+/**
+ * ============================================================
+ * GIAO DIỆN TỔNG QUAN CHỦ ĐẠO TRẮNG - XANH DA TRỜI (SKY BLUE & WHITE)
+ * Hệ thống Quản lý Chuỗi Cảng Hàng không (ACV Airport Chain Management)
+ * File: assets/css/dashboard-sky.css
+ * Tuân thủ nguyên tắc thiết kế chuyên biệt (Aviation Frontend Design)
+ * ============================================================
+ */
+
+:root {
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+  --sky-800: #075985;
+  --sky-900: #0c4a6e;
+  --sky-pure-white: #ffffff;
+  --sky-card-bg: #ffffff;
+  --sky-slate-900: #0f172a;
+  --sky-slate-700: #334155;
+  --sky-slate-600: #475569;
+  --sky-slate-500: #64748b;
+  --sky-border-subtle: #e0f2fe;
+  --sky-border-medium: #bae6fd;
+  --sky-shadow-soft: 0 4px 20px -2px rgba(2, 132, 199, 0.08);
+  --sky-shadow-hover: 0 10px 25px -4px rgba(2, 132, 199, 0.14);
+}
+
+/* ---------- 1. HERO BANNER CHUYÊN NGÀNH HÀNG KHÔNG ---------- */
+.sky-hero {
+  position: relative;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 48%, #ffffff 100%);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 18px;
+  min-height: 340px;
+  padding: 28px !important;
+  margin-bottom: 26px;
+  box-shadow: var(--sky-shadow-soft);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+}
+
+.sky-hero::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(2, 132, 199, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sky-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-pure-white);
+  color: var(--sky-700);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 9999px;
+  padding: 7px 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.06);
+}
+
+.sky-hero__title {
+  color: var(--sky-900);
+  font-size: 2.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.sky-hero__lead {
+  color: var(--sky-slate-600);
+  font-size: 0.95rem;
+  max-width: 720px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.sky-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--sky-slate-500);
+  padding-top: 14px;
+  border-top: 1px solid rgba(186, 230, 253, 0.6);
+}
+
+.sky-hero__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sky-hero__meta-item i {
+  color: var(--sky-600);
+}
+
+.sky-hero__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.sky-hero__status-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+/* ---------- 2. THẺ CHỈ SỐ NHANH (KPI METRICS) ---------- */
+.sky-metric-card {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 14px;
+  padding: 20px;
+  height: 100%;
+  box-shadow: var(--sky-shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sky-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sky-shadow-hover);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-metric-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--sky-400), var(--sky-600));
+  opacity: 0.85;
+}
+
+.sky-metric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.sky-metric-card__title {
+  color: var(--sky-slate-500);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.sky-metric-card__icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--sky-50);
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  border: 1px solid var(--sky-border-subtle);
+  flex-shrink: 0;
+}
+
+.sky-metric-card__icon-box i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sky-metric-card__value {
+  color: var(--sky-900);
+  font-size: 2.15rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.sky-metric-card__subtext {
+  color: var(--sky-slate-500);
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+/* ---------- 3. TRUNG TÂM PHÂN HỆ ĐIỀU HÀNH (PORTALS) ---------- */
+.sky-portal-card {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--sky-shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sky-portal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sky-shadow-hover);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-portal-card__badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sky-portal-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--sky-50), var(--sky-100));
+  color: var(--sky-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.55rem;
+  line-height: 1;
+  border: 1px solid var(--sky-border-medium);
+  flex-shrink: 0;
+}
+
+.sky-portal-card__icon i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sky-portal-card__badge {
+  background: var(--sky-50);
+  color: var(--sky-700);
+  border: 1px solid var(--sky-border-medium);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sky-portal-card__title {
+  color: var(--sky-900);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.sky-portal-card__desc {
+  color: var(--sky-slate-600);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+.sky-portal-card__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--sky-border-subtle);
+}
+
+.sky-portal-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  color: var(--sky-slate-600);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.76rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sky-portal-card__tag:hover {
+  background: var(--sky-100);
+  color: var(--sky-700);
+  border-color: var(--sky-border-medium);
+}
+
+.sky-portal-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--sky-600);
+  color: var(--sky-pure-white);
+  border: 1px solid var(--sky-600);
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  width: 100%;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sky-portal-card__btn:hover {
+  background: var(--sky-700);
+  border-color: var(--sky-700);
+  color: var(--sky-pure-white);
+}
+
+/* ---------- 4. KHỐI THÔNG TIN BỔ TRỢ (PANEL BẦU TRỜI) ---------- */
+.sky-panel {
+  background: var(--sky-pure-white);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--sky-shadow-soft);
+  height: 100%;
+}
+
+.sky-panel__title {
+  color: var(--sky-900);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sky-panel__title i {
+  color: var(--sky-600);
+}
+
+.sky-airports-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sky-airport-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-50);
+  border: 1px solid var(--sky-border-subtle);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  color: var(--sky-slate-700);
+  font-weight: 500;
+}
+
+.sky-airport-chip strong {
+  color: var(--sky-700);
+  font-weight: 700;
+}
+
+.sky-guide-list {
+  padding-left: 0;
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.sky-guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+  color: var(--sky-slate-600);
+}
+
+.sky-guide-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sky-guide-item__num {
+  width: 24px;
+  height: 24px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sky-guide-item strong {
+  color: var(--sky-slate-900);
+}
+
+.sky-section-header {
+  margin-bottom: 18px;
+}
+
+.sky-section-header h2 {
+  color: var(--sky-900);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sky-section-header p {
+  color: var(--sky-slate-500);
+  font-size: 0.88rem;
+  margin: 4px 0 0 0;
+}
+
+/* ---------- 5. ĐỒNG BỘ TOÀN BỘ GIAO DIỆN: TRẮNG - XANH DA TRỜI (LIGHT SKY THEME) ---------- */
+
+/* 5.1. Sidebar phong cách sáng sủa thiên về trắng (Light Aviation Theme) */
+.app-sidebar,
+aside.app-sidebar {
+  background-color: #e0f2fe !important;
+  border-right: 1px solid #bae6fd !important;
+  box-shadow: none !important;
+}
+
+.sidebar-wrapper {
+  background-color: transparent !important;
+}
+
+/* Thẻ thương hiệu sidebar */
+.sidebar-brand,
+.app-sidebar .sidebar-brand {
+  background-color: #dbeafe !important;
+  border-bottom: 1px solid #bae6fd !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  padding: 0 18px !important;
+}
+
+.sidebar-brand .brand-link {
+  color: #0284c7 !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.sidebar-brand .brand-text {
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  font-size: 1.55rem !important;
+}
+
+/* Tiêu đề nhóm menu (PHÂN HỆ CHỨC NĂNG) */
+.sidebar-menu .nav-header {
+  color: #0284c7 !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  padding: 14px 16px 6px 16px !important;
+  text-transform: uppercase !important;
+}
+
+/* Khung chung của mọi mục menu trong sidebar */
+.sidebar-menu .nav-link,
+.sidebar-menu details.nav-group > summary.nav-link {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  border-radius: 8px !important;
+  margin: 3px 12px !important;
+  width: calc(100% - 24px) !important;
+  padding: 9px 14px !important;
+  min-height: 42px !important;
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.sidebar-menu .nav-link > p,
+.sidebar-menu details.nav-group > summary.nav-link > p {
+  display: inline-block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  line-height: 1.5 !important;
+  padding-right: 24px !important;
+  color: #0f172a !important;
+}
+
+.sidebar-menu .nav-link i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link i.nav-icon {
+  color: #0284c7 !important;
+  font-size: 1.25rem !important;
+  margin-right: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+/* CĂN GIỮA MŨI TÊN CHUẨN XÁC THEO CHIỀU DỌC */
+.sidebar-menu .nav-arrow,
+.sidebar-menu details.nav-group > summary .nav-arrow,
+.sidebar-menu details.nav-group > summary > p > .nav-arrow {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  font-size: 0.85rem !important;
+  color: #94a3b8 !important;
+  transition: transform 0.2s ease, color 0.15s ease !important;
+  pointer-events: none !important;
+}
+
+/* Khi nhóm mở: Mũi tên xoay 90 độ tại đúng tâm giữa */
+.sidebar-menu details.nav-group[open] > summary .nav-arrow,
+.sidebar-menu details.nav-group[open] > summary > p > .nav-arrow {
+  transform: translateY(-50%) rotate(90deg) !important;
+  color: #0284c7 !important;
+}
+
+/* Rê chuột (hover) vào menu cha: không hiệu ứng glow */
+.sidebar-menu > .nav-item > .nav-link:hover,
+.sidebar-menu details.nav-group > summary.nav-link:hover {
+  background-color: #bae6fd !important;
+  color: #0369a1 !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link:hover > p,
+.sidebar-menu details.nav-group > summary.nav-link:hover > p {
+  color: #0369a1 !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link:hover i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link:hover i.nav-icon {
+  color: #0369a1 !important;
+}
+
+/* Mục menu cha đang active (ví dụ Tổng quan): KHÔNG GLOW */
+.sidebar-menu > .nav-item > .nav-link.active,
+.sidebar-menu > .nav-item > .nav-link.active:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link.active > p,
+.sidebar-menu > .nav-item > .nav-link.active:hover > p {
+  color: #ffffff !important;
+}
+
+.sidebar-menu > .nav-item > .nav-link.active i.nav-icon,
+.sidebar-menu > .nav-item > .nav-link.active:hover i.nav-icon {
+  color: #ffffff !important;
+}
+
+/* Khối danh sách menu con bên trong (treeview) */
+.sidebar-menu details.nav-group > .nav-treeview {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-radius: 8px !important;
+  margin: 4px 8px 6px 8px !important;
+  padding: 4px !important;
+  border: 1px solid #bae6fd !important;
+  list-style: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-item {
+  margin: 0 !important;
+}
+
+/* Menu con bình thường */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link {
+  color: #475569 !important;
+  font-size: 0.92rem !important;
+  margin: 2px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link > p {
+  color: #475569 !important;
+  padding-right: 0 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link i.nav-icon {
+  color: #0284c7 !important;
+  font-size: 1rem !important;
+  margin-right: 8px !important;
+}
+
+/* Rê chuột (hover) vào menu con */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover {
+  background-color: #bae6fd !important;
+  color: #0369a1 !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover > p {
+  color: #0369a1 !important;
+  font-weight: 600 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link:hover i.nav-icon {
+  color: #0369a1 !important;
+}
+
+/* MENU CON ĐANG ĐƯỢC CHỌN (ACTIVE): KHÔNG GLOW */
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active > p,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover > p {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active i.nav-icon,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link.active:hover i.nav-icon {
+  color: #ffffff !important;
+}
+
+/* 5.2. Navbar trên cùng: Chiều cao 70px đồng bộ chuẩn xác với logo sidebar */
+.app-header.navbar {
+  background-color: var(--sky-pure-white) !important;
+  border-bottom: 1px solid var(--sky-border-subtle) !important;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.05);
+  height: 70px !important;
+  min-height: 70px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.app-header.navbar .nav-link {
+  color: #334155 !important;
+  font-size: 1.02rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.app-header.navbar .nav-link:hover {
+  color: #0284c7 !important;
+}
+
+.app-header.navbar .user-image {
+  width: 42px !important;
+  height: 42px !important;
+}
+
+/* 5.3. Nền nội dung chính */
+.app-main {
+  background-color: #f8fafc;
+}
+
+/* 5.4. Breadcrumb trang nhã */
+.breadcrumb-item a {
+  color: var(--sky-600);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--sky-800);
+  text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+  color: var(--sky-slate-500);
+}
+
+
+
+
+/* ============================================================
+ * FIX TRIỆT ĐỂ: TOÀN BỘ MENU ACTIVE VÀ HOVER TRÊN SIDEBAR
+ * 1. Khối active có margin 12px hai bên (width: calc(100% - 24px)), KHÔNG BAO GIỜ dính sát mép phải
+ * 2. Đồng bộ 100% màu sắc icon: khi chưa active là xanh #0284c7, khi active là trắng #ffffff, khi hover là xanh đậm #0369a1
+ * ============================================================ */
+
+/* Khung menu item đảm bảo khoảng cách hai bên gọn gàng */
+.sidebar-menu .nav-link,
+.sidebar-menu details.nav-group > summary.nav-link {
+  margin: 3px 12px !important;
+  width: calc(100% - 24px) !important;
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* ĐỒNG BỘ 100% ICON: TẤT CẢ ICON KHI CHƯA CHỌN PHẢI LÀ MÀU XANH #0284c7 */
+.sidebar-menu i.nav-icon,
+.sidebar-menu .nav-link i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link i.nav-icon,
+.sidebar-menu details.nav-group > .nav-treeview .nav-link i.nav-icon,
+.app-sidebar .sidebar-menu i.nav-icon {
+  color: #0284c7 !important;
+  fill: #0284c7 !important;
+  -webkit-text-fill-color: #0284c7 !important;
+  opacity: 1 !important;
+}
+
+/* Dropdown cha (summary) khi CHƯA chọn */
+.sidebar-menu details.nav-group:not(.is-active) > summary.nav-link:not(.active),
+.app-sidebar details.nav-group:not(.is-active) > summary.nav-link:not(.active) {
+  background-color: transparent !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group:not(.is-active) > summary.nav-link:not(.active) > p {
+  color: #0f172a !important;
+}
+
+.sidebar-menu details.nav-group:not(.is-active) > summary.nav-link:not(.active) .nav-arrow {
+  color: #0284c7 !important;
+}
+
+/* Dropdown cha (summary) khi ĐƯỢC CHỌN (ACTIVE) */
+.sidebar-menu details.nav-group > summary.nav-link.active,
+.sidebar-menu details.nav-group.is-active > summary.nav-link,
+.app-sidebar details.nav-group > summary.nav-link.active,
+.app-sidebar details.nav-group.is-active > summary.nav-link {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.sidebar-menu details.nav-group > summary.nav-link.active > p,
+.sidebar-menu details.nav-group.is-active > summary.nav-link > p,
+.app-sidebar details.nav-group > summary.nav-link.active > p,
+.app-sidebar details.nav-group.is-active > summary.nav-link > p {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-menu details.nav-group > summary.nav-link.active i.nav-icon,
+.sidebar-menu details.nav-group.is-active > summary.nav-link i.nav-icon,
+.sidebar-menu details.nav-group > summary.nav-link.active .nav-arrow,
+.sidebar-menu details.nav-group.is-active > summary.nav-link .nav-arrow {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Mục menu đơn hoặc menu con khi ACTIVE: Nền xanh, chữ và icon TRẮNG ĐỒNG BỘ */
+.app-sidebar > .sidebar-wrapper .sidebar-menu > .nav-item > a.nav-link.active,
+.app-sidebar .nav-treeview a.nav-link.active,
+.sidebar-wrapper .nav-treeview a.nav-link.active,
+.sidebar-menu .nav-treeview a.nav-link.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.app-sidebar > .sidebar-wrapper .sidebar-menu > .nav-item > a.nav-link.active *,
+.app-sidebar .nav-treeview a.nav-link.active *,
+.sidebar-wrapper .nav-treeview a.nav-link.active *,
+.sidebar-menu .nav-treeview a.nav-link.active * {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* KHI HOVER: NỀN XANH MÂY #bae6fd, CHỮ VÀ ICON MÀU XANH DƯƠNG ĐẬM #0369a1, CẤM TRẮNG */
+.app-sidebar a.nav-link:not(.active):hover,
+.app-sidebar details.nav-group:not(.is-active) > summary.nav-link:not(.active):hover,
+.sidebar-wrapper a.nav-link:not(.active):hover,
+.sidebar-wrapper .nav-treeview a.nav-link:not(.active):hover,
+.sidebar-menu a.nav-link:not(.active):hover,
+.sidebar-menu details.nav-group:not(.is-active) > summary.nav-link:not(.active):hover,
+.sidebar-menu details.nav-group > .nav-treeview a.nav-link:not(.active):hover {
+  background-color: #bae6fd !important;
+  color: #0369a1 !important;
+  box-shadow: none !important;
+}
+
+.app-sidebar a.nav-link:not(.active):hover *,
+.app-sidebar details.nav-group:not(.is-active) > summary.nav-link:not(.active):hover *,
+.sidebar-wrapper a.nav-link:not(.active):hover *,
+.sidebar-wrapper .nav-treeview a.nav-link:not(.active):hover *,
+.sidebar-menu a.nav-link:not(.active):hover *,
+.sidebar-menu details.nav-group:not(.is-active) > summary.nav-link:not(.active):hover *,
+.sidebar-menu details.nav-group > .nav-treeview a.nav-link:not(.active):hover * {
+  color: #0369a1 !important;
+  fill: #0369a1 !important;
+  -webkit-text-fill-color: #0369a1 !important;
+}
+
+/* Treeview submenu căn lề đồng bộ */
+.sidebar-menu details.nav-group > .nav-treeview {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+  border-radius: 8px !important;
+  margin: 4px 12px 6px 12px !important;
+  width: calc(100% - 24px) !important;
+  padding: 4px !important;
+  border: 1px solid #bae6fd !important;
+  list-style: none !important;
+  box-sizing: border-box !important;
+}
+
+.sidebar-menu details.nav-group > .nav-treeview .nav-link {
+  margin: 2px 0 !important;
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+}
+
+/* ============================================================
+ * 6. HERO SLIDER & MINI SHOWCASE (THỰC ĐỊA SÂN BAY GỌN GÀNG)
+ * Thuần CSS Animation, chuyển cảnh êm ái, KHÔNG dùng JS
+ * ============================================================ */
+.sky-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 340px;
+}
+
+.sky-hero__bg-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: var(--sky-radius-xl);
+}
+
+.sky-hero__bg-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center right;
+  opacity: 0;
+  animation: skyHeroBgCrossfade 15s infinite ease-in-out;
+}
+
+.sky-hero__bg-overlay {
+  display: none !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(240, 249, 255, 0.82) 42%, rgba(224, 242, 254, 0.25) 75%, rgba(255, 255, 255, 0.05) 100%);
+  z-index: 2;
+  border-radius: var(--sky-radius-xl);
+}
+
+.sky-hero > .row {
+  position: relative;
+  z-index: 3;
+}
+
+@keyframes skyHeroBgCrossfade {
+  0%   { opacity: 0; transform: scale(1); }
+  8%   { opacity: 0.82; }
+  33%  { opacity: 0.82; transform: scale(1.03); }
+  41%  { opacity: 0; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.sky-mini-slider {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(186, 230, 253, 0.8);
+  margin-bottom: 0;
+  background-color: #0c2340;
+}
+
+.sky-mini-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0;
+  animation: skyMiniCrossfade 15s infinite ease-in-out;
+}
+
+@keyframes skyMiniCrossfade {
+  0%   { opacity: 0; transform: scale(1); }
+  8%   { opacity: 1; }
+  33%  { opacity: 1; transform: scale(1.04); }
+  41%  { opacity: 0; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.sky-mini-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 4;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sky-mini-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #38bdf8;
+  display: inline-block;
+  box-shadow: 0 0 6px #38bdf8;
+}

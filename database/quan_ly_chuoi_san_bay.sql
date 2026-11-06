@@ -1,105 +1,145 @@
--- ============================================================
--- CƠ SỞ DỮ LIỆU: `quan_ly_chuoi_san_bay` — BẢN KẾT HỢP
--- Ngày tạo: 02/11/2026
--- ------------------------------------------------------------
--- Ghép từ 2 file:
---   GỐC : database/quan_ly_chuoi_san_bay.sql       (18 bảng)
---   MỚI : database/quan_ly_chuoi_san_bay (3).sql   (16 bảng)
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
 --
--- NGUYÊN TẮC: lấy file GỐC làm chính, chỉ thay các bảng có
--- thay đổi bằng phiên bản trong file MỚI.
---
--- 4 BẢNG LẤY TỪ FILE MỚI (cấu trúc + dữ liệu):
---   - `chuyen_bay_ngay`        : bỏ cột id_lich_mua, còn 6 chuyến bay
---   - `lich_su_chuyen_bay`     : 5 dòng
---   - `nhat_ky_trang_thai_bay` : 31 dòng
---   - `hoa_don`                : 0 dòng
---
--- 2 BẢNG BỎ THEO FILE MỚI (không còn mã nào sử dụng):
---   - `lich_bay_mua`
---   - `nhat_ky_lich_bay_mua`
---
--- 12 BẢNG CÒN LẠI: giống hệt nhau ở cả 2 file, giữ nguyên từ GỐC
---   (sân bay, nhà ga, cửa ra máy bay, quầy check-in, băng chuyền,
---    thiết bị sân bay, yêu cầu bảo trì, người dùng, hãng hàng không,
---    loại tàu bay, đơn vị mặt đất, bảng giá dịch vụ)
---
--- KẾT QUẢ: 16 bảng.
---
--- LƯU Ý:
---   - Do 12 bảng còn lại vốn giống hệt nhau ở cả 2 file nên dữ liệu
---     cuối cùng của file này giống bản (3); điểm khác là file được
---     ghép theo nguyên tắc "lấy bản gốc làm chính".
---   - File có DROP TABLE IF EXISTS nên import được vào CSDL đang có;
---     dữ liệu cũ của các bảng trong file sẽ bị thay thế.
---     Cuối file tự xóa 2 bảng cũ `lich_bay_mua` và
---     `nhat_ky_lich_bay_mua` nếu CSDL đích còn.
---
--- CÁCH IMPORT:
---   Cách 1 (khuyến nghị):
---     mysql -u root --default-character-set=utf8mb4 < database/quan_ly_chuoi_san_bay_hop_nhat.sql
---   Cách 2: phpMyAdmin -> Import -> chọn file -> Character set: utf-8 -> Go
--- ============================================================
-
+-- Host: 127.0.0.1
+-- Generation Time: Nov 06, 2026 at 05:32 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 CREATE DATABASE IF NOT EXISTS `quan_ly_chuoi_san_bay`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
 USE `quan_ly_chuoi_san_bay`;
 
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS `bang_chuyen_hanh_ly`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
+--
+-- Database: `quan_ly_chuoi_san_bay`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bang_chuyen_hanh_ly`
+--
+
 CREATE TABLE `bang_chuyen_hanh_ly` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_nha_ga` int(11) NOT NULL,
   `so_bang_chuyen` varchar(20) NOT NULL,
   `khu_vuc` varchar(50) DEFAULT NULL,
-  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_bang_chuyen_nha_ga` (`id_nha_ga`,`so_bang_chuyen`),
-  KEY `id_nha_ga` (`id_nha_ga`),
-  CONSTRAINT `bang_chuyen_hanh_ly_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `bang_chuyen_hanh_ly` WRITE;
-/*!40000 ALTER TABLE `bang_chuyen_hanh_ly` DISABLE KEYS */;
-INSERT INTO `bang_chuyen_hanh_ly` VALUES (1,1,'01','Sảnh đến','Hoat_Dong'),(2,7,'01','Sảnh đến','Hoat_Dong'),(3,1,'02','Sảnh đến','Hoat_Dong'),(4,1,'03','Sảnh đến','Hoat_Dong'),(5,1,'04','Sảnh đến','Hoat_Dong'),(6,1,'05','Sảnh đến','Hoat_Dong'),(7,1,'06','Sảnh đến','Bao_Tri'),(8,2,'07','Sảnh đến','Hoat_Dong'),(9,2,'08','Sảnh đến','Hoat_Dong'),(10,2,'09','Sảnh đến','Hoat_Dong'),(11,2,'10','Sảnh đến','Hoat_Dong'),(12,2,'11','Sảnh đến','Hoat_Dong'),(13,2,'12','Sảnh đến','Bao_Tri'),(14,3,'01','Sảnh đến','Hoat_Dong'),(15,3,'02','Sảnh đến','Hoat_Dong'),(16,3,'03','Sảnh đến','Hoat_Dong'),(17,3,'04','Sảnh đến','Hoat_Dong'),(18,3,'05','Sảnh đến','Hoat_Dong'),(19,3,'06','Sảnh đến','Hoat_Dong'),(20,4,'07','Sảnh đến','Hoat_Dong'),(21,4,'08','Sảnh đến','Hoat_Dong'),(22,4,'09','Sảnh đến','Hoat_Dong'),(23,4,'10','Sảnh đến','Hoat_Dong'),(24,4,'11','Sảnh đến','Hoat_Dong'),(25,4,'12','Sảnh đến','Bao_Tri'),(26,5,'01','Sảnh đến','Hoat_Dong'),(27,5,'02','Sảnh đến','Hoat_Dong'),(28,5,'03','Sảnh đến','Hoat_Dong'),(29,5,'04','Sảnh đến','Hoat_Dong'),(30,6,'05','Sảnh đến','Hoat_Dong'),(31,6,'06','Sảnh đến','Hoat_Dong'),(32,6,'07','Sảnh đến','Hoat_Dong'),(33,6,'08','Sảnh đến','Hoat_Dong'),(34,7,'02','Sảnh đến','Hoat_Dong'),(35,7,'03','Sảnh đến','Hoat_Dong'),(36,8,'04','Sảnh đến','Hoat_Dong'),(37,8,'05','Sảnh đến','Hoat_Dong'),(38,8,'06','Sảnh đến','Bao_Tri'),(39,9,'01','Sảnh đến','Hoat_Dong'),(40,9,'02','Sảnh đến','Hoat_Dong'),(41,9,'03','Sảnh đến','Hoat_Dong'),(42,9,'04','Sảnh đến','Hoat_Dong'),(43,9,'05','Sảnh đến','Hoat_Dong'),(44,9,'06','Sảnh đến','Hoat_Dong'),(45,11,'01','Sảnh đến','Hoat_Dong'),(46,11,'02','Sảnh đến','Hoat_Dong'),(47,11,'03','Sảnh đến','Hoat_Dong'),(48,11,'04','Sảnh đến','Hoat_Dong'),(49,12,'01','Sảnh đến','Hoat_Dong'),(50,12,'02','Sảnh đến','Hoat_Dong'),(51,12,'03','Sảnh đến','Bao_Tri'),(52,13,'01','Sảnh đến','Hoat_Dong'),(53,13,'02','Sảnh đến','Hoat_Dong'),(54,14,'01','Sảnh đến','Hoat_Dong'),(55,14,'02','Sảnh đến','Hoat_Dong'),(56,15,'01','Sảnh đến','Hoat_Dong'),(57,16,'01','Sảnh đến','Hoat_Dong'),(58,16,'02','Sảnh đến','Hoat_Dong'),(59,17,'01','Sảnh đến','Hoat_Dong'),(60,18,'01','Sảnh đến','Hoat_Dong'),(61,18,'02','Sảnh đến','Bao_Tri'),(62,19,'01','Sảnh đến','Hoat_Dong'),(63,19,'02','Sảnh đến','Hoat_Dong'),(64,20,'01','Sảnh đến','Hoat_Dong');
-/*!40000 ALTER TABLE `bang_chuyen_hanh_ly` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `bang_gia_dich_vu`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `bang_chuyen_hanh_ly`
+--
+
+INSERT INTO `bang_chuyen_hanh_ly` (`id`, `id_nha_ga`, `so_bang_chuyen`, `khu_vuc`, `trang_thai`) VALUES
+(1, 1, '01', 'Sảnh đến', 'Hoat_Dong'),
+(2, 7, '01', 'Sảnh đến', 'Hoat_Dong'),
+(3, 1, '02', 'Sảnh đến', 'Hoat_Dong'),
+(4, 1, '03', 'Sảnh đến', 'Hoat_Dong'),
+(5, 1, '04', 'Sảnh đến', 'Hoat_Dong'),
+(6, 1, '05', 'Sảnh đến', 'Hoat_Dong'),
+(7, 1, '06', 'Sảnh đến', 'Bao_Tri'),
+(8, 2, '07', 'Sảnh đến', 'Hoat_Dong'),
+(9, 2, '08', 'Sảnh đến', 'Hoat_Dong'),
+(10, 2, '09', 'Sảnh đến', 'Hoat_Dong'),
+(11, 2, '10', 'Sảnh đến', 'Hoat_Dong'),
+(12, 2, '11', 'Sảnh đến', 'Hoat_Dong'),
+(13, 2, '12', 'Sảnh đến', 'Bao_Tri'),
+(14, 3, '01', 'Sảnh đến', 'Hoat_Dong'),
+(15, 3, '02', 'Sảnh đến', 'Hoat_Dong'),
+(16, 3, '03', 'Sảnh đến', 'Hoat_Dong'),
+(17, 3, '04', 'Sảnh đến', 'Hoat_Dong'),
+(18, 3, '05', 'Sảnh đến', 'Hoat_Dong'),
+(19, 3, '06', 'Sảnh đến', 'Hoat_Dong'),
+(20, 4, '07', 'Sảnh đến', 'Hoat_Dong'),
+(21, 4, '08', 'Sảnh đến', 'Hoat_Dong'),
+(22, 4, '09', 'Sảnh đến', 'Hoat_Dong'),
+(23, 4, '10', 'Sảnh đến', 'Hoat_Dong'),
+(24, 4, '11', 'Sảnh đến', 'Hoat_Dong'),
+(25, 4, '12', 'Sảnh đến', 'Bao_Tri'),
+(26, 5, '01', 'Sảnh đến', 'Hoat_Dong'),
+(27, 5, '02', 'Sảnh đến', 'Hoat_Dong'),
+(28, 5, '03', 'Sảnh đến', 'Hoat_Dong'),
+(29, 5, '04', 'Sảnh đến', 'Hoat_Dong'),
+(30, 6, '05', 'Sảnh đến', 'Hoat_Dong'),
+(31, 6, '06', 'Sảnh đến', 'Hoat_Dong'),
+(32, 6, '07', 'Sảnh đến', 'Hoat_Dong'),
+(33, 6, '08', 'Sảnh đến', 'Hoat_Dong'),
+(34, 7, '02', 'Sảnh đến', 'Hoat_Dong'),
+(35, 7, '03', 'Sảnh đến', 'Hoat_Dong'),
+(36, 8, '04', 'Sảnh đến', 'Hoat_Dong'),
+(37, 8, '05', 'Sảnh đến', 'Hoat_Dong'),
+(38, 8, '06', 'Sảnh đến', 'Bao_Tri'),
+(39, 9, '01', 'Sảnh đến', 'Hoat_Dong'),
+(40, 9, '02', 'Sảnh đến', 'Hoat_Dong'),
+(41, 9, '03', 'Sảnh đến', 'Hoat_Dong'),
+(42, 9, '04', 'Sảnh đến', 'Hoat_Dong'),
+(43, 9, '05', 'Sảnh đến', 'Hoat_Dong'),
+(44, 9, '06', 'Sảnh đến', 'Hoat_Dong'),
+(45, 11, '01', 'Sảnh đến', 'Hoat_Dong'),
+(46, 11, '02', 'Sảnh đến', 'Hoat_Dong'),
+(47, 11, '03', 'Sảnh đến', 'Hoat_Dong'),
+(48, 11, '04', 'Sảnh đến', 'Hoat_Dong'),
+(49, 12, '01', 'Sảnh đến', 'Hoat_Dong'),
+(50, 12, '02', 'Sảnh đến', 'Hoat_Dong'),
+(51, 12, '03', 'Sảnh đến', 'Bao_Tri'),
+(52, 13, '01', 'Sảnh đến', 'Hoat_Dong'),
+(53, 13, '02', 'Sảnh đến', 'Hoat_Dong'),
+(54, 14, '01', 'Sảnh đến', 'Hoat_Dong'),
+(55, 14, '02', 'Sảnh đến', 'Hoat_Dong'),
+(56, 15, '01', 'Sảnh đến', 'Bao_Tri'),
+(57, 16, '01', 'Sảnh đến', 'Hoat_Dong'),
+(58, 16, '02', 'Sảnh đến', 'Hoat_Dong'),
+(59, 17, '01', 'Sảnh đến', 'Hoat_Dong'),
+(60, 18, '01', 'Sảnh đến', 'Hoat_Dong'),
+(61, 18, '02', 'Sảnh đến', 'Bao_Tri'),
+(62, 19, '01', 'Sảnh đến', 'Hoat_Dong'),
+(63, 19, '02', 'Sảnh đến', 'Hoat_Dong'),
+(64, 20, '01', 'Sảnh đến', 'Hoat_Dong');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bang_gia_dich_vu`
+--
+
 CREATE TABLE `bang_gia_dich_vu` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `loai_dich_vu` enum('Phi_Cat_Ha_Canh','Phi_Do_Tau_Bay','Phi_Phuc_Vu_Hanh_Khach') NOT NULL,
   `don_gia` decimal(15,2) NOT NULL,
-  `don_vi_tinh` varchar(50) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `don_vi_tinh` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `bang_gia_dich_vu` WRITE;
-/*!40000 ALTER TABLE `bang_gia_dich_vu` DISABLE KEYS */;
-INSERT INTO `bang_gia_dich_vu` VALUES (1,'Phi_Cat_Ha_Canh',1500000.00,'Lượt'),(2,'Phi_Do_Tau_Bay',50000.00,'Giờ/Tấn MTOW'),(3,'Phi_Phuc_Vu_Hanh_Khach',100000.00,'Hành khách');
-/*!40000 ALTER TABLE `bang_gia_dich_vu` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `chuyen_bay_ngay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `bang_gia_dich_vu`
+--
+
+INSERT INTO `bang_gia_dich_vu` (`id`, `loai_dich_vu`, `don_gia`, `don_vi_tinh`) VALUES
+(1, 'Phi_Cat_Ha_Canh', 1500000.00, 'Lượt'),
+(2, 'Phi_Do_Tau_Bay', 50000.00, 'Giờ/Tấn MTOW'),
+(3, 'Phi_Phuc_Vu_Hanh_Khach', 100000.00, 'Hành khách');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `chuyen_bay_ngay`
+--
+
 CREATE TABLE `chuyen_bay_ngay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `so_hieu` varchar(20) NOT NULL,
   `id_hang_hang_khong` int(11) NOT NULL,
   `id_loai_tau_bay` int(11) NOT NULL,
@@ -112,91 +152,318 @@ CREATE TABLE `chuyen_bay_ngay` (
   `gio_thuc_te` datetime DEFAULT NULL,
   `luong_hanh_khach` int(11) DEFAULT 0,
   `luong_hang_hoa_tan` decimal(10,2) DEFAULT 0.00,
-  `trang_thai_tong` enum('Dang_Mo','Cat_Canh','Ha_Canh','Delay','Huy') DEFAULT 'Dang_Mo',
-  PRIMARY KEY (`id`),
-  KEY `id_hang_hang_khong` (`id_hang_hang_khong`),
-  KEY `id_loai_tau_bay` (`id_loai_tau_bay`),
-  KEY `id_san_bay_di` (`id_san_bay_di`),
-  KEY `id_san_bay_den` (`id_san_bay_den`),
-  KEY `id_cua_ra_may_bay` (`id_cua_ra_may_bay`),
-  KEY `id_quay_checkin` (`id_quay_checkin`),
-  KEY `id_bang_chuyen` (`id_bang_chuyen`),
-  CONSTRAINT `chuyen_bay_ngay_ibfk_2` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`),
-  CONSTRAINT `chuyen_bay_ngay_ibfk_3` FOREIGN KEY (`id_loai_tau_bay`) REFERENCES `loai_tau_bay` (`id`),
-  CONSTRAINT `chuyen_bay_ngay_ibfk_4` FOREIGN KEY (`id_san_bay_di`) REFERENCES `san_bay` (`id`),
-  CONSTRAINT `chuyen_bay_ngay_ibfk_5` FOREIGN KEY (`id_san_bay_den`) REFERENCES `san_bay` (`id`),
-  CONSTRAINT `chuyen_bay_ngay_ibfk_6` FOREIGN KEY (`id_cua_ra_may_bay`) REFERENCES `cua_ra_may_bay` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chuyen_bay_ngay_ibfk_7` FOREIGN KEY (`id_quay_checkin`) REFERENCES `quay_checkin` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chuyen_bay_ngay_ibfk_8` FOREIGN KEY (`id_bang_chuyen`) REFERENCES `bang_chuyen_hanh_ly` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai_tong` enum('Dang_Mo','Cat_Canh','Ha_Canh','Delay','Huy') DEFAULT 'Dang_Mo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `chuyen_bay_ngay` WRITE;
-/*!40000 ALTER TABLE `chuyen_bay_ngay` DISABLE KEYS */;
-INSERT INTO `chuyen_bay_ngay` VALUES (1,'CB0000',3,1,4,12,62,15,30,'2026-11-02 16:09:23','2026-11-02 16:13:23',230,89.00,'Ha_Canh'),(2,'CB0001',3,3,5,11,94,22,42,'2026-11-02 16:22:30','2026-11-02 16:24:30',290,233.00,'Ha_Canh'),(3,'CB0002',3,1,8,5,109,31,53,'2026-11-02 17:06:00','2026-11-02 17:14:00',230,89.00,'Ha_Canh'),(4,'CB0003',3,1,3,8,78,20,37,'2026-11-02 17:44:04','2026-11-02 17:48:04',230,89.00,'Ha_Canh'),(5,'CB0004',1,2,1,4,17,6,9,'2026-11-02 17:46:16','2026-11-02 17:51:16',310,254.00,'Ha_Canh'),(6,'CB0005',3,3,10,7,118,35,56,'2026-11-02 18:33:09','2026-11-02 18:33:00',290,230.00,'Delay');
-/*!40000 ALTER TABLE `chuyen_bay_ngay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `cua_ra_may_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `chuyen_bay_ngay`
+--
+
+INSERT INTO `chuyen_bay_ngay` (`id`, `so_hieu`, `id_hang_hang_khong`, `id_loai_tau_bay`, `id_san_bay_di`, `id_san_bay_den`, `id_cua_ra_may_bay`, `id_quay_checkin`, `id_bang_chuyen`, `gio_du_kien`, `gio_thuc_te`, `luong_hanh_khach`, `luong_hang_hoa_tan`, `trang_thai_tong`) VALUES
+(7, 'VN201', 1, 4, 1, 2, NULL, NULL, NULL, '2026-11-06 07:50:00', '2026-11-06 08:00:00', 180, 2.50, 'Ha_Canh'),
+(8, 'VN202', 1, 4, 2, 3, NULL, NULL, NULL, '2026-11-06 10:05:03', NULL, 175, 2.10, 'Cat_Canh'),
+(9, 'VJ303', 2, 2, 1, 2, NULL, NULL, NULL, '2026-11-06 09:45:00', '2026-11-06 10:00:00', 300, 5.00, 'Ha_Canh'),
+(10, 'VJ304', 2, 2, 2, 1, NULL, NULL, NULL, '2026-11-06 13:00:00', NULL, 290, 4.80, 'Huy'),
+(11, 'QH405', 3, 1, 2, 3, NULL, NULL, NULL, '2026-11-06 23:30:00', '2026-11-06 23:45:00', 200, 3.20, 'Ha_Canh'),
+(12, 'QH406', 3, 15, 3, 1, NULL, NULL, NULL, '2026-11-04 07:45:00', '2026-11-04 08:00:00', 150, 1.80, 'Ha_Canh'),
+(13, 'QH407', 3, 15, 1, 2, NULL, NULL, NULL, '2026-11-05 14:00:00', NULL, 160, 2.00, 'Huy'),
+(14, 'VN210', 1, 5, 1, 2, 9, 1, 11, '2026-01-05 06:30:00', '2026-01-05 06:36:00', 296, 9.10, 'Ha_Canh'),
+(15, 'VJ134', 2, 1, 2, 1, 44, 8, 19, '2026-01-08 09:15:00', '2026-01-08 09:15:00', 205, 8.40, 'Ha_Canh'),
+(16, 'QH201', 3, 4, 1, 4, 13, 2, 6, '2026-01-12 11:20:00', '2026-01-12 11:16:00', 167, 5.80, 'Ha_Canh'),
+(17, 'VN158', 1, 2, 4, 2, 53, 15, 33, '2026-01-16 14:00:00', '2026-01-16 13:56:00', 288, 8.10, 'Ha_Canh'),
+(18, 'VJ211', 2, 14, 2, 3, 51, 11, 23, '2026-01-20 08:30:00', '2026-01-20 08:27:00', 215, 6.90, 'Ha_Canh'),
+(19, 'QH142', 3, 13, 1, 6, 15, 1, 10, '2026-01-23 13:45:00', '2026-01-23 13:53:00', 297, 3.90, 'Ha_Canh'),
+(20, 'VN245', 1, 8, 2, 1, 29, 11, 23, '2026-01-27 17:10:00', '2026-01-27 17:13:00', 352, 3.20, 'Ha_Canh'),
+(21, 'VJ380', 2, 15, 5, 2, 94, 25, 39, '2026-01-30 19:30:00', '2026-01-30 19:28:00', 173, 8.70, 'Ha_Canh'),
+(22, 'VN212', 1, 5, 2, 1, 36, 8, 15, '2026-02-02 05:45:00', '2026-02-02 05:45:00', 306, 8.40, 'Ha_Canh'),
+(23, 'VJ128', 2, 14, 2, 4, 46, 3, 18, '2026-02-05 07:15:00', '2026-02-05 07:14:00', 215, 2.90, 'Ha_Canh'),
+(24, 'QH218', 3, 3, 2, 5, 43, 10, 21, '2026-02-08 08:30:00', '2026-02-08 08:34:00', 284, 7.90, 'Ha_Canh'),
+(25, 'VN7204', 1, 1, 2, 9, 31, 9, 16, '2026-02-11 10:00:00', '2026-02-11 09:59:00', 225, 5.70, 'Ha_Canh'),
+(26, 'VJ624', 2, 6, 2, 10, 37, 12, 22, '2026-02-14 12:45:00', '2026-02-14 12:49:00', 185, 2.70, 'Ha_Canh'),
+(27, 'QH156', 3, 9, 2, 14, 37, 9, 23, '2026-02-17 14:30:00', '2026-02-17 14:29:00', 82, 7.70, 'Ha_Canh'),
+(28, 'VN218', 1, 2, 1, 2, 22, 6, 10, '2026-02-20 16:15:00', '2026-02-20 16:12:00', 279, 8.40, 'Ha_Canh'),
+(29, 'VJ198', 2, 1, 4, 2, 61, 14, 32, '2026-02-23 18:00:00', '2026-02-23 18:05:00', 214, 7.60, 'Ha_Canh'),
+(30, 'QH240', 3, 4, 3, 2, 73, 20, 37, '2026-02-25 19:40:00', '2026-02-25 19:37:00', 188, 9.30, 'Ha_Canh'),
+(31, 'VN120', 1, 1, 6, 2, 100, 28, 45, '2026-02-28 21:00:00', '2026-02-28 20:56:00', 189, 4.80, 'Ha_Canh'),
+(32, 'VN214', 1, 5, 1, 2, 19, 2, 4, '2026-03-04 07:30:00', '2026-03-04 07:34:00', 289, 5.60, 'Ha_Canh'),
+(33, 'VJ136', 2, 1, 2, 1, 45, 3, 19, '2026-03-09 10:15:00', '2026-03-09 10:22:00', 214, 8.40, 'Ha_Canh'),
+(34, 'QH204', 3, 4, 1, 3, 7, 1, 11, '2026-03-14 12:00:00', '2026-03-14 12:08:00', 182, 6.70, 'Ha_Canh'),
+(35, 'VN160', 1, 1, 2, 4, 40, 11, 21, '2026-03-18 14:30:00', '2026-03-18 14:26:00', 191, 3.90, 'Ha_Canh'),
+(36, 'VJ452', 2, 14, 1, 6, 15, 2, 11, '2026-03-22 16:20:00', '2026-03-22 16:25:00', 220, 8.90, 'Ha_Canh'),
+(37, 'QH162', 3, 15, 4, 1, 55, 13, 30, '2026-03-26 18:45:00', '2026-03-26 18:52:00', 153, 5.30, 'Ha_Canh'),
+(38, 'VN302', 1, 10, 2, 7, 43, 3, 19, '2026-03-30 20:10:00', '2026-03-30 20:12:00', 60, 2.90, 'Ha_Canh'),
+(39, 'VN216', 1, 2, 2, 1, 37, 3, 19, '2026-04-03 06:15:00', '2026-04-03 06:18:00', 291, 4.90, 'Ha_Canh'),
+(40, 'VJ140', 2, 1, 1, 2, 10, 1, 12, '2026-04-07 08:45:00', '2026-04-07 08:45:00', 205, 8.60, 'Ha_Canh'),
+(41, 'QH208', 3, 4, 1, 4, 2, 1, 9, '2026-04-12 11:30:00', '2026-04-12 11:33:00', 182, 3.50, 'Ha_Canh'),
+(42, 'VN164', 1, 1, 2, 6, 49, 12, 22, '2026-04-16 13:15:00', '2026-04-16 13:22:00', 196, 4.20, 'Ha_Canh'),
+(43, 'VJ220', 2, 14, 2, 3, 32, 8, 16, '2026-04-20 15:00:00', '2026-04-20 15:01:00', 222, 6.90, 'Ha_Canh'),
+(44, 'QH310', 3, 9, 1, 8, 9, 2, 1, '2026-04-24 09:30:00', '2026-04-24 09:35:00', 88, 3.70, 'Ha_Canh'),
+(45, 'VN250', 1, 8, 1, 2, 21, 5, 3, '2026-04-27 17:00:00', '2026-04-27 17:01:00', 376, 5.00, 'Ha_Canh'),
+(46, 'VJ630', 2, 1, 2, 5, 50, 10, 20, '2026-04-29 19:20:00', '2026-04-29 19:28:00', 225, 7.90, 'Ha_Canh'),
+(47, 'QH170', 3, 4, 4, 6, 55, 13, 32, '2026-04-30 20:45:00', '2026-04-30 20:53:00', 188, 5.40, 'Ha_Canh'),
+(48, 'VN220', 1, 5, 1, 2, 24, 1, 3, '2026-05-04 06:45:00', '2026-05-04 06:41:00', 283, 5.80, 'Ha_Canh'),
+(49, 'VJ146', 2, 1, 2, 1, 45, 11, 18, '2026-05-08 09:30:00', '2026-05-08 09:37:00', 193, 9.40, 'Ha_Canh'),
+(50, 'QH212', 3, 4, 1, 4, 19, 6, 6, '2026-05-13 11:15:00', '2026-05-13 11:21:00', 163, 7.20, 'Ha_Canh'),
+(51, 'VN168', 1, 1, 2, 3, 29, 10, 21, '2026-05-17 14:00:00', '2026-05-17 14:07:00', 193, 4.50, 'Ha_Canh'),
+(52, 'VJ458', 2, 14, 2, 6, 34, 8, 23, '2026-05-21 16:30:00', '2026-05-21 16:34:00', 215, 2.70, 'Ha_Canh'),
+(53, 'QH176', 3, 15, 5, 4, 87, 24, 39, '2026-05-25 18:15:00', '2026-05-25 18:21:00', 157, 9.10, 'Ha_Canh'),
+(54, 'VN512', 1, 1, 1, 7, 26, 5, 1, '2026-05-28 10:20:00', '2026-05-28 10:25:00', 207, 4.10, 'Ha_Canh'),
+(55, 'VJ780', 2, 1, 3, 1, 82, 17, 36, '2026-05-31 20:00:00', '2026-05-31 19:55:00', 216, 5.70, 'Ha_Canh'),
+(56, 'VN224', 1, 13, 2, 1, 41, 9, 20, '2026-06-02 06:00:00', '2026-06-02 06:03:00', 271, 6.00, 'Ha_Canh'),
+(57, 'VJ152', 2, 14, 1, 2, 15, 5, 4, '2026-06-05 08:20:00', '2026-06-05 08:25:00', 224, 8.90, 'Ha_Canh'),
+(58, 'QH216', 3, 2, 1, 6, 1, 2, 8, '2026-06-09 10:45:00', '2026-06-09 10:42:00', 301, 5.00, 'Ha_Canh'),
+(59, 'VN172', 1, 5, 2, 4, 41, 12, 24, '2026-06-13 13:30:00', '2026-06-13 13:26:00', 309, 9.10, 'Ha_Canh'),
+(60, 'VJ226', 2, 15, 4, 3, 62, 13, 33, '2026-06-16 15:15:00', '2026-06-16 15:10:00', 158, 6.50, 'Ha_Canh'),
+(61, 'QH182', 3, 4, 2, 3, 37, 10, 19, '2026-06-20 17:00:00', '2026-06-20 17:05:00', 171, 3.30, 'Ha_Canh'),
+(62, 'VN256', 1, 8, 1, 2, 21, 6, 3, '2026-06-23 18:45:00', '2026-06-23 18:43:00', 348, 6.10, 'Ha_Canh'),
+(63, 'VJ636', 2, 1, 5, 6, 87, 25, 43, '2026-06-26 11:10:00', '2026-06-26 11:08:00', 189, 8.90, 'Ha_Canh'),
+(64, 'QH246', 3, 15, 7, 1, 106, 30, 49, '2026-06-28 14:00:00', '2026-06-28 14:02:00', 173, 5.30, 'Ha_Canh'),
+(65, 'VN128', 1, 1, 2, 14, 36, 3, 23, '2026-06-30 20:30:00', '2026-06-30 20:32:00', 216, 4.00, 'Ha_Canh'),
+(66, 'VN228', 1, 5, 1, 2, 1, 5, 11, '2026-07-03 06:15:00', '2026-07-03 06:20:00', 276, 6.20, 'Ha_Canh'),
+(67, 'VJ158', 2, 14, 2, 1, 41, 12, 14, '2026-07-06 08:30:00', '2026-07-06 08:26:00', 200, 3.00, 'Ha_Canh'),
+(68, 'QH220', 3, 3, 1, 4, 8, 1, 3, '2026-07-10 11:00:00', '2026-07-10 11:01:00', 255, 3.50, 'Ha_Canh'),
+(69, 'VN176', 1, 2, 2, 6, 3, 11, 17, '2026-07-14 13:45:00', '2026-07-14 13:46:00', 257, 6.30, 'Ha_Canh'),
+(70, 'VJ232', 2, 1, 2, 3, 29, 12, 22, '2026-07-18 15:30:00', '2026-07-18 15:30:00', 214, 2.50, 'Ha_Canh'),
+(71, 'QH188', 3, 4, 4, 2, 63, 14, 28, '2026-07-21 17:15:00', '2026-07-21 17:20:00', 184, 4.80, 'Ha_Canh'),
+(72, 'VN260', 1, 8, 2, 1, 35, 11, 19, '2026-07-25 18:50:00', '2026-07-25 18:54:00', 356, 2.80, 'Ha_Canh'),
+(73, 'VJ642', 2, 15, 5, 4, 85, 25, 42, '2026-07-27 12:20:00', '2026-07-27 12:19:00', 162, 7.80, 'Ha_Canh'),
+(74, 'QH252', 3, 15, 6, 2, 98, 27, 45, '2026-07-29 16:40:00', '2026-07-29 16:44:00', 173, 7.70, 'Ha_Canh'),
+(75, 'VN134', 1, 1, 2, 13, 33, 8, 16, '2026-07-31 20:15:00', '2026-07-31 20:18:00', 219, 7.30, 'Ha_Canh'),
+(76, 'VN232', 1, 2, 2, 1, 44, 3, 18, '2026-08-03 07:00:00', '2026-08-03 07:07:00', 298, 7.50, 'Ha_Canh'),
+(77, 'VJ164', 2, 1, 1, 2, 24, 1, 5, '2026-08-07 09:15:00', '2026-08-07 09:13:00', 200, 6.80, 'Ha_Canh'),
+(78, 'QH224', 3, 4, 2, 4, 28, 11, 22, '2026-08-11 11:45:00', '2026-08-11 11:48:00', 173, 9.10, 'Ha_Canh'),
+(79, 'VN180', 1, 1, 1, 3, 20, 5, 1, '2026-08-15 14:20:00', '2026-08-15 14:16:00', 207, 9.10, 'Ha_Canh'),
+(80, 'VJ464', 2, 14, 2, 6, 49, 11, 22, '2026-08-19 16:00:00', '2026-08-19 16:04:00', 217, 4.00, 'Ha_Canh'),
+(81, 'QH194', 3, 15, 3, 1, 72, 19, 36, '2026-08-23 18:30:00', '2026-08-23 18:26:00', 148, 8.80, 'Ha_Canh'),
+(82, 'VN266', 1, 5, 1, 2, 18, 1, 3, '2026-08-27 19:45:00', '2026-08-27 19:52:00', 280, 4.10, 'Ha_Canh'),
+(83, 'VJ648', 2, 6, 2, 12, 32, 3, 14, '2026-08-30 21:00:00', '2026-08-30 20:58:00', 164, 3.10, 'Ha_Canh'),
+(84, 'VN236', 1, 5, 1, 2, 15, 5, 3, '2026-09-01 06:30:00', '2026-09-01 06:36:00', 299, 7.80, 'Ha_Canh'),
+(85, 'VJ170', 2, 14, 2, 1, 47, 3, 21, '2026-09-02 08:45:00', '2026-09-02 08:49:00', 239, 5.20, 'Ha_Canh'),
+(86, 'QH228', 3, 4, 1, 4, 23, 1, 9, '2026-09-05 11:00:00', '2026-09-05 11:05:00', 167, 5.80, 'Ha_Canh'),
+(87, 'VN184', 1, 2, 2, 4, 28, 8, 16, '2026-09-10 13:30:00', '2026-09-10 13:25:00', 264, 7.20, 'Ha_Canh'),
+(88, 'VJ238', 2, 1, 2, 3, 32, 3, 22, '2026-09-15 15:15:00', '2026-09-15 15:14:00', 196, 6.10, 'Ha_Canh'),
+(89, 'QH202', 3, 15, 1, 7, 6, 4, 9, '2026-09-20 17:00:00', '2026-09-20 16:59:00', 149, 8.60, 'Ha_Canh'),
+(90, 'VN270', 1, 13, 2, 1, 27, 9, 14, '2026-09-25 18:30:00', '2026-09-25 18:30:00', 271, 4.50, 'Ha_Canh'),
+(91, 'VJ654', 2, 1, 5, 2, 90, 23, 42, '2026-09-29 20:15:00', '2026-09-29 20:12:00', 202, 3.60, 'Ha_Canh'),
+(92, 'VN240', 1, 2, 2, 1, 46, 8, 14, '2026-10-04 07:15:00', '2026-10-04 07:13:00', 273, 7.30, 'Ha_Canh'),
+(93, 'VJ176', 2, 1, 1, 2, 13, 4, 10, '2026-10-08 09:30:00', '2026-10-08 09:32:00', 189, 4.50, 'Ha_Canh'),
+(94, 'QH232', 3, 4, 2, 4, 28, 3, 18, '2026-10-12 11:45:00', '2026-10-12 11:42:00', 186, 5.80, 'Ha_Canh'),
+(95, 'VN188', 1, 5, 1, 6, 19, 1, 3, '2026-10-16 14:00:00', '2026-10-16 13:58:00', 319, 4.20, 'Ha_Canh'),
+(96, 'VJ244', 2, 14, 2, 3, 35, 3, 20, '2026-10-21 16:15:00', '2026-10-21 16:10:00', 239, 4.80, 'Ha_Canh'),
+(97, 'QH206', 3, 15, 4, 1, 61, 16, 28, '2026-10-25 18:00:00', '2026-10-25 17:57:00', 160, 3.50, 'Ha_Canh'),
+(98, 'VN274', 1, 8, 1, 2, 11, 6, 11, '2026-10-28 19:30:00', '2026-10-28 19:33:00', 368, 7.90, 'Ha_Canh'),
+(99, 'VJ660', 2, 6, 2, 9, 48, 10, 22, '2026-10-31 21:00:00', '2026-10-31 20:56:00', 172, 4.50, 'Ha_Canh'),
+(100, 'VN242', 1, 5, 1, 2, 5, 6, 9, '2026-11-01 06:15:00', '2026-11-01 06:21:00', 283, 2.70, 'Ha_Canh'),
+(101, 'VJ180', 2, 14, 2, 1, 51, 3, 22, '2026-11-02 08:30:00', '2026-11-02 08:36:00', 210, 4.10, 'Ha_Canh'),
+(102, 'QH236', 3, 4, 1, 4, 12, 5, 5, '2026-11-03 11:00:00', '2026-11-03 11:06:00', 167, 6.50, 'Ha_Canh'),
+(103, 'VN192', 1, 2, 2, 3, 44, 11, 19, '2026-11-04 13:15:00', '2026-11-04 13:21:00', 291, 2.90, 'Ha_Canh'),
+(104, 'VJ250', 2, 1, 4, 2, 53, 15, 32, '2026-11-05 15:30:00', '2026-11-05 15:37:00', 191, 9.30, 'Ha_Canh'),
+(105, 'VN246', 1, 13, 2, 1, 29, 12, 24, '2026-11-06 06:30:00', '2026-11-06 06:29:00', 307, 5.40, 'Ha_Canh'),
+(106, 'VJ184', 2, 1, 1, 2, 10, 6, 3, '2026-11-06 14:15:00', '2026-11-06 14:10:00', 209, 5.60, 'Ha_Canh'),
+(107, 'QH242', 3, 2, 1, 6, 18, 2, 6, '2026-11-06 22:24:31', NULL, 295, 6.10, 'Cat_Canh'),
+(108, 'VN196', 1, 1, 2, 4, 36, 9, 14, '2026-11-06 22:24:35', NULL, 202, 2.60, 'Cat_Canh'),
+(109, 'VJ256', 2, 15, 2, 3, 33, 9, 18, '2026-11-07 09:00:00', NULL, 173, 9.10, 'Dang_Mo'),
+(110, 'QH248', 3, 4, 5, 2, 94, 24, 40, '2026-11-08 14:30:00', NULL, 180, 5.60, 'Dang_Mo'),
+(111, 'VN280', 1, 5, 1, 2, 14, 4, 12, '2026-11-09 17:15:00', NULL, 289, 5.60, 'Dang_Mo'),
+(112, 'VJ188', 2, 14, 2, 1, 51, 3, 21, '2026-11-10 19:40:00', NULL, 229, 4.00, 'Dang_Mo'),
+(113, 'QH250', 3, 3, 1, 4, 20, 5, 10, '2026-11-12 11:20:00', NULL, 261, 8.30, 'Dang_Mo'),
+(114, 'VN202', 1, 2, 2, 6, 28, 12, 15, '2026-11-15 15:00:00', NULL, 298, 9.40, 'Dang_Mo'),
+(115, 'VN284', 1, 8, 2, 1, 49, 11, 23, '2026-12-05 08:30:00', NULL, 352, 4.60, 'Dang_Mo'),
+(116, 'VJ190', 2, 14, 1, 2, 23, 2, 5, '2026-12-12 11:00:00', NULL, 229, 8.00, 'Dang_Mo'),
+(117, 'QH254', 3, 2, 1, 6, 12, 4, 10, '2026-12-20 14:15:00', NULL, 264, 3.60, 'Dang_Mo'),
+(118, 'VN290', 1, 5, 2, 4, 33, 3, 20, '2026-12-24 16:45:00', NULL, 293, 3.00, 'Dang_Mo'),
+(119, 'VJ260', 2, 1, 2, 3, 28, 10, 22, '2026-12-31 19:30:00', NULL, 223, 7.10, 'Dang_Mo');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cua_ra_may_bay`
+--
+
 CREATE TABLE `cua_ra_may_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_nha_ga` int(11) NOT NULL,
   `so_cua` varchar(20) NOT NULL,
   `khu_vuc` varchar(50) DEFAULT NULL,
-  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_cua_ra_nha_ga` (`id_nha_ga`,`so_cua`),
-  KEY `id_nha_ga` (`id_nha_ga`),
-  CONSTRAINT `cua_ra_may_bay_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=141 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `cua_ra_may_bay` WRITE;
-/*!40000 ALTER TABLE `cua_ra_may_bay` DISABLE KEYS */;
-INSERT INTO `cua_ra_may_bay` VALUES (1,1,'1','Tầng 2 - Khu A','Hoat_Dong'),(2,1,'2','Tầng 2 - Khu A','Hoat_Dong'),(3,3,'10','Tầng 2 - Khu B','Hoat_Dong'),(4,3,'11','Tầng 2 - Khu B','Bao_Tri'),(5,1,'3','Tầng 2 - Khu A','Hoat_Dong'),(6,1,'4','Tầng 2 - Khu A','Hoat_Dong'),(7,1,'5','Tầng 2 - Khu A','Hoat_Dong'),(8,1,'6','Tầng 2 - Khu A','Hoat_Dong'),(9,1,'7','Tầng 2 - Khu A','Hoat_Dong'),(10,1,'8','Tầng 2 - Khu A','Hoat_Dong'),(11,1,'9','Tầng 2 - Khu B','Hoat_Dong'),(12,1,'10','Tầng 2 - Khu B','Hoat_Dong'),(13,1,'11','Tầng 2 - Khu B','Hoat_Dong'),(14,1,'12','Tầng 2 - Khu B','Hoat_Dong'),(15,1,'13','Tầng 2 - Khu B','Hoat_Dong'),(16,1,'14','Tầng 2 - Khu B','Bao_Tri'),(17,2,'21','Tầng 2 - Khu quốc tế','Hoat_Dong'),(18,2,'22','Tầng 2 - Khu quốc tế','Hoat_Dong'),(19,2,'23','Tầng 2 - Khu quốc tế','Hoat_Dong'),(20,2,'24','Tầng 2 - Khu quốc tế','Hoat_Dong'),(21,2,'25','Tầng 2 - Khu quốc tế','Hoat_Dong'),(22,2,'26','Tầng 2 - Khu quốc tế','Hoat_Dong'),(23,2,'27','Tầng 2 - Khu quốc tế','Hoat_Dong'),(24,2,'28','Tầng 2 - Khu quốc tế','Hoat_Dong'),(25,2,'29','Tầng 2 - Khu quốc tế','Bao_Tri'),(26,2,'30','Tầng 2 - Khu quốc tế','Hoat_Dong'),(27,3,'1','Tầng 2 - Khu A','Hoat_Dong'),(28,3,'2','Tầng 2 - Khu A','Hoat_Dong'),(29,3,'3','Tầng 2 - Khu A','Hoat_Dong'),(30,3,'4','Tầng 2 - Khu A','Hoat_Dong'),(31,3,'5','Tầng 2 - Khu A','Hoat_Dong'),(32,3,'6','Tầng 2 - Khu A','Hoat_Dong'),(33,3,'7','Tầng 2 - Khu A','Hoat_Dong'),(34,3,'8','Tầng 2 - Khu A','Hoat_Dong'),(35,3,'9','Tầng 2 - Khu B','Hoat_Dong'),(36,3,'12','Tầng 2 - Khu B','Hoat_Dong'),(37,3,'13','Tầng 2 - Khu B','Hoat_Dong'),(38,3,'14','Tầng 2 - Khu B','Hoat_Dong'),(39,3,'15','Tầng 2 - Khu B','Hoat_Dong'),(40,3,'16','Tầng 2 - Khu B','Hoat_Dong'),(41,4,'13','Tầng 2 - Khu quốc tế','Hoat_Dong'),(42,4,'14','Tầng 2 - Khu quốc tế','Hoat_Dong'),(43,4,'15','Tầng 2 - Khu quốc tế','Hoat_Dong'),(44,4,'16','Tầng 2 - Khu quốc tế','Hoat_Dong'),(45,4,'17','Tầng 2 - Khu quốc tế','Hoat_Dong'),(46,4,'18','Tầng 2 - Khu quốc tế','Hoat_Dong'),(47,4,'19','Tầng 2 - Khu quốc tế','Hoat_Dong'),(48,4,'20','Tầng 2 - Khu quốc tế','Hoat_Dong'),(49,4,'21','Tầng 2 - Khu quốc tế','Hoat_Dong'),(50,4,'22','Tầng 2 - Khu quốc tế','Hoat_Dong'),(51,4,'23','Tầng 2 - Khu quốc tế','Hoat_Dong'),(52,4,'24','Tầng 2 - Khu quốc tế','Bao_Tri'),(53,5,'1','Khu quốc nội','Hoat_Dong'),(54,5,'2','Khu quốc nội','Hoat_Dong'),(55,5,'3','Khu quốc nội','Hoat_Dong'),(56,5,'4','Khu quốc nội','Hoat_Dong'),(57,5,'5','Khu quốc nội','Hoat_Dong'),(58,5,'6','Khu quốc nội','Hoat_Dong'),(59,5,'7','Khu quốc nội','Hoat_Dong'),(60,5,'8','Khu quốc nội','Hoat_Dong'),(61,6,'9','Khu quốc tế','Hoat_Dong'),(62,6,'10','Khu quốc tế','Hoat_Dong'),(63,6,'11','Khu quốc tế','Hoat_Dong'),(64,6,'12','Khu quốc tế','Hoat_Dong'),(65,6,'13','Khu quốc tế','Hoat_Dong'),(66,6,'14','Khu quốc tế','Hoat_Dong'),(67,6,'15','Khu quốc tế','Hoat_Dong'),(68,6,'16','Khu quốc tế','Bao_Tri'),(69,7,'1','Khu quốc nội','Hoat_Dong'),(70,7,'2','Khu quốc nội','Hoat_Dong'),(71,7,'3','Khu quốc nội','Hoat_Dong'),(72,7,'4','Khu quốc nội','Hoat_Dong'),(73,7,'5','Khu quốc nội','Hoat_Dong'),(74,7,'6','Khu quốc nội','Hoat_Dong'),(75,8,'7','Khu quốc tế','Hoat_Dong'),(76,8,'8','Khu quốc tế','Hoat_Dong'),(77,8,'9','Khu quốc tế','Hoat_Dong'),(78,8,'10','Khu quốc tế','Hoat_Dong'),(79,8,'11','Khu quốc tế','Hoat_Dong'),(80,8,'12','Khu quốc tế','Hoat_Dong'),(81,8,'13','Khu quốc tế','Hoat_Dong'),(82,8,'14','Khu quốc tế','Hoat_Dong'),(83,9,'1','Khu quốc nội','Hoat_Dong'),(84,9,'2','Khu quốc nội','Hoat_Dong'),(85,9,'3','Khu quốc nội','Hoat_Dong'),(86,9,'4','Khu quốc nội','Hoat_Dong'),(87,9,'5','Khu quốc nội','Hoat_Dong'),(88,9,'6','Khu quốc nội','Hoat_Dong'),(89,9,'7','Khu quốc tế','Hoat_Dong'),(90,9,'8','Khu quốc tế','Hoat_Dong'),(91,9,'9','Khu quốc tế','Hoat_Dong'),(92,9,'10','Khu quốc tế','Hoat_Dong'),(93,9,'11','Khu quốc tế','Hoat_Dong'),(94,9,'12','Khu quốc tế','Hoat_Dong'),(95,11,'1','Khu khởi hành','Hoat_Dong'),(96,11,'2','Khu khởi hành','Hoat_Dong'),(97,11,'3','Khu khởi hành','Hoat_Dong'),(98,11,'4','Khu khởi hành','Hoat_Dong'),(99,11,'5','Khu khởi hành','Hoat_Dong'),(100,11,'6','Khu khởi hành','Hoat_Dong'),(101,11,'7','Khu khởi hành','Hoat_Dong'),(102,11,'8','Khu khởi hành','Bao_Tri'),(103,12,'1','Khu khởi hành','Hoat_Dong'),(104,12,'2','Khu khởi hành','Hoat_Dong'),(105,12,'3','Khu khởi hành','Hoat_Dong'),(106,12,'4','Khu khởi hành','Hoat_Dong'),(107,12,'5','Khu khởi hành','Hoat_Dong'),(108,12,'6','Khu khởi hành','Hoat_Dong'),(109,13,'1','Khu khởi hành','Hoat_Dong'),(110,13,'2','Khu khởi hành','Hoat_Dong'),(111,13,'3','Khu khởi hành','Hoat_Dong'),(112,13,'4','Khu khởi hành','Hoat_Dong'),(113,14,'1','Khu khởi hành','Hoat_Dong'),(114,14,'2','Khu khởi hành','Hoat_Dong'),(115,14,'3','Khu khởi hành','Hoat_Dong'),(116,14,'4','Khu khởi hành','Hoat_Dong'),(117,14,'5','Khu khởi hành','Hoat_Dong'),(118,15,'1','Khu khởi hành','Hoat_Dong'),(119,15,'2','Khu khởi hành','Hoat_Dong'),(120,15,'3','Khu khởi hành','Hoat_Dong'),(121,16,'1','Khu khởi hành','Hoat_Dong'),(122,16,'2','Khu khởi hành','Hoat_Dong'),(123,16,'3','Khu khởi hành','Hoat_Dong'),(124,16,'4','Khu khởi hành','Hoat_Dong'),(125,17,'1','Khu khởi hành','Hoat_Dong'),(126,17,'2','Khu khởi hành','Hoat_Dong'),(127,17,'3','Khu khởi hành','Hoat_Dong'),(128,17,'4','Khu khởi hành','Hoat_Dong'),(129,18,'1','Khu khởi hành','Hoat_Dong'),(130,18,'2','Khu khởi hành','Hoat_Dong'),(131,18,'3','Khu khởi hành','Hoat_Dong'),(132,18,'4','Khu khởi hành','Hoat_Dong'),(133,19,'1','Khu khởi hành','Hoat_Dong'),(134,19,'2','Khu khởi hành','Hoat_Dong'),(135,19,'3','Khu khởi hành','Hoat_Dong'),(136,19,'4','Khu khởi hành','Hoat_Dong'),(137,19,'5','Khu khởi hành','Bao_Tri'),(138,20,'1','Khu khởi hành','Hoat_Dong'),(139,20,'2','Khu khởi hành','Hoat_Dong'),(140,20,'3','Khu khởi hành','Bao_Tri');
-/*!40000 ALTER TABLE `cua_ra_may_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `don_vi_mat_dat`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `don_vi_mat_dat` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `ma_don_vi` varchar(10) NOT NULL,
-  `ten_don_vi` varchar(100) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ma_don_vi` (`ma_don_vi`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+--
+-- Dumping data for table `cua_ra_may_bay`
+--
 
-LOCK TABLES `don_vi_mat_dat` WRITE;
-/*!40000 ALTER TABLE `don_vi_mat_dat` DISABLE KEYS */;
-INSERT INTO `don_vi_mat_dat` VALUES (1,'VIAGS','Công ty Dịch vụ mặt đất sân bay Việt Nam'),(2,'SAGS','Công ty Phục vụ mặt đất Sài Gòn');
-/*!40000 ALTER TABLE `don_vi_mat_dat` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `hang_hang_khong`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+INSERT INTO `cua_ra_may_bay` (`id`, `id_nha_ga`, `so_cua`, `khu_vuc`, `trang_thai`) VALUES
+(1, 1, '1', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(2, 1, '2', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(3, 3, '10', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(4, 3, '11', 'Tầng 2 - Khu B', 'Bao_Tri'),
+(5, 1, '3', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(6, 1, '4', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(7, 1, '5', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(8, 1, '6', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(9, 1, '7', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(10, 1, '8', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(11, 1, '9', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(12, 1, '10', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(13, 1, '11', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(14, 1, '12', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(15, 1, '13', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(16, 1, '14', 'Tầng 2 - Khu B', 'Bao_Tri'),
+(17, 2, '21', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(18, 2, '22', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(19, 2, '23', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(20, 2, '24', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(21, 2, '25', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(22, 2, '26', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(23, 2, '27', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(24, 2, '28', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(25, 2, '29', 'Tầng 2 - Khu quốc tế', 'Bao_Tri'),
+(26, 2, '30', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(27, 3, '1', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(28, 3, '2', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(29, 3, '3', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(30, 3, '4', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(31, 3, '5', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(32, 3, '6', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(33, 3, '7', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(34, 3, '8', 'Tầng 2 - Khu A', 'Hoat_Dong'),
+(35, 3, '9', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(36, 3, '12', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(37, 3, '13', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(38, 3, '14', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(39, 3, '15', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(40, 3, '16', 'Tầng 2 - Khu B', 'Hoat_Dong'),
+(41, 4, '13', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(42, 4, '14', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(43, 4, '15', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(44, 4, '16', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(45, 4, '17', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(46, 4, '18', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(47, 4, '19', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(48, 4, '20', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(49, 4, '21', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(50, 4, '22', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(51, 4, '23', 'Tầng 2 - Khu quốc tế', 'Hoat_Dong'),
+(52, 4, '24', 'Tầng 2 - Khu quốc tế', 'Bao_Tri'),
+(53, 5, '1', 'Khu quốc nội', 'Hoat_Dong'),
+(54, 5, '2', 'Khu quốc nội', 'Hoat_Dong'),
+(55, 5, '3', 'Khu quốc nội', 'Hoat_Dong'),
+(56, 5, '4', 'Khu quốc nội', 'Hoat_Dong'),
+(57, 5, '5', 'Khu quốc nội', 'Hoat_Dong'),
+(58, 5, '6', 'Khu quốc nội', 'Hoat_Dong'),
+(59, 5, '7', 'Khu quốc nội', 'Hoat_Dong'),
+(60, 5, '8', 'Khu quốc nội', 'Hoat_Dong'),
+(61, 6, '9', 'Khu quốc tế', 'Hoat_Dong'),
+(62, 6, '10', 'Khu quốc tế', 'Hoat_Dong'),
+(63, 6, '11', 'Khu quốc tế', 'Hoat_Dong'),
+(64, 6, '12', 'Khu quốc tế', 'Hoat_Dong'),
+(65, 6, '13', 'Khu quốc tế', 'Hoat_Dong'),
+(66, 6, '14', 'Khu quốc tế', 'Hoat_Dong'),
+(67, 6, '15', 'Khu quốc tế', 'Hoat_Dong'),
+(68, 6, '16', 'Khu quốc tế', 'Bao_Tri'),
+(69, 7, '1', 'Khu quốc nội', 'Hoat_Dong'),
+(70, 7, '2', 'Khu quốc nội', 'Hoat_Dong'),
+(71, 7, '3', 'Khu quốc nội', 'Hoat_Dong'),
+(72, 7, '4', 'Khu quốc nội', 'Hoat_Dong'),
+(73, 7, '5', 'Khu quốc nội', 'Hoat_Dong'),
+(74, 7, '6', 'Khu quốc nội', 'Hoat_Dong'),
+(75, 8, '7', 'Khu quốc tế', 'Hoat_Dong'),
+(76, 8, '8', 'Khu quốc tế', 'Hoat_Dong'),
+(77, 8, '9', 'Khu quốc tế', 'Hoat_Dong'),
+(78, 8, '10', 'Khu quốc tế', 'Hoat_Dong'),
+(79, 8, '11', 'Khu quốc tế', 'Hoat_Dong'),
+(80, 8, '12', 'Khu quốc tế', 'Hoat_Dong'),
+(81, 8, '13', 'Khu quốc tế', 'Hoat_Dong'),
+(82, 8, '14', 'Khu quốc tế', 'Hoat_Dong'),
+(83, 9, '1', 'Khu quốc nội', 'Hoat_Dong'),
+(84, 9, '2', 'Khu quốc nội', 'Hoat_Dong'),
+(85, 9, '3', 'Khu quốc nội', 'Hoat_Dong'),
+(86, 9, '4', 'Khu quốc nội', 'Hoat_Dong'),
+(87, 9, '5', 'Khu quốc nội', 'Hoat_Dong'),
+(88, 9, '6', 'Khu quốc nội', 'Hoat_Dong'),
+(89, 9, '7', 'Khu quốc tế', 'Hoat_Dong'),
+(90, 9, '8', 'Khu quốc tế', 'Hoat_Dong'),
+(91, 9, '9', 'Khu quốc tế', 'Hoat_Dong'),
+(92, 9, '10', 'Khu quốc tế', 'Hoat_Dong'),
+(93, 9, '11', 'Khu quốc tế', 'Hoat_Dong'),
+(94, 9, '12', 'Khu quốc tế', 'Hoat_Dong'),
+(95, 11, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(96, 11, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(97, 11, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(98, 11, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(99, 11, '5', 'Khu khởi hành', 'Hoat_Dong'),
+(100, 11, '6', 'Khu khởi hành', 'Hoat_Dong'),
+(101, 11, '7', 'Khu khởi hành', 'Hoat_Dong'),
+(102, 11, '8', 'Khu khởi hành', 'Bao_Tri'),
+(103, 12, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(104, 12, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(105, 12, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(106, 12, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(107, 12, '5', 'Khu khởi hành', 'Hoat_Dong'),
+(108, 12, '6', 'Khu khởi hành', 'Hoat_Dong'),
+(109, 13, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(110, 13, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(111, 13, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(112, 13, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(113, 14, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(114, 14, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(115, 14, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(116, 14, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(117, 14, '5', 'Khu khởi hành', 'Hoat_Dong'),
+(118, 15, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(119, 15, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(120, 15, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(121, 16, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(122, 16, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(123, 16, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(124, 16, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(125, 17, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(126, 17, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(127, 17, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(128, 17, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(129, 18, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(130, 18, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(131, 18, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(132, 18, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(133, 19, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(134, 19, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(135, 19, '3', 'Khu khởi hành', 'Hoat_Dong'),
+(136, 19, '4', 'Khu khởi hành', 'Hoat_Dong'),
+(137, 19, '5', 'Khu khởi hành', 'Bao_Tri'),
+(138, 20, '1', 'Khu khởi hành', 'Hoat_Dong'),
+(139, 20, '2', 'Khu khởi hành', 'Hoat_Dong'),
+(140, 20, '3', 'Khu khởi hành', 'Bao_Tri');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hang_hang_khong`
+--
+
 CREATE TABLE `hang_hang_khong` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `ma_iata` varchar(2) NOT NULL,
   `ten_hang` varchar(100) NOT NULL,
-  `quoc_gia` varchar(50) DEFAULT 'Viet Nam',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ma_iata` (`ma_iata`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `quoc_gia` varchar(50) DEFAULT 'Viet Nam'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `hang_hang_khong` WRITE;
-/*!40000 ALTER TABLE `hang_hang_khong` DISABLE KEYS */;
-INSERT INTO `hang_hang_khong` VALUES (1,'VN','Vietnam Airlines','Viet Nam'),(2,'VJ','Vietjet Air','Viet Nam'),(3,'QH','Bamboo Airways','Viet Nam');
-/*!40000 ALTER TABLE `hang_hang_khong` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `hoa_don`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `hang_hang_khong`
+--
+
+INSERT INTO `hang_hang_khong` (`id`, `ma_iata`, `ten_hang`, `quoc_gia`) VALUES
+(1, 'VN', 'Vietnam Airlines', 'Viet Nam'),
+(2, 'VJ', 'Vietjet Air', 'Viet Nam'),
+(3, 'QH', 'Bamboo Airways', 'Viet Nam');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hoa_don`
+--
+
 CREATE TABLE `hoa_don` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_chuyen_bay` int(11) NOT NULL,
   `id_hang_hang_khong` int(11) NOT NULL,
   `phi_cat_ha_canh` decimal(15,2) DEFAULT 0.00,
@@ -205,23 +472,141 @@ CREATE TABLE `hoa_don` (
   `tong_tien` decimal(15,2) DEFAULT 0.00,
   `ngay_xuat` datetime DEFAULT current_timestamp(),
   `trang_thai_thanh_toan` enum('Chua_Thanh_Toan','Da_Thanh_Toan') DEFAULT 'Chua_Thanh_Toan',
-  PRIMARY KEY (`id`),
-  KEY `id_chuyen_bay` (`id_chuyen_bay`),
-  KEY `id_hang_hang_khong` (`id_hang_hang_khong`),
-  CONSTRAINT `hoa_don_ibfk_1` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `hoa_don_ibfk_2` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`) ON DELETE CASCADE
+  `thoi_gian_do_gio` decimal(6,2) DEFAULT NULL,
+  `don_gia_cat_ha_canh` decimal(15,2) DEFAULT NULL,
+  `don_gia_do` decimal(15,2) DEFAULT NULL,
+  `don_gia_phuc_vu` decimal(15,2) DEFAULT NULL,
+  `mtow_ap_dung` decimal(8,2) DEFAULT NULL,
+  `so_khach_ap_dung` int(11) DEFAULT NULL,
+  `tam_tinh` tinyint(1) NOT NULL DEFAULT 0,
+  `ghi_chu` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
-LOCK TABLES `hoa_don` WRITE;
-/*!40000 ALTER TABLE `hoa_don` DISABLE KEYS */;
-/*!40000 ALTER TABLE `hoa_don` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `lich_su_chuyen_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `hoa_don`
+--
+
+INSERT INTO `hoa_don` (`id`, `id_chuyen_bay`, `id_hang_hang_khong`, `phi_cat_ha_canh`, `phi_do_tau_bay`, `phi_phuc_vu_hk`, `tong_tien`, `ngay_xuat`, `trang_thai_thanh_toan`, `thoi_gian_do_gio`, `don_gia_cat_ha_canh`, `don_gia_do`, `don_gia_phuc_vu`, `mtow_ap_dung`, `so_khach_ap_dung`, `tam_tinh`, `ghi_chu`) VALUES
+(3, 7, 1, 1500000.00, 5925000.00, 18000000.00, 25425000.00, '2026-11-05 20:12:28', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 79.00, 180, 0, NULL),
+(4, 12, 3, 1500000.00, 115500000.00, 15000000.00, 132000000.00, '2026-11-05 20:12:53', 'Da_Thanh_Toan', 30.00, 1500000.00, 50000.00, 100000.00, 77.00, 150, 1, 'Giờ đỗ trên 24h, cần kế toán kiểm tra'),
+(5, 9, 2, 1500000.00, 38100000.00, 30000000.00, 69600000.00, '2026-11-05 20:13:31', 'Da_Thanh_Toan', 3.00, 1500000.00, 50000.00, 100000.00, 254.00, 300, 0, NULL),
+(6, 11, 3, 1500000.00, 6675000.00, 20000000.00, 28175000.00, '2026-11-05 21:03:45', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 89.00, 200, 1, 'Giờ đỗ mặc định, chưa có chuyến kế tiếp'),
+(10, 14, 1, 1500000.00, 21000000.00, 29600000.00, 52100000.00, '2026-01-05 18:30:00', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 280.00, 296, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN210'),
+(11, 15, 2, 1500000.00, 12460000.00, 20500000.00, 34460000.00, '2026-01-08 21:15:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 89.00, 205, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ134'),
+(12, 16, 3, 1500000.00, 9875000.00, 16700000.00, 28075000.00, '2026-01-12 23:20:00', 'Da_Thanh_Toan', 2.50, 1500000.00, 50000.00, 100000.00, 79.00, 167, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH201'),
+(13, 17, 1, 1500000.00, 21590000.00, 28800000.00, 51890000.00, '2026-01-17 02:00:00', 'Da_Thanh_Toan', 1.70, 1500000.00, 50000.00, 100000.00, 254.00, 288, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN158'),
+(14, 18, 2, 1500000.00, 16975000.00, 21500000.00, 39975000.00, '2026-01-20 20:30:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 97.00, 215, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ211'),
+(15, 19, 3, 1500000.00, 27940000.00, 29700000.00, 59140000.00, '2026-01-24 01:45:00', 'Da_Thanh_Toan', 2.20, 1500000.00, 50000.00, 100000.00, 254.00, 297, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH142'),
+(16, 20, 1, 1500000.00, 52725000.00, 35200000.00, 89425000.00, '2026-01-28 05:10:00', 'Da_Thanh_Toan', 3.00, 1500000.00, 50000.00, 100000.00, 351.00, 352, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN245'),
+(17, 21, 2, 1500000.00, 8470000.00, 17300000.00, 27270000.00, '2026-01-31 07:30:00', 'Da_Thanh_Toan', 2.20, 1500000.00, 50000.00, 100000.00, 77.00, 173, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ380'),
+(18, 22, 1, 1500000.00, 22400000.00, 30600000.00, 54500000.00, '2026-02-02 17:45:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 280.00, 306, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN212'),
+(19, 23, 2, 1500000.00, 9215000.00, 21500000.00, 32215000.00, '2026-02-05 19:15:00', 'Da_Thanh_Toan', 1.90, 1500000.00, 50000.00, 100000.00, 97.00, 215, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ128'),
+(20, 24, 3, 1500000.00, 36115000.00, 28400000.00, 66015000.00, '2026-02-08 20:30:00', 'Da_Thanh_Toan', 3.10, 1500000.00, 50000.00, 100000.00, 233.00, 284, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH218'),
+(21, 25, 1, 1500000.00, 11570000.00, 22500000.00, 35570000.00, '2026-02-11 22:00:00', 'Da_Thanh_Toan', 2.60, 1500000.00, 50000.00, 100000.00, 89.00, 225, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN7204'),
+(22, 26, 2, 1500000.00, 9875000.00, 18500000.00, 29875000.00, '2026-02-15 00:45:00', 'Da_Thanh_Toan', 2.50, 1500000.00, 50000.00, 100000.00, 79.00, 185, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ624'),
+(23, 27, 3, 1500000.00, 5698000.00, 8200000.00, 15398000.00, '2026-02-18 02:30:00', 'Da_Thanh_Toan', 2.20, 1500000.00, 50000.00, 100000.00, 51.00, 82, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH156'),
+(24, 28, 1, 1500000.00, 44450000.00, 27900000.00, 73850000.00, '2026-02-21 04:15:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 254.00, 279, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN218'),
+(25, 29, 2, 1500000.00, 15130000.00, 21400000.00, 38030000.00, '2026-02-24 06:00:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 89.00, 214, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ198'),
+(26, 30, 3, 1500000.00, 11455000.00, 18800000.00, 31755000.00, '2026-02-26 07:40:00', 'Da_Thanh_Toan', 2.90, 1500000.00, 50000.00, 100000.00, 79.00, 188, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH240'),
+(27, 31, 1, 1500000.00, 13795000.00, 18900000.00, 34195000.00, '2026-03-01 09:00:00', 'Da_Thanh_Toan', 3.10, 1500000.00, 50000.00, 100000.00, 89.00, 189, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN120'),
+(28, 32, 1, 1500000.00, 42000000.00, 28900000.00, 72400000.00, '2026-03-04 19:30:00', 'Da_Thanh_Toan', 3.00, 1500000.00, 50000.00, 100000.00, 280.00, 289, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN214'),
+(29, 33, 2, 1500000.00, 14685000.00, 21400000.00, 37585000.00, '2026-03-09 22:15:00', 'Da_Thanh_Toan', 3.30, 1500000.00, 50000.00, 100000.00, 89.00, 214, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ136'),
+(30, 34, 3, 1500000.00, 11455000.00, 18200000.00, 31155000.00, '2026-03-15 00:00:00', 'Da_Thanh_Toan', 2.90, 1500000.00, 50000.00, 100000.00, 79.00, 182, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH204'),
+(31, 35, 1, 1500000.00, 14240000.00, 19100000.00, 34840000.00, '2026-03-19 02:30:00', 'Da_Thanh_Toan', 3.20, 1500000.00, 50000.00, 100000.00, 89.00, 191, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN160'),
+(32, 36, 2, 1500000.00, 15035000.00, 22000000.00, 38535000.00, '2026-03-23 04:20:00', 'Da_Thanh_Toan', 3.10, 1500000.00, 50000.00, 100000.00, 97.00, 220, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ452'),
+(33, 37, 3, 1500000.00, 6160000.00, 15300000.00, 22960000.00, '2026-03-27 06:45:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 77.00, 153, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH162'),
+(34, 38, 1, 1500000.00, 1725000.00, 6000000.00, 9225000.00, '2026-03-31 08:10:00', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 23.00, 60, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN302'),
+(35, 39, 1, 1500000.00, 19050000.00, 29100000.00, 49650000.00, '2026-04-03 18:15:00', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 254.00, 291, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN216'),
+(36, 40, 2, 1500000.00, 9790000.00, 20500000.00, 31790000.00, '2026-04-07 20:45:00', 'Da_Thanh_Toan', 2.20, 1500000.00, 50000.00, 100000.00, 89.00, 205, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ140'),
+(37, 41, 3, 1500000.00, 13825000.00, 18200000.00, 33525000.00, '2026-04-12 23:30:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 79.00, 182, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH208'),
+(38, 42, 1, 1500000.00, 14685000.00, 19600000.00, 35785000.00, '2026-04-17 01:15:00', 'Da_Thanh_Toan', 3.30, 1500000.00, 50000.00, 100000.00, 89.00, 196, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN164'),
+(39, 43, 2, 1500000.00, 9215000.00, 22200000.00, 32915000.00, '2026-04-21 03:00:00', 'Da_Thanh_Toan', 1.90, 1500000.00, 50000.00, 100000.00, 97.00, 222, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ220'),
+(40, 44, 3, 1500000.00, 8806000.00, 8800000.00, 19106000.00, '2026-04-24 21:30:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 51.00, 88, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH310'),
+(41, 45, 1, 1500000.00, 35150000.00, 37600000.00, 74250000.00, '2026-04-28 05:00:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 351.00, 376, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN250'),
+(42, 46, 2, 1500000.00, 12905000.00, 22500000.00, 36905000.00, '2026-04-30 07:20:00', 'Da_Thanh_Toan', 2.90, 1500000.00, 50000.00, 100000.00, 89.00, 225, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ630'),
+(43, 47, 3, 1500000.00, 13825000.00, 18800000.00, 34125000.00, '2026-05-01 08:45:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 79.00, 188, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH170'),
+(44, 48, 1, 1500000.00, 29400000.00, 28300000.00, 59200000.00, '2026-05-04 18:45:00', 'Da_Thanh_Toan', 2.10, 1500000.00, 50000.00, 100000.00, 280.00, 283, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN220'),
+(45, 49, 2, 1500000.00, 15575000.00, 19300000.00, 36375000.00, '2026-05-08 21:30:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 89.00, 193, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ146'),
+(46, 50, 3, 1500000.00, 11060000.00, 16300000.00, 28860000.00, '2026-05-13 23:15:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 79.00, 163, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH212'),
+(47, 51, 1, 1500000.00, 8010000.00, 19300000.00, 28810000.00, '2026-05-18 02:00:00', 'Da_Thanh_Toan', 1.80, 1500000.00, 50000.00, 100000.00, 89.00, 193, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN168'),
+(48, 52, 2, 1500000.00, 15520000.00, 21500000.00, 38520000.00, '2026-05-22 04:30:00', 'Da_Thanh_Toan', 3.20, 1500000.00, 50000.00, 100000.00, 97.00, 215, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ458'),
+(49, 53, 3, 1500000.00, 12705000.00, 15700000.00, 29905000.00, '2026-05-26 06:15:00', 'Da_Thanh_Toan', 3.30, 1500000.00, 50000.00, 100000.00, 77.00, 157, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH176'),
+(50, 54, 1, 1500000.00, 14240000.00, 20700000.00, 36440000.00, '2026-05-28 22:20:00', 'Da_Thanh_Toan', 3.20, 1500000.00, 50000.00, 100000.00, 89.00, 207, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN512'),
+(51, 55, 2, 1500000.00, 7120000.00, 21600000.00, 30220000.00, '2026-06-01 08:00:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 89.00, 216, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ780'),
+(52, 56, 1, 1500000.00, 34290000.00, 27100000.00, 62890000.00, '2026-06-02 18:00:00', 'Da_Thanh_Toan', 2.70, 1500000.00, 50000.00, 100000.00, 254.00, 271, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN224'),
+(53, 57, 2, 1500000.00, 13580000.00, 22400000.00, 37480000.00, '2026-06-05 20:20:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 97.00, 224, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ152'),
+(54, 58, 3, 1500000.00, 31750000.00, 30100000.00, 63350000.00, '2026-06-09 22:45:00', 'Da_Thanh_Toan', 2.50, 1500000.00, 50000.00, 100000.00, 254.00, 301, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH216'),
+(55, 59, 1, 1500000.00, 22400000.00, 30900000.00, 54800000.00, '2026-06-14 01:30:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 280.00, 309, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN172'),
+(56, 60, 2, 1500000.00, 9240000.00, 15800000.00, 26540000.00, '2026-06-17 03:15:00', 'Da_Thanh_Toan', 2.40, 1500000.00, 50000.00, 100000.00, 77.00, 158, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ226'),
+(57, 61, 3, 1500000.00, 13825000.00, 17100000.00, 32425000.00, '2026-06-21 05:00:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 79.00, 171, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH182'),
+(58, 62, 1, 1500000.00, 52725000.00, 34800000.00, 89025000.00, '2026-06-24 06:45:00', 'Da_Thanh_Toan', 3.00, 1500000.00, 50000.00, 100000.00, 351.00, 348, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN256'),
+(59, 63, 2, 1500000.00, 7565000.00, 18900000.00, 27965000.00, '2026-06-26 23:10:00', 'Da_Thanh_Toan', 1.70, 1500000.00, 50000.00, 100000.00, 89.00, 189, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ636'),
+(60, 64, 3, 1500000.00, 7700000.00, 17300000.00, 26500000.00, '2026-06-29 02:00:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 77.00, 173, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH246'),
+(61, 65, 1, 1500000.00, 7120000.00, 21600000.00, 30220000.00, '2026-07-01 08:30:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 89.00, 216, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN128'),
+(62, 66, 1, 1500000.00, 49000000.00, 27600000.00, 78100000.00, '2026-07-03 18:15:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 280.00, 276, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN228'),
+(63, 67, 2, 1500000.00, 13095000.00, 20000000.00, 34595000.00, '2026-07-06 20:30:00', 'Da_Thanh_Toan', 2.70, 1500000.00, 50000.00, 100000.00, 97.00, 200, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ158'),
+(64, 68, 3, 1500000.00, 17475000.00, 25500000.00, 44475000.00, '2026-07-10 23:00:00', 'Da_Thanh_Toan', 1.50, 1500000.00, 50000.00, 100000.00, 233.00, 255, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH220'),
+(65, 69, 1, 1500000.00, 20320000.00, 25700000.00, 47520000.00, '2026-07-15 01:45:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 254.00, 257, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN176'),
+(66, 70, 2, 1500000.00, 15130000.00, 21400000.00, 38030000.00, '2026-07-19 03:30:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 89.00, 214, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ232'),
+(67, 71, 3, 1500000.00, 11060000.00, 18400000.00, 30960000.00, '2026-07-22 05:15:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 79.00, 184, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH188'),
+(68, 72, 1, 1500000.00, 61512500.00, 35600000.00, 98612500.00, '2026-07-26 06:50:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 351.00, 356, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN260'),
+(69, 73, 2, 1500000.00, 10780000.00, 16200000.00, 28480000.00, '2026-07-28 00:20:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 77.00, 162, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ642'),
+(70, 74, 3, 1500000.00, 13475000.00, 17300000.00, 32275000.00, '2026-07-30 04:40:00', 'Da_Thanh_Toan', 3.50, 1500000.00, 50000.00, 100000.00, 77.00, 173, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH252'),
+(71, 75, 1, 1500000.00, 11125000.00, 21900000.00, 34525000.00, '2026-08-01 08:15:00', 'Da_Thanh_Toan', 2.50, 1500000.00, 50000.00, 100000.00, 89.00, 219, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN134'),
+(72, 76, 1, 1500000.00, 38100000.00, 29800000.00, 69400000.00, '2026-08-03 19:00:00', 'Da_Thanh_Toan', 3.00, 1500000.00, 50000.00, 100000.00, 254.00, 298, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN232'),
+(73, 77, 2, 1500000.00, 8900000.00, 20000000.00, 30400000.00, '2026-08-07 21:15:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 89.00, 200, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ164'),
+(74, 78, 3, 1500000.00, 12640000.00, 17300000.00, 31440000.00, '2026-08-11 23:45:00', 'Da_Thanh_Toan', 3.20, 1500000.00, 50000.00, 100000.00, 79.00, 173, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH224'),
+(75, 79, 1, 1500000.00, 10235000.00, 20700000.00, 32435000.00, '2026-08-16 02:20:00', 'Da_Thanh_Toan', 2.30, 1500000.00, 50000.00, 100000.00, 89.00, 207, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN180'),
+(76, 80, 2, 1500000.00, 16005000.00, 21700000.00, 39205000.00, '2026-08-20 04:00:00', 'Da_Thanh_Toan', 3.30, 1500000.00, 50000.00, 100000.00, 97.00, 217, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ464'),
+(77, 81, 3, 1500000.00, 13090000.00, 14800000.00, 29390000.00, '2026-08-24 06:30:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 77.00, 148, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH194'),
+(78, 82, 1, 1500000.00, 28000000.00, 28000000.00, 57500000.00, '2026-08-28 07:45:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 280.00, 280, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN266'),
+(79, 83, 2, 1500000.00, 9875000.00, 16400000.00, 27775000.00, '2026-08-31 09:00:00', 'Da_Thanh_Toan', 2.50, 1500000.00, 50000.00, 100000.00, 79.00, 164, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ648'),
+(80, 84, 1, 1500000.00, 29400000.00, 29900000.00, 60800000.00, '2026-09-01 18:30:00', 'Da_Thanh_Toan', 2.10, 1500000.00, 50000.00, 100000.00, 280.00, 299, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN236'),
+(81, 85, 2, 1500000.00, 9700000.00, 23900000.00, 35100000.00, '2026-09-02 20:45:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 97.00, 239, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ170'),
+(82, 86, 3, 1500000.00, 10665000.00, 16700000.00, 28865000.00, '2026-09-05 23:00:00', 'Da_Thanh_Toan', 2.70, 1500000.00, 50000.00, 100000.00, 79.00, 167, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH228'),
+(83, 87, 1, 1500000.00, 20320000.00, 26400000.00, 48220000.00, '2026-09-11 01:30:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 254.00, 264, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN184'),
+(84, 88, 2, 1500000.00, 15130000.00, 19600000.00, 36230000.00, '2026-09-16 03:15:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 89.00, 196, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ238'),
+(85, 89, 3, 1500000.00, 10780000.00, 14900000.00, 27180000.00, '2026-09-21 05:00:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 77.00, 149, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH202'),
+(86, 90, 1, 1500000.00, 20320000.00, 27100000.00, 48920000.00, '2026-09-26 06:30:00', 'Da_Thanh_Toan', 1.60, 1500000.00, 50000.00, 100000.00, 254.00, 271, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN270'),
+(87, 91, 2, 1500000.00, 14240000.00, 20200000.00, 35940000.00, '2026-09-30 08:15:00', 'Da_Thanh_Toan', 3.20, 1500000.00, 50000.00, 100000.00, 89.00, 202, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ654'),
+(88, 92, 1, 1500000.00, 35560000.00, 27300000.00, 64360000.00, '2026-10-04 19:15:00', 'Da_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 254.00, 273, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN240'),
+(89, 93, 2, 1500000.00, 10680000.00, 18900000.00, 31080000.00, '2026-10-08 21:30:00', 'Da_Thanh_Toan', 2.40, 1500000.00, 50000.00, 100000.00, 89.00, 189, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ176'),
+(90, 94, 3, 1500000.00, 9085000.00, 18600000.00, 29185000.00, '2026-10-12 23:45:00', 'Da_Thanh_Toan', 2.30, 1500000.00, 50000.00, 100000.00, 79.00, 186, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH232'),
+(91, 95, 1, 1500000.00, 26600000.00, 31900000.00, 60000000.00, '2026-10-17 02:00:00', 'Da_Thanh_Toan', 1.90, 1500000.00, 50000.00, 100000.00, 280.00, 319, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN188'),
+(92, 96, 2, 1500000.00, 11640000.00, 23900000.00, 37040000.00, '2026-10-22 04:15:00', 'Da_Thanh_Toan', 2.40, 1500000.00, 50000.00, 100000.00, 97.00, 239, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ244'),
+(93, 97, 3, 1500000.00, 9240000.00, 16000000.00, 26740000.00, '2026-10-26 06:00:00', 'Chua_Thanh_Toan', 2.40, 1500000.00, 50000.00, 100000.00, 77.00, 160, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH206'),
+(94, 98, 1, 1500000.00, 40422500.00, 36800000.00, 78722500.00, '2026-10-29 07:30:00', 'Da_Thanh_Toan', 2.30, 1500000.00, 50000.00, 100000.00, 351.00, 368, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN274'),
+(95, 99, 2, 1500000.00, 7110000.00, 17200000.00, 25810000.00, '2026-11-01 09:00:00', 'Da_Thanh_Toan', 1.80, 1500000.00, 50000.00, 100000.00, 79.00, 172, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ660'),
+(96, 100, 1, 1500000.00, 23800000.00, 28300000.00, 53600000.00, '2026-11-01 18:15:00', 'Da_Thanh_Toan', 1.70, 1500000.00, 50000.00, 100000.00, 280.00, 283, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN242'),
+(97, 101, 2, 1500000.00, 9700000.00, 21000000.00, 32200000.00, '2026-11-02 20:30:00', 'Da_Thanh_Toan', 2.00, 1500000.00, 50000.00, 100000.00, 97.00, 210, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ180'),
+(98, 102, 3, 1500000.00, 9085000.00, 16700000.00, 27285000.00, '2026-11-03 23:00:00', 'Da_Thanh_Toan', 2.30, 1500000.00, 50000.00, 100000.00, 79.00, 167, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay QH236'),
+(99, 103, 1, 1500000.00, 26670000.00, 29100000.00, 57270000.00, '2026-11-05 01:15:00', 'Da_Thanh_Toan', 2.10, 1500000.00, 50000.00, 100000.00, 254.00, 291, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN192'),
+(100, 104, 2, 1500000.00, 15130000.00, 19100000.00, 35730000.00, '2026-11-06 03:30:00', 'Da_Thanh_Toan', 3.40, 1500000.00, 50000.00, 100000.00, 89.00, 191, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VJ250'),
+(101, 105, 1, 1500000.00, 35560000.00, 30700000.00, 67760000.00, '2026-11-06 18:30:00', 'Chua_Thanh_Toan', 2.80, 1500000.00, 50000.00, 100000.00, 254.00, 307, 0, 'Hóa đơn dịch vụ mặt đất chuyến bay VN246');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hoa_don_dieu_chinh_log`
+--
+
+CREATE TABLE `hoa_don_dieu_chinh_log` (
+  `id` int(11) NOT NULL,
+  `id_hoa_don` int(11) NOT NULL,
+  `tong_tien_cu` decimal(15,2) NOT NULL,
+  `tong_tien_moi` decimal(15,2) NOT NULL,
+  `ly_do` varchar(255) NOT NULL,
+  `thoi_diem` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lich_su_chuyen_bay`
+--
+
 CREATE TABLE `lich_su_chuyen_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_chuyen_bay` int(11) NOT NULL,
   `so_hieu` varchar(20) NOT NULL,
   `id_hang_hang_khong` int(11) DEFAULT NULL,
@@ -237,64 +622,534 @@ CREATE TABLE `lich_su_chuyen_bay` (
   `tong_gio_bay` decimal(8,2) NOT NULL DEFAULT 0.00,
   `so_hanh_khach` int(11) NOT NULL DEFAULT 0,
   `khoi_luong_hang_kg` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `thoi_diem_luu` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_chuyen_bay` (`id_chuyen_bay`),
-  KEY `idx_gio_ha_canh` (`gio_ha_canh`),
-  CONSTRAINT `fk_lich_su_chuyen_bay` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `thoi_diem_luu` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `lich_su_chuyen_bay` WRITE;
-/*!40000 ALTER TABLE `lich_su_chuyen_bay` DISABLE KEYS */;
-INSERT INTO `lich_su_chuyen_bay` VALUES (1,1,'CB0000',3,'Bamboo Airways',4,'DAD','Cảng hàng không quốc tế Đà Nẵng',12,'VCL','Cảng hàng không Chu Lai','2026-11-02 16:09:23','2026-11-02 16:13:23',0.07,230,89000.00,'2026-11-02 16:13:24'),(2,2,'CB0001',3,'Bamboo Airways',5,'HPH','Cảng hàng không quốc tế Cát Bi',11,'TBB','Cảng hàng không Tuy Hòa','2026-11-02 16:22:30','2026-11-02 16:24:30',0.03,290,233000.00,'2026-11-02 16:24:32'),(3,3,'CB0002',3,'Bamboo Airways',8,'DIN','Cảng hàng không Điện Biên Phủ',5,'HPH','Cảng hàng không quốc tế Cát Bi','2026-11-02 17:06:00','2026-11-02 17:14:00',0.13,230,89000.00,'2026-11-02 17:14:29'),(4,4,'CB0003',3,'Bamboo Airways',3,'CXR','Cảng hàng không quốc tế Cam Ranh',8,'DIN','Cảng hàng không Điện Biên Phủ','2026-11-02 17:44:04','2026-11-02 17:48:04',0.07,230,89000.00,'2026-11-02 17:48:14'),(5,5,'CB0004',1,'Vietnam Airlines',1,'HAN','Cảng hàng không quốc tế Nội Bài',4,'DAD','Cảng hàng không quốc tế Đà Nẵng','2026-11-02 17:46:16','2026-11-02 17:51:16',0.08,310,254000.00,'2026-11-02 17:51:28');
-/*!40000 ALTER TABLE `lich_su_chuyen_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `loai_tau_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `lich_su_chuyen_bay`
+--
+
+INSERT INTO `lich_su_chuyen_bay` (`id`, `id_chuyen_bay`, `so_hieu`, `id_hang_hang_khong`, `ten_hang`, `id_san_bay_di`, `ma_di`, `ten_san_bay_di`, `id_san_bay_den`, `ma_den`, `ten_san_bay_den`, `gio_cat_canh`, `gio_ha_canh`, `tong_gio_bay`, `so_hanh_khach`, `khoi_luong_hang_kg`, `thoi_diem_luu`) VALUES
+(6, 7, 'VN201', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-11-06 07:50:00', '2026-11-06 08:00:00', 0.17, 180, 2500.00, '2026-11-05 20:38:04'),
+(7, 9, 'VJ303', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-11-06 09:45:00', '2026-11-06 10:00:00', 0.25, 300, 5000.00, '2026-11-05 20:38:04'),
+(8, 11, 'QH405', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-11-06 23:30:00', '2026-11-06 23:45:00', 0.25, 200, 3200.00, '2026-11-05 20:38:04'),
+(9, 12, 'QH406', 3, 'Bamboo Airways', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-11-04 07:45:00', '2026-11-04 08:00:00', 0.25, 150, 1800.00, '2026-11-05 20:38:04'),
+(10, 14, 'VN210', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-01-05 06:30:00', '2026-01-05 06:36:00', 0.10, 296, 9100.00, '2026-01-05 08:36:00'),
+(11, 15, 'VJ134', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-01-08 09:15:00', '2026-01-08 09:15:00', 0.00, 205, 8400.00, '2026-01-08 11:15:00'),
+(12, 16, 'QH201', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-01-12 11:20:00', '2026-01-12 11:16:00', 0.00, 167, 5800.00, '2026-01-12 12:38:00'),
+(13, 17, 'VN158', 1, 'Vietnam Airlines', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-01-16 14:00:00', '2026-01-16 13:56:00', 0.00, 288, 8100.00, '2026-01-16 15:24:00'),
+(14, 18, 'VJ211', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-01-20 08:30:00', '2026-01-20 08:27:00', 0.00, 215, 6900.00, '2026-01-20 09:36:00'),
+(15, 19, 'QH142', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-01-23 13:45:00', '2026-01-23 13:53:00', 0.13, 297, 3900.00, '2026-01-23 16:03:00'),
+(16, 20, 'VN245', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-01-27 17:10:00', '2026-01-27 17:13:00', 0.05, 352, 3200.00, '2026-01-27 19:16:00'),
+(17, 21, 'VJ380', 2, 'Vietjet Air', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-01-30 19:30:00', '2026-01-30 19:28:00', 0.00, 173, 8700.00, '2026-01-30 21:42:00'),
+(18, 22, 'VN212', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-02-02 05:45:00', '2026-02-02 05:45:00', 0.00, 306, 8400.00, '2026-02-02 07:51:00'),
+(19, 23, 'VJ128', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-02-05 07:15:00', '2026-02-05 07:14:00', 0.00, 215, 2900.00, '2026-02-05 08:39:00'),
+(20, 24, 'QH218', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', '2026-02-08 08:30:00', '2026-02-08 08:34:00', 0.07, 284, 7900.00, '2026-02-08 10:42:00'),
+(21, 25, 'VN7204', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 9, 'THD', 'Cảng hàng không Thọ Xuân', '2026-02-11 10:00:00', '2026-02-11 09:59:00', 0.00, 225, 5700.00, '2026-02-11 12:00:00'),
+(22, 26, 'VJ624', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 10, 'VDH', 'Cảng hàng không Đồng Hới', '2026-02-14 12:45:00', '2026-02-14 12:49:00', 0.07, 185, 2700.00, '2026-02-14 14:33:00'),
+(23, 27, 'QH156', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 14, 'UIH', 'Cảng hàng không Phù Cát', '2026-02-17 14:30:00', '2026-02-17 14:29:00', 0.00, 82, 7700.00, '2026-02-17 15:42:00'),
+(24, 28, 'VN218', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-02-20 16:15:00', '2026-02-20 16:12:00', 0.00, 279, 8400.00, '2026-02-20 18:21:00'),
+(25, 29, 'VJ198', 2, 'Vietjet Air', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-02-23 18:00:00', '2026-02-23 18:05:00', 0.08, 214, 7600.00, '2026-02-23 19:24:00'),
+(26, 30, 'QH240', 3, 'Bamboo Airways', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-02-25 19:40:00', '2026-02-25 19:37:00', 0.00, 188, 9300.00, '2026-02-25 20:46:00'),
+(27, 31, 'VN120', 1, 'Vietnam Airlines', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-02-28 21:00:00', '2026-02-28 20:56:00', 0.00, 189, 4800.00, '2026-02-28 22:00:00'),
+(28, 32, 'VN214', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-03-04 07:30:00', '2026-03-04 07:34:00', 0.07, 289, 5600.00, '2026-03-04 09:36:00'),
+(29, 33, 'VJ136', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-03-09 10:15:00', '2026-03-09 10:22:00', 0.12, 214, 8400.00, '2026-03-09 12:15:00'),
+(30, 34, 'QH204', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-03-14 12:00:00', '2026-03-14 12:08:00', 0.13, 182, 6700.00, '2026-03-14 13:54:00'),
+(31, 35, 'VN160', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-03-18 14:30:00', '2026-03-18 14:26:00', 0.00, 191, 3900.00, '2026-03-18 15:54:00'),
+(32, 36, 'VJ452', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-03-22 16:20:00', '2026-03-22 16:25:00', 0.08, 220, 8900.00, '2026-03-22 18:38:00'),
+(33, 37, 'QH162', 3, 'Bamboo Airways', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-03-26 18:45:00', '2026-03-26 18:52:00', 0.12, 153, 5300.00, '2026-03-26 20:03:00'),
+(34, 38, 'VN302', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 7, 'VCA', 'Cảng hàng không quốc tế Cần Thơ', '2026-03-30 20:10:00', '2026-03-30 20:12:00', 0.03, 60, 2900.00, '2026-03-30 20:58:00'),
+(35, 39, 'VN216', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-04-03 06:15:00', '2026-04-03 06:18:00', 0.05, 291, 4900.00, '2026-04-03 08:21:00'),
+(36, 40, 'VJ140', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-04-07 08:45:00', '2026-04-07 08:45:00', 0.00, 205, 8600.00, '2026-04-07 10:45:00'),
+(37, 41, 'QH208', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-04-12 11:30:00', '2026-04-12 11:33:00', 0.05, 182, 3500.00, '2026-04-12 12:48:00'),
+(38, 42, 'VN164', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-04-16 13:15:00', '2026-04-16 13:22:00', 0.12, 196, 4200.00, '2026-04-16 14:15:00'),
+(39, 43, 'VJ220', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-04-20 15:00:00', '2026-04-20 15:01:00', 0.02, 222, 6900.00, '2026-04-20 16:06:00'),
+(40, 44, 'QH310', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 8, 'DIN', 'Cảng hàng không Điện Biên Phủ', '2026-04-24 09:30:00', '2026-04-24 09:35:00', 0.08, 88, 3700.00, '2026-04-24 10:30:00'),
+(41, 45, 'VN250', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-04-27 17:00:00', '2026-04-27 17:01:00', 0.02, 376, 5000.00, '2026-04-27 19:06:00'),
+(42, 46, 'VJ630', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', '2026-04-29 19:20:00', '2026-04-29 19:28:00', 0.13, 225, 7900.00, '2026-04-29 21:32:00'),
+(43, 47, 'QH170', 3, 'Bamboo Airways', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-04-30 20:45:00', '2026-04-30 20:53:00', 0.13, 188, 5400.00, '2026-04-30 22:21:00'),
+(44, 48, 'VN220', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-05-04 06:45:00', '2026-05-04 06:41:00', 0.00, 283, 5800.00, '2026-05-04 08:51:00'),
+(45, 49, 'VJ146', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-05-08 09:30:00', '2026-05-08 09:37:00', 0.12, 193, 9400.00, '2026-05-08 11:30:00'),
+(46, 50, 'QH212', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-05-13 11:15:00', '2026-05-13 11:21:00', 0.10, 163, 7200.00, '2026-05-13 12:33:00'),
+(47, 51, 'VN168', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-05-17 14:00:00', '2026-05-17 14:07:00', 0.12, 193, 4500.00, '2026-05-17 15:06:00'),
+(48, 52, 'VJ458', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-05-21 16:30:00', '2026-05-21 16:34:00', 0.07, 215, 2700.00, '2026-05-21 17:30:00'),
+(49, 53, 'QH176', 3, 'Bamboo Airways', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-05-25 18:15:00', '2026-05-25 18:21:00', 0.10, 157, 9100.00, '2026-05-25 19:39:00'),
+(50, 54, 'VN512', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 7, 'VCA', 'Cảng hàng không quốc tế Cần Thơ', '2026-05-28 10:20:00', '2026-05-28 10:25:00', 0.08, 207, 4100.00, '2026-05-28 12:32:00'),
+(51, 55, 'VJ780', 2, 'Vietjet Air', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-05-31 20:00:00', '2026-05-31 19:55:00', 0.00, 216, 5700.00, '2026-05-31 21:54:00'),
+(52, 56, 'VN224', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-06-02 06:00:00', '2026-06-02 06:03:00', 0.05, 271, 6000.00, '2026-06-02 08:06:00'),
+(53, 57, 'VJ152', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-06-05 08:20:00', '2026-06-05 08:25:00', 0.08, 224, 8900.00, '2026-06-05 10:20:00'),
+(54, 58, 'QH216', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-06-09 10:45:00', '2026-06-09 10:42:00', 0.00, 301, 5000.00, '2026-06-09 13:03:00'),
+(55, 59, 'VN172', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-06-13 13:30:00', '2026-06-13 13:26:00', 0.00, 309, 9100.00, '2026-06-13 14:54:00'),
+(56, 60, 'VJ226', 2, 'Vietjet Air', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-06-16 15:15:00', '2026-06-16 15:10:00', 0.00, 158, 6500.00, '2026-06-16 16:27:00'),
+(57, 61, 'QH182', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-06-20 17:00:00', '2026-06-20 17:05:00', 0.08, 171, 3300.00, '2026-06-20 18:06:00'),
+(58, 62, 'VN256', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-06-23 18:45:00', '2026-06-23 18:43:00', 0.00, 348, 6100.00, '2026-06-23 20:51:00'),
+(59, 63, 'VJ636', 2, 'Vietjet Air', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-06-26 11:10:00', '2026-06-26 11:08:00', 0.00, 189, 8900.00, '2026-06-26 13:34:00'),
+(60, 64, 'QH246', 3, 'Bamboo Airways', 7, 'VCA', 'Cảng hàng không quốc tế Cần Thơ', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-06-28 14:00:00', '2026-06-28 14:02:00', 0.03, 173, 5300.00, '2026-06-28 16:12:00'),
+(61, 65, 'VN128', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 14, 'UIH', 'Cảng hàng không Phù Cát', '2026-06-30 20:30:00', '2026-06-30 20:32:00', 0.03, 216, 4000.00, '2026-06-30 21:42:00'),
+(62, 66, 'VN228', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-07-03 06:15:00', '2026-07-03 06:20:00', 0.08, 276, 6200.00, '2026-07-03 08:21:00'),
+(63, 67, 'VJ158', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-07-06 08:30:00', '2026-07-06 08:26:00', 0.00, 200, 3000.00, '2026-07-06 10:30:00'),
+(64, 68, 'QH220', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-07-10 11:00:00', '2026-07-10 11:01:00', 0.02, 255, 3500.00, '2026-07-10 12:18:00'),
+(65, 69, 'VN176', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-07-14 13:45:00', '2026-07-14 13:46:00', 0.02, 257, 6300.00, '2026-07-14 14:45:00'),
+(66, 70, 'VJ232', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-07-18 15:30:00', '2026-07-18 15:30:00', 0.00, 214, 2500.00, '2026-07-18 16:36:00'),
+(67, 71, 'QH188', 3, 'Bamboo Airways', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-07-21 17:15:00', '2026-07-21 17:20:00', 0.08, 184, 4800.00, '2026-07-21 18:39:00'),
+(68, 72, 'VN260', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-07-25 18:50:00', '2026-07-25 18:54:00', 0.07, 356, 2800.00, '2026-07-25 20:56:00'),
+(69, 73, 'VJ642', 2, 'Vietjet Air', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-07-27 12:20:00', '2026-07-27 12:19:00', 0.00, 162, 7800.00, '2026-07-27 13:44:00'),
+(70, 74, 'QH252', 3, 'Bamboo Airways', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-07-29 16:40:00', '2026-07-29 16:44:00', 0.07, 173, 7700.00, '2026-07-29 17:40:00'),
+(71, 75, 'VN134', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 13, 'PXU', 'Cảng hàng không Pleiku', '2026-07-31 20:15:00', '2026-07-31 20:18:00', 0.05, 219, 7300.00, '2026-07-31 21:27:00'),
+(72, 76, 'VN232', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-08-03 07:00:00', '2026-08-03 07:07:00', 0.12, 298, 7500.00, '2026-08-03 09:06:00'),
+(73, 77, 'VJ164', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-08-07 09:15:00', '2026-08-07 09:13:00', 0.00, 200, 6800.00, '2026-08-07 11:15:00'),
+(74, 78, 'QH224', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-08-11 11:45:00', '2026-08-11 11:48:00', 0.05, 173, 9100.00, '2026-08-11 13:09:00'),
+(75, 79, 'VN180', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-08-15 14:20:00', '2026-08-15 14:16:00', 0.00, 207, 9100.00, '2026-08-15 16:14:00'),
+(76, 80, 'VJ464', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-08-19 16:00:00', '2026-08-19 16:04:00', 0.07, 217, 4000.00, '2026-08-19 17:00:00'),
+(77, 81, 'QH194', 3, 'Bamboo Airways', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-08-23 18:30:00', '2026-08-23 18:26:00', 0.00, 148, 8800.00, '2026-08-23 20:24:00'),
+(78, 82, 'VN266', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-08-27 19:45:00', '2026-08-27 19:52:00', 0.12, 280, 4100.00, '2026-08-27 21:51:00'),
+(79, 83, 'VJ648', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 12, 'VCL', 'Cảng hàng không Chu Lai', '2026-08-30 21:00:00', '2026-08-30 20:58:00', 0.00, 164, 3100.00, '2026-08-30 22:18:00'),
+(80, 84, 'VN236', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-09-01 06:30:00', '2026-09-01 06:36:00', 0.10, 299, 7800.00, '2026-09-01 08:36:00'),
+(81, 85, 'VJ170', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-09-02 08:45:00', '2026-09-02 08:49:00', 0.07, 239, 5200.00, '2026-09-02 10:45:00'),
+(82, 86, 'QH228', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-09-05 11:00:00', '2026-09-05 11:05:00', 0.08, 167, 5800.00, '2026-09-05 12:18:00'),
+(83, 87, 'VN184', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-09-10 13:30:00', '2026-09-10 13:25:00', 0.00, 264, 7200.00, '2026-09-10 14:54:00'),
+(84, 88, 'VJ238', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-09-15 15:15:00', '2026-09-15 15:14:00', 0.00, 196, 6100.00, '2026-09-15 16:21:00'),
+(85, 89, 'QH202', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 7, 'VCA', 'Cảng hàng không quốc tế Cần Thơ', '2026-09-20 17:00:00', '2026-09-20 16:59:00', 0.00, 149, 8600.00, '2026-09-20 19:12:00'),
+(86, 90, 'VN270', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-09-25 18:30:00', '2026-09-25 18:30:00', 0.00, 271, 4500.00, '2026-09-25 20:36:00'),
+(87, 91, 'VJ654', 2, 'Vietjet Air', 5, 'HPH', 'Cảng hàng không quốc tế Cát Bi', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-09-29 20:15:00', '2026-09-29 20:12:00', 0.00, 202, 3600.00, '2026-09-29 22:27:00'),
+(88, 92, 'VN240', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-10-04 07:15:00', '2026-10-04 07:13:00', 0.00, 273, 7300.00, '2026-10-04 09:21:00'),
+(89, 93, 'VJ176', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-10-08 09:30:00', '2026-10-08 09:32:00', 0.03, 189, 4500.00, '2026-10-08 11:30:00'),
+(90, 94, 'QH232', 3, 'Bamboo Airways', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-10-12 11:45:00', '2026-10-12 11:42:00', 0.00, 186, 5800.00, '2026-10-12 13:09:00'),
+(91, 95, 'VN188', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 6, 'PQC', 'Cảng hàng không quốc tế Phú Quốc', '2026-10-16 14:00:00', '2026-10-16 13:58:00', 0.00, 319, 4200.00, '2026-10-16 16:18:00'),
+(92, 96, 'VJ244', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-10-21 16:15:00', '2026-10-21 16:10:00', 0.00, 239, 4800.00, '2026-10-21 17:21:00'),
+(93, 97, 'QH206', 3, 'Bamboo Airways', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-10-25 18:00:00', '2026-10-25 17:57:00', 0.00, 160, 3500.00, '2026-10-25 19:18:00'),
+(94, 98, 'VN274', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-10-28 19:30:00', '2026-10-28 19:33:00', 0.05, 368, 7900.00, '2026-10-28 21:36:00'),
+(95, 99, 'VJ660', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 9, 'THD', 'Cảng hàng không Thọ Xuân', '2026-10-31 21:00:00', '2026-10-31 20:56:00', 0.00, 172, 4500.00, '2026-10-31 23:00:00'),
+(96, 100, 'VN242', 1, 'Vietnam Airlines', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-11-01 06:15:00', '2026-11-01 06:21:00', 0.10, 283, 2700.00, '2026-11-01 08:21:00'),
+(97, 101, 'VJ180', 2, 'Vietjet Air', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-11-02 08:30:00', '2026-11-02 08:36:00', 0.10, 210, 4100.00, '2026-11-02 10:30:00'),
+(98, 102, 'QH236', 3, 'Bamboo Airways', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', '2026-11-03 11:00:00', '2026-11-03 11:06:00', 0.10, 167, 6500.00, '2026-11-03 12:18:00'),
+(99, 103, 'VN192', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 3, 'CXR', 'Cảng hàng không quốc tế Cam Ranh', '2026-11-04 13:15:00', '2026-11-04 13:21:00', 0.10, 291, 2900.00, '2026-11-04 14:21:00'),
+(100, 104, 'VJ250', 2, 'Vietjet Air', 4, 'DAD', 'Cảng hàng không quốc tế Đà Nẵng', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-11-05 15:30:00', '2026-11-05 15:37:00', 0.12, 191, 9300.00, '2026-11-05 16:54:00'),
+(101, 105, 'VN246', 1, 'Vietnam Airlines', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', '2026-11-06 06:30:00', '2026-11-06 06:29:00', 0.00, 307, 5400.00, '2026-11-06 08:36:00'),
+(102, 106, 'VJ184', 2, 'Vietjet Air', 1, 'HAN', 'Cảng hàng không quốc tế Nội Bài', 2, 'SGN', 'Cảng hàng không quốc tế Tân Sơn Nhất', '2026-11-06 14:15:00', '2026-11-06 14:10:00', 0.00, 209, 5600.00, '2026-11-06 21:47:06');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `loai_tau_bay`
+--
+
 CREATE TABLE `loai_tau_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
+  `id_san_bay` int(11) DEFAULT NULL,
   `ma_loai` varchar(50) NOT NULL,
+  `id_hang_hang_khong` int(11) DEFAULT NULL,
   `tai_trong_cat_canh_mtow` decimal(10,2) NOT NULL,
   `suc_chua_hanh_khach` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ma_loai` (`ma_loai`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `hinh_anh` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `loai_tau_bay` WRITE;
-/*!40000 ALTER TABLE `loai_tau_bay` DISABLE KEYS */;
-INSERT INTO `loai_tau_bay` VALUES (1,'Airbus A321',89.00,230),(2,'Boeing 787-9',254.00,310),(3,'Airbus A330',233.00,290);
-/*!40000 ALTER TABLE `loai_tau_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `nguoi_dung`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `loai_tau_bay`
+--
+
+INSERT INTO `loai_tau_bay` (`id`, `id_san_bay`, `ma_loai`, `id_hang_hang_khong`, `tai_trong_cat_canh_mtow`, `suc_chua_hanh_khach`, `hinh_anh`) VALUES
+(1, NULL, 'Airbus A321', 1, 89.00, 230, 'assets/img/tau_bay/vietnam-airlines/01.jpg'),
+(2, NULL, 'Boeing 787-9', 2, 254.00, 310, 'assets/img/tau_bay/vietjet-air/01.jpg'),
+(3, NULL, 'Airbus A330', 3, 233.00, 290, 'assets/img/tau_bay/bamboo-airways/01.jpg'),
+(4, NULL, 'Airbus A320neo', 1, 79.00, 194, 'assets/img/tau_bay/vietnam-airlines/02.jpg'),
+(5, NULL, 'Airbus A350-900', 2, 280.00, 325, 'assets/img/tau_bay/vietjet-air/02.jpg'),
+(6, NULL, 'Boeing 737-800', 3, 79.00, 189, 'assets/img/tau_bay/bamboo-airways/02.jpg'),
+(7, NULL, 'Boeing 737 MAX 8', 1, 82.00, 210, 'assets/img/tau_bay/vietnam-airlines/03.jpg'),
+(8, NULL, 'Boeing 777-300ER', 2, 351.50, 396, 'assets/img/tau_bay/vietjet-air/03.jpg'),
+(9, NULL, 'Embraer E190', 3, 51.80, 100, 'assets/img/tau_bay/bamboo-airways/03.jpg'),
+(10, NULL, 'ATR 72-600', 1, 23.00, 72, 'assets/img/tau_bay/vietnam-airlines/04.jpg'),
+(11, NULL, 'Airbus A380-800', 2, 575.00, 555, 'assets/img/tau_bay/vietjet-air/04.jpg'),
+(12, NULL, 'Boeing 777-200LR', 3, 347.50, 317, 'assets/img/tau_bay/bamboo-airways/04.jpg'),
+(13, NULL, 'Boeing 787-10', 1, 254.00, 330, 'assets/img/tau_bay/vietnam-airlines/05.jpg'),
+(14, NULL, 'Airbus A321neo', 2, 97.00, 244, 'assets/img/tau_bay/vietjet-air/05.jpg'),
+(15, NULL, 'Airbus A320', 3, 77.00, 180, 'assets/img/tau_bay/bamboo-airways/05.jpg'),
+(16, NULL, 'Airbus A319', 1, 64.00, 156, 'assets/img/tau_bay/vietnam-airlines/06.jpg'),
+(17, NULL, 'ATR 42-600', 2, 18.60, 48, 'assets/img/tau_bay/vietjet-air/06.jpg'),
+(18, NULL, 'ATR 72-500', 3, 22.00, 68, 'assets/img/tau_bay/bamboo-airways/06.jpg'),
+(19, NULL, 'Embraer E175', 1, 38.80, 88, 'assets/img/tau_bay/vietnam-airlines/07.jpg'),
+(20, NULL, 'Embraer E195-E2', 2, 61.50, 146, 'assets/img/tau_bay/vietjet-air/07.jpg'),
+(21, NULL, 'Bombardier CRJ900', 3, 38.30, 90, 'assets/img/tau_bay/bamboo-airways/07.jpg'),
+(22, NULL, 'Sukhoi Superjet 100', 1, 45.90, 98, 'assets/img/tau_bay/vietnam-airlines/08.jpg'),
+(23, NULL, 'COMAC C919', 2, 72.50, 192, 'assets/img/tau_bay/vietjet-air/08.jpg'),
+(24, NULL, 'Boeing 757-200', 3, 115.70, 200, 'assets/img/tau_bay/bamboo-airways/08.jpg'),
+(25, NULL, 'Boeing 767-300ER', 1, 186.90, 269, 'assets/img/tau_bay/vietnam-airlines/09.jpg'),
+(26, NULL, 'Boeing 747-8I', 2, 447.70, 410, 'assets/img/tau_bay/vietjet-air/09.jpg'),
+(27, NULL, 'Airbus A330-900neo', 3, 251.00, 287, 'assets/img/tau_bay/bamboo-airways/09.jpg'),
+(28, NULL, 'Airbus A340-600', 1, 380.00, 380, 'assets/img/tau_bay/vietnam-airlines/10.jpg'),
+(29, NULL, 'Boeing 787-8', 2, 227.90, 242, 'assets/img/tau_bay/vietjet-air/10.jpg'),
+(30, NULL, 'Boeing 737-900ER', 3, 85.10, 220, 'assets/img/tau_bay/bamboo-airways/10.jpg');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nguoi_dung`
+--
+
 CREATE TABLE `nguoi_dung` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `ten_dang_nhap` varchar(50) NOT NULL,
   `mat_khau_hash` varchar(255) NOT NULL,
   `ho_ten` varchar(100) NOT NULL,
-  `vai_tro` enum('Admin_Tong_Cong_Ty','Quan_Ly_San_Bay','Nhan_Vien_Dieu_Hanh','Ke_Toan') NOT NULL,
-  `id_san_bay` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ten_dang_nhap` (`ten_dang_nhap`),
-  KEY `id_san_bay` (`id_san_bay`),
-  CONSTRAINT `nguoi_dung_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `anh_dai_dien` varchar(255) DEFAULT NULL,
+  `vai_tro` enum('Admin_Tong_Cong_Ty','Quan_Ly_San_Bay','Nhan_Vien_Dieu_Hanh','Nhan_Vien_Bao_Tri','Ke_Toan') NOT NULL,
+  `id_san_bay` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `nguoi_dung` WRITE;
-/*!40000 ALTER TABLE `nguoi_dung` DISABLE KEYS */;
-INSERT INTO `nguoi_dung` VALUES (1,'admin','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','Nguyễn Đình Khánh','Admin_Tong_Cong_Ty',NULL),(2,'dieuhanh_sgn','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','Trần Bảo Thiên','Nhan_Vien_Dieu_Hanh',2),(3,'ketoan_han','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','Nguyễn Thị Mỹ Khánh','Ke_Toan',1),(4,'quanly_cxr','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','Huỳnh Tuấn Ngọc','Quan_Ly_San_Bay',3);
-/*!40000 ALTER TABLE `nguoi_dung` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `nha_ga`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `nguoi_dung`
+--
+
+INSERT INTO `nguoi_dung` (`id`, `ten_dang_nhap`, `mat_khau_hash`, `ho_ten`, `anh_dai_dien`, `vai_tro`, `id_san_bay`) VALUES
+(1, 'admin', '$2y$10$eY96i0eJ653aST8JM.Nq9.q/e9wlTyO2pzAif5PWKnlIn76ggnFxq', 'Nguyễn Đình Khánh', 'assets/img/avatars/avatar_1793957369_45c962b7.png', 'Admin_Tong_Cong_Ty', NULL),
+(2, 'dieuhanh_sgn', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Trần Bảo Thiên', NULL, 'Nhan_Vien_Dieu_Hanh', 2),
+(3, 'ketoan_han', '$2y$10$T.sAfXhRrMMrmowa.HACZ.QmQWnjN6Uoc6jDYC6oeTC7II1xaTUb2', 'Nguyễn Thị Mỹ Khánh', 'assets/img/avatars/avatar_1793957443_a5340c83.png', 'Ke_Toan', 1),
+(4, 'quanly_cxr', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Huỳnh Tuấn Ngọc', NULL, 'Quan_Ly_San_Bay', 3),
+(6, 'baotri_han', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Trần Nhật An', NULL, 'Nhan_Vien_Bao_Tri', 1),
+(7, 'baotri_sgn', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Võ Lê Gia Bảo', NULL, 'Nhan_Vien_Bao_Tri', 2),
+(8, 'baotri_cxr', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Nguyễn Đức Duy', NULL, 'Nhan_Vien_Bao_Tri', 3),
+(9, 'quanly_han', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Nguyễn Nhật Khánh Duy', NULL, 'Quan_Ly_San_Bay', 1),
+(10, 'dieuhanh_han', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Trần Thế Hào', NULL, 'Nhan_Vien_Dieu_Hanh', 1),
+(11, 'quanly_dad', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Nguyễn Văn Hưng', NULL, 'Quan_Ly_San_Bay', 4),
+(12, 'dieuhanh_dad', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Võ Nhật Lâm', NULL, 'Nhan_Vien_Dieu_Hanh', 4),
+(13, 'baotri_dad', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Đoàn Phi Phong', NULL, 'Nhan_Vien_Bao_Tri', 4),
+(14, 'ketoan_sgn', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Quảng Thị Kim Hiền', NULL, 'Ke_Toan', 2),
+(15, 'ketoan_dad', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Bùi Thị Kim Nhàn', NULL, 'Ke_Toan', 4),
+(16, 'quanly_pqc', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Lê Thị Nhung', NULL, 'Quan_Ly_San_Bay', 6),
+(17, 'ketoan_cxr', '$2y$10$UPyhS7H4oE3IC2psIJTi0.JSAAoOfQdhG3oD.pqaNVz8U6LMQO3C.', 'Nguyễn Thị Diễm Quỳnh', NULL, 'Ke_Toan', 3);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nhat_ky_trang_thai_bay`
+--
+
+CREATE TABLE `nhat_ky_trang_thai_bay` (
+  `id` int(11) NOT NULL,
+  `id_chuyen_bay` int(11) NOT NULL,
+  `id_nguoi_dung` int(11) DEFAULT NULL,
+  `hanh_dong` varchar(30) NOT NULL DEFAULT 'Sua',
+  `trang_thai` enum('Dang_Mo','Cat_Canh','Ha_Canh','Delay','Huy') NOT NULL,
+  `trang_thai_cu` varchar(20) DEFAULT NULL,
+  `thoi_gian_cap_nhat` datetime DEFAULT current_timestamp(),
+  `ghi_chu` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `nhat_ky_trang_thai_bay`
+--
+
+INSERT INTO `nhat_ky_trang_thai_bay` (`id`, `id_chuyen_bay`, `id_nguoi_dung`, `hanh_dong`, `trang_thai`, `trang_thai_cu`, `thoi_gian_cap_nhat`, `ghi_chu`) VALUES
+(32, 13, NULL, 'Tu_Dong', 'Delay', 'Dang_Mo', '2026-11-05 20:38:04', 'Tự động chuyển Trễ chuyến: quá 15 phút kể từ giờ cất cánh mà chưa xác nhận điều kiện bay.'),
+(33, 13, NULL, 'Tu_Dong', 'Huy', 'Delay', '2026-11-05 20:38:04', 'Hủy chuyến do chưa khắc phục được sự cố và chuyển sang chuyến bay gần nhất.'),
+(34, 8, NULL, 'Tu_Dong', 'Delay', 'Dang_Mo', '2026-11-06 10:03:43', 'Tự động chuyển Trễ chuyến: quá 15 phút kể từ giờ cất cánh mà chưa xác nhận điều kiện bay.'),
+(35, 8, 1, 'Xac_Nhan_Cat_Canh', 'Cat_Canh', 'Delay', '2026-11-06 10:05:03', 'Chuyến bay VN202 đã khắc phục xong các sự cố trễ trước đó, Lý do không có lý do trước đó. Nguyễn Đình Khánh xác nhận đủ điều kiện an toàn và cho cất cánh lúc 10:05. Tổng thời gian trễ 35 phút (0 phút delay + 35 phút quá hạn).'),
+(36, 10, NULL, 'Tu_Dong', 'Delay', 'Dang_Mo', '2026-11-06 13:21:03', 'Tự động chuyển Trễ chuyến: quá 15 phút kể từ giờ cất cánh mà chưa xác nhận điều kiện bay.'),
+(37, 10, NULL, 'Tu_Dong', 'Huy', 'Delay', '2026-11-06 21:20:29', 'Hủy chuyến do chưa khắc phục được sự cố và chuyển sang chuyến bay gần nhất.'),
+(38, 14, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-05 06:30:00', 'Khởi tạo lịch bay VN210'),
+(39, 14, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-05 06:30:00', 'Chuyến bay VN210 cất cánh từ HAN'),
+(40, 14, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-05 08:36:00', 'Chuyến bay VN210 hạ cánh an toàn tại SGN'),
+(41, 15, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-08 09:15:00', 'Khởi tạo lịch bay VJ134'),
+(42, 15, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-08 09:15:00', 'Chuyến bay VJ134 cất cánh từ SGN'),
+(43, 15, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-08 11:15:00', 'Chuyến bay VJ134 hạ cánh an toàn tại HAN'),
+(44, 16, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-12 11:20:00', 'Khởi tạo lịch bay QH201'),
+(45, 16, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-12 11:20:00', 'Chuyến bay QH201 cất cánh từ HAN'),
+(46, 16, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-12 12:38:00', 'Chuyến bay QH201 hạ cánh an toàn tại DAD'),
+(47, 17, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-16 14:00:00', 'Khởi tạo lịch bay VN158'),
+(48, 17, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-16 14:00:00', 'Chuyến bay VN158 cất cánh từ DAD'),
+(49, 17, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-16 15:24:00', 'Chuyến bay VN158 hạ cánh an toàn tại SGN'),
+(50, 18, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-20 08:30:00', 'Khởi tạo lịch bay VJ211'),
+(51, 18, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-20 08:30:00', 'Chuyến bay VJ211 cất cánh từ SGN'),
+(52, 18, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-20 09:36:00', 'Chuyến bay VJ211 hạ cánh an toàn tại CXR'),
+(53, 19, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-23 13:45:00', 'Khởi tạo lịch bay QH142'),
+(54, 19, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-23 13:45:00', 'Chuyến bay QH142 cất cánh từ HAN'),
+(55, 19, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-23 16:03:00', 'Chuyến bay QH142 hạ cánh an toàn tại PQC'),
+(56, 20, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-27 17:10:00', 'Khởi tạo lịch bay VN245'),
+(57, 20, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-27 17:10:00', 'Chuyến bay VN245 cất cánh từ SGN'),
+(58, 20, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-27 19:16:00', 'Chuyến bay VN245 hạ cánh an toàn tại HAN'),
+(59, 21, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-01-30 19:30:00', 'Khởi tạo lịch bay VJ380'),
+(60, 21, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-01-30 19:30:00', 'Chuyến bay VJ380 cất cánh từ HPH'),
+(61, 21, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-01-30 21:42:00', 'Chuyến bay VJ380 hạ cánh an toàn tại SGN'),
+(62, 22, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-02 05:45:00', 'Khởi tạo lịch bay VN212'),
+(63, 22, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-02 05:45:00', 'Chuyến bay VN212 cất cánh từ SGN'),
+(64, 22, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-02 07:51:00', 'Chuyến bay VN212 hạ cánh an toàn tại HAN'),
+(65, 23, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-05 07:15:00', 'Khởi tạo lịch bay VJ128'),
+(66, 23, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-05 07:15:00', 'Chuyến bay VJ128 cất cánh từ SGN'),
+(67, 23, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-05 08:39:00', 'Chuyến bay VJ128 hạ cánh an toàn tại DAD'),
+(68, 24, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-08 08:30:00', 'Khởi tạo lịch bay QH218'),
+(69, 24, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-08 08:30:00', 'Chuyến bay QH218 cất cánh từ SGN'),
+(70, 24, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-08 10:42:00', 'Chuyến bay QH218 hạ cánh an toàn tại HPH'),
+(71, 25, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-11 10:00:00', 'Khởi tạo lịch bay VN7204'),
+(72, 25, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-11 10:00:00', 'Chuyến bay VN7204 cất cánh từ SGN'),
+(73, 25, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-11 12:00:00', 'Chuyến bay VN7204 hạ cánh an toàn tại THD'),
+(74, 26, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-14 12:45:00', 'Khởi tạo lịch bay VJ624'),
+(75, 26, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-14 12:45:00', 'Chuyến bay VJ624 cất cánh từ SGN'),
+(76, 26, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-14 14:33:00', 'Chuyến bay VJ624 hạ cánh an toàn tại VDH'),
+(77, 27, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-17 14:30:00', 'Khởi tạo lịch bay QH156'),
+(78, 27, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-17 14:30:00', 'Chuyến bay QH156 cất cánh từ SGN'),
+(79, 27, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-17 15:42:00', 'Chuyến bay QH156 hạ cánh an toàn tại UIH'),
+(80, 28, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-20 16:15:00', 'Khởi tạo lịch bay VN218'),
+(81, 28, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-20 16:15:00', 'Chuyến bay VN218 cất cánh từ HAN'),
+(82, 28, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-20 18:21:00', 'Chuyến bay VN218 hạ cánh an toàn tại SGN'),
+(83, 29, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-23 18:00:00', 'Khởi tạo lịch bay VJ198'),
+(84, 29, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-23 18:00:00', 'Chuyến bay VJ198 cất cánh từ DAD'),
+(85, 29, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-23 19:24:00', 'Chuyến bay VJ198 hạ cánh an toàn tại SGN'),
+(86, 30, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-25 19:40:00', 'Khởi tạo lịch bay QH240'),
+(87, 30, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-25 19:40:00', 'Chuyến bay QH240 cất cánh từ CXR'),
+(88, 30, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-25 20:46:00', 'Chuyến bay QH240 hạ cánh an toàn tại SGN'),
+(89, 31, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-02-28 21:00:00', 'Khởi tạo lịch bay VN120'),
+(90, 31, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-02-28 21:00:00', 'Chuyến bay VN120 cất cánh từ PQC'),
+(91, 31, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-02-28 22:00:00', 'Chuyến bay VN120 hạ cánh an toàn tại SGN'),
+(92, 32, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-04 07:30:00', 'Khởi tạo lịch bay VN214'),
+(93, 32, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-04 07:30:00', 'Chuyến bay VN214 cất cánh từ HAN'),
+(94, 32, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-04 09:36:00', 'Chuyến bay VN214 hạ cánh an toàn tại SGN'),
+(95, 33, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-09 10:15:00', 'Khởi tạo lịch bay VJ136'),
+(96, 33, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-09 10:15:00', 'Chuyến bay VJ136 cất cánh từ SGN'),
+(97, 33, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-09 12:15:00', 'Chuyến bay VJ136 hạ cánh an toàn tại HAN'),
+(98, 34, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-14 12:00:00', 'Khởi tạo lịch bay QH204'),
+(99, 34, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-14 12:00:00', 'Chuyến bay QH204 cất cánh từ HAN'),
+(100, 34, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-14 13:54:00', 'Chuyến bay QH204 hạ cánh an toàn tại CXR'),
+(101, 35, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-18 14:30:00', 'Khởi tạo lịch bay VN160'),
+(102, 35, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-18 14:30:00', 'Chuyến bay VN160 cất cánh từ SGN'),
+(103, 35, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-18 15:54:00', 'Chuyến bay VN160 hạ cánh an toàn tại DAD'),
+(104, 36, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-22 16:20:00', 'Khởi tạo lịch bay VJ452'),
+(105, 36, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-22 16:20:00', 'Chuyến bay VJ452 cất cánh từ HAN'),
+(106, 36, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-22 18:38:00', 'Chuyến bay VJ452 hạ cánh an toàn tại PQC'),
+(107, 37, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-26 18:45:00', 'Khởi tạo lịch bay QH162'),
+(108, 37, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-26 18:45:00', 'Chuyến bay QH162 cất cánh từ DAD'),
+(109, 37, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-26 20:03:00', 'Chuyến bay QH162 hạ cánh an toàn tại HAN'),
+(110, 38, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-03-30 20:10:00', 'Khởi tạo lịch bay VN302'),
+(111, 38, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-03-30 20:10:00', 'Chuyến bay VN302 cất cánh từ SGN'),
+(112, 38, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-03-30 20:58:00', 'Chuyến bay VN302 hạ cánh an toàn tại VCA'),
+(113, 39, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-03 06:15:00', 'Khởi tạo lịch bay VN216'),
+(114, 39, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-03 06:15:00', 'Chuyến bay VN216 cất cánh từ SGN'),
+(115, 39, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-03 08:21:00', 'Chuyến bay VN216 hạ cánh an toàn tại HAN'),
+(116, 40, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-07 08:45:00', 'Khởi tạo lịch bay VJ140'),
+(117, 40, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-07 08:45:00', 'Chuyến bay VJ140 cất cánh từ HAN'),
+(118, 40, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-07 10:45:00', 'Chuyến bay VJ140 hạ cánh an toàn tại SGN'),
+(119, 41, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-12 11:30:00', 'Khởi tạo lịch bay QH208'),
+(120, 41, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-12 11:30:00', 'Chuyến bay QH208 cất cánh từ HAN'),
+(121, 41, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-12 12:48:00', 'Chuyến bay QH208 hạ cánh an toàn tại DAD'),
+(122, 42, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-16 13:15:00', 'Khởi tạo lịch bay VN164'),
+(123, 42, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-16 13:15:00', 'Chuyến bay VN164 cất cánh từ SGN'),
+(124, 42, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-16 14:15:00', 'Chuyến bay VN164 hạ cánh an toàn tại PQC'),
+(125, 43, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-20 15:00:00', 'Khởi tạo lịch bay VJ220'),
+(126, 43, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-20 15:00:00', 'Chuyến bay VJ220 cất cánh từ SGN'),
+(127, 43, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-20 16:06:00', 'Chuyến bay VJ220 hạ cánh an toàn tại CXR'),
+(128, 44, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-24 09:30:00', 'Khởi tạo lịch bay QH310'),
+(129, 44, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-24 09:30:00', 'Chuyến bay QH310 cất cánh từ HAN'),
+(130, 44, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-24 10:30:00', 'Chuyến bay QH310 hạ cánh an toàn tại DIN'),
+(131, 45, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-27 17:00:00', 'Khởi tạo lịch bay VN250'),
+(132, 45, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-27 17:00:00', 'Chuyến bay VN250 cất cánh từ HAN'),
+(133, 45, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-27 19:06:00', 'Chuyến bay VN250 hạ cánh an toàn tại SGN'),
+(134, 46, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-29 19:20:00', 'Khởi tạo lịch bay VJ630'),
+(135, 46, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-29 19:20:00', 'Chuyến bay VJ630 cất cánh từ SGN'),
+(136, 46, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-29 21:32:00', 'Chuyến bay VJ630 hạ cánh an toàn tại HPH'),
+(137, 47, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-04-30 20:45:00', 'Khởi tạo lịch bay QH170'),
+(138, 47, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-04-30 20:45:00', 'Chuyến bay QH170 cất cánh từ DAD'),
+(139, 47, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-04-30 22:21:00', 'Chuyến bay QH170 hạ cánh an toàn tại PQC'),
+(140, 48, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-04 06:45:00', 'Khởi tạo lịch bay VN220'),
+(141, 48, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-04 06:45:00', 'Chuyến bay VN220 cất cánh từ HAN'),
+(142, 48, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-04 08:51:00', 'Chuyến bay VN220 hạ cánh an toàn tại SGN'),
+(143, 49, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-08 09:30:00', 'Khởi tạo lịch bay VJ146'),
+(144, 49, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-08 09:30:00', 'Chuyến bay VJ146 cất cánh từ SGN'),
+(145, 49, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-08 11:30:00', 'Chuyến bay VJ146 hạ cánh an toàn tại HAN'),
+(146, 50, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-13 11:15:00', 'Khởi tạo lịch bay QH212'),
+(147, 50, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-13 11:15:00', 'Chuyến bay QH212 cất cánh từ HAN'),
+(148, 50, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-13 12:33:00', 'Chuyến bay QH212 hạ cánh an toàn tại DAD'),
+(149, 51, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-17 14:00:00', 'Khởi tạo lịch bay VN168'),
+(150, 51, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-17 14:00:00', 'Chuyến bay VN168 cất cánh từ SGN'),
+(151, 51, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-17 15:06:00', 'Chuyến bay VN168 hạ cánh an toàn tại CXR'),
+(152, 52, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-21 16:30:00', 'Khởi tạo lịch bay VJ458'),
+(153, 52, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-21 16:30:00', 'Chuyến bay VJ458 cất cánh từ SGN'),
+(154, 52, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-21 17:30:00', 'Chuyến bay VJ458 hạ cánh an toàn tại PQC'),
+(155, 53, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-25 18:15:00', 'Khởi tạo lịch bay QH176'),
+(156, 53, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-25 18:15:00', 'Chuyến bay QH176 cất cánh từ HPH'),
+(157, 53, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-25 19:39:00', 'Chuyến bay QH176 hạ cánh an toàn tại DAD'),
+(158, 54, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-28 10:20:00', 'Khởi tạo lịch bay VN512'),
+(159, 54, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-28 10:20:00', 'Chuyến bay VN512 cất cánh từ HAN'),
+(160, 54, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-28 12:32:00', 'Chuyến bay VN512 hạ cánh an toàn tại VCA'),
+(161, 55, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-05-31 20:00:00', 'Khởi tạo lịch bay VJ780'),
+(162, 55, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-05-31 20:00:00', 'Chuyến bay VJ780 cất cánh từ CXR'),
+(163, 55, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-05-31 21:54:00', 'Chuyến bay VJ780 hạ cánh an toàn tại HAN'),
+(164, 56, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-02 06:00:00', 'Khởi tạo lịch bay VN224'),
+(165, 56, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-02 06:00:00', 'Chuyến bay VN224 cất cánh từ SGN'),
+(166, 56, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-02 08:06:00', 'Chuyến bay VN224 hạ cánh an toàn tại HAN'),
+(167, 57, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-05 08:20:00', 'Khởi tạo lịch bay VJ152'),
+(168, 57, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-05 08:20:00', 'Chuyến bay VJ152 cất cánh từ HAN'),
+(169, 57, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-05 10:20:00', 'Chuyến bay VJ152 hạ cánh an toàn tại SGN'),
+(170, 58, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-09 10:45:00', 'Khởi tạo lịch bay QH216'),
+(171, 58, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-09 10:45:00', 'Chuyến bay QH216 cất cánh từ HAN'),
+(172, 58, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-09 13:03:00', 'Chuyến bay QH216 hạ cánh an toàn tại PQC'),
+(173, 59, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-13 13:30:00', 'Khởi tạo lịch bay VN172'),
+(174, 59, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-13 13:30:00', 'Chuyến bay VN172 cất cánh từ SGN'),
+(175, 59, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-13 14:54:00', 'Chuyến bay VN172 hạ cánh an toàn tại DAD'),
+(176, 60, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-16 15:15:00', 'Khởi tạo lịch bay VJ226'),
+(177, 60, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-16 15:15:00', 'Chuyến bay VJ226 cất cánh từ DAD'),
+(178, 60, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-16 16:27:00', 'Chuyến bay VJ226 hạ cánh an toàn tại CXR'),
+(179, 61, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-20 17:00:00', 'Khởi tạo lịch bay QH182'),
+(180, 61, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-20 17:00:00', 'Chuyến bay QH182 cất cánh từ SGN'),
+(181, 61, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-20 18:06:00', 'Chuyến bay QH182 hạ cánh an toàn tại CXR'),
+(182, 62, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-23 18:45:00', 'Khởi tạo lịch bay VN256'),
+(183, 62, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-23 18:45:00', 'Chuyến bay VN256 cất cánh từ HAN'),
+(184, 62, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-23 20:51:00', 'Chuyến bay VN256 hạ cánh an toàn tại SGN'),
+(185, 63, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-26 11:10:00', 'Khởi tạo lịch bay VJ636'),
+(186, 63, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-26 11:10:00', 'Chuyến bay VJ636 cất cánh từ HPH'),
+(187, 63, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-26 13:34:00', 'Chuyến bay VJ636 hạ cánh an toàn tại PQC'),
+(188, 64, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-28 14:00:00', 'Khởi tạo lịch bay QH246'),
+(189, 64, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-28 14:00:00', 'Chuyến bay QH246 cất cánh từ VCA'),
+(190, 64, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-28 16:12:00', 'Chuyến bay QH246 hạ cánh an toàn tại HAN'),
+(191, 65, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-06-30 20:30:00', 'Khởi tạo lịch bay VN128'),
+(192, 65, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-06-30 20:30:00', 'Chuyến bay VN128 cất cánh từ SGN'),
+(193, 65, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-06-30 21:42:00', 'Chuyến bay VN128 hạ cánh an toàn tại UIH'),
+(194, 66, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-03 06:15:00', 'Khởi tạo lịch bay VN228'),
+(195, 66, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-03 06:15:00', 'Chuyến bay VN228 cất cánh từ HAN'),
+(196, 66, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-03 08:21:00', 'Chuyến bay VN228 hạ cánh an toàn tại SGN'),
+(197, 67, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-06 08:30:00', 'Khởi tạo lịch bay VJ158'),
+(198, 67, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-06 08:30:00', 'Chuyến bay VJ158 cất cánh từ SGN'),
+(199, 67, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-06 10:30:00', 'Chuyến bay VJ158 hạ cánh an toàn tại HAN'),
+(200, 68, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-10 11:00:00', 'Khởi tạo lịch bay QH220'),
+(201, 68, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-10 11:00:00', 'Chuyến bay QH220 cất cánh từ HAN'),
+(202, 68, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-10 12:18:00', 'Chuyến bay QH220 hạ cánh an toàn tại DAD'),
+(203, 69, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-14 13:45:00', 'Khởi tạo lịch bay VN176'),
+(204, 69, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-14 13:45:00', 'Chuyến bay VN176 cất cánh từ SGN'),
+(205, 69, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-14 14:45:00', 'Chuyến bay VN176 hạ cánh an toàn tại PQC'),
+(206, 70, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-18 15:30:00', 'Khởi tạo lịch bay VJ232'),
+(207, 70, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-18 15:30:00', 'Chuyến bay VJ232 cất cánh từ SGN'),
+(208, 70, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-18 16:36:00', 'Chuyến bay VJ232 hạ cánh an toàn tại CXR'),
+(209, 71, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-21 17:15:00', 'Khởi tạo lịch bay QH188'),
+(210, 71, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-21 17:15:00', 'Chuyến bay QH188 cất cánh từ DAD'),
+(211, 71, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-21 18:39:00', 'Chuyến bay QH188 hạ cánh an toàn tại SGN'),
+(212, 72, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-25 18:50:00', 'Khởi tạo lịch bay VN260'),
+(213, 72, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-25 18:50:00', 'Chuyến bay VN260 cất cánh từ SGN'),
+(214, 72, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-25 20:56:00', 'Chuyến bay VN260 hạ cánh an toàn tại HAN'),
+(215, 73, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-27 12:20:00', 'Khởi tạo lịch bay VJ642'),
+(216, 73, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-27 12:20:00', 'Chuyến bay VJ642 cất cánh từ HPH'),
+(217, 73, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-27 13:44:00', 'Chuyến bay VJ642 hạ cánh an toàn tại DAD'),
+(218, 74, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-29 16:40:00', 'Khởi tạo lịch bay QH252'),
+(219, 74, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-29 16:40:00', 'Chuyến bay QH252 cất cánh từ PQC'),
+(220, 74, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-29 17:40:00', 'Chuyến bay QH252 hạ cánh an toàn tại SGN'),
+(221, 75, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-07-31 20:15:00', 'Khởi tạo lịch bay VN134'),
+(222, 75, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-07-31 20:15:00', 'Chuyến bay VN134 cất cánh từ SGN'),
+(223, 75, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-07-31 21:27:00', 'Chuyến bay VN134 hạ cánh an toàn tại PXU'),
+(224, 76, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-03 07:00:00', 'Khởi tạo lịch bay VN232'),
+(225, 76, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-03 07:00:00', 'Chuyến bay VN232 cất cánh từ SGN'),
+(226, 76, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-03 09:06:00', 'Chuyến bay VN232 hạ cánh an toàn tại HAN'),
+(227, 77, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-07 09:15:00', 'Khởi tạo lịch bay VJ164'),
+(228, 77, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-07 09:15:00', 'Chuyến bay VJ164 cất cánh từ HAN'),
+(229, 77, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-07 11:15:00', 'Chuyến bay VJ164 hạ cánh an toàn tại SGN'),
+(230, 78, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-11 11:45:00', 'Khởi tạo lịch bay QH224'),
+(231, 78, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-11 11:45:00', 'Chuyến bay QH224 cất cánh từ SGN'),
+(232, 78, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-11 13:09:00', 'Chuyến bay QH224 hạ cánh an toàn tại DAD'),
+(233, 79, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-15 14:20:00', 'Khởi tạo lịch bay VN180'),
+(234, 79, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-15 14:20:00', 'Chuyến bay VN180 cất cánh từ HAN'),
+(235, 79, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-15 16:14:00', 'Chuyến bay VN180 hạ cánh an toàn tại CXR'),
+(236, 80, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-19 16:00:00', 'Khởi tạo lịch bay VJ464'),
+(237, 80, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-19 16:00:00', 'Chuyến bay VJ464 cất cánh từ SGN'),
+(238, 80, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-19 17:00:00', 'Chuyến bay VJ464 hạ cánh an toàn tại PQC'),
+(239, 81, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-23 18:30:00', 'Khởi tạo lịch bay QH194'),
+(240, 81, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-23 18:30:00', 'Chuyến bay QH194 cất cánh từ CXR'),
+(241, 81, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-23 20:24:00', 'Chuyến bay QH194 hạ cánh an toàn tại HAN'),
+(242, 82, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-27 19:45:00', 'Khởi tạo lịch bay VN266'),
+(243, 82, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-27 19:45:00', 'Chuyến bay VN266 cất cánh từ HAN'),
+(244, 82, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-27 21:51:00', 'Chuyến bay VN266 hạ cánh an toàn tại SGN'),
+(245, 83, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-08-30 21:00:00', 'Khởi tạo lịch bay VJ648'),
+(246, 83, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-08-30 21:00:00', 'Chuyến bay VJ648 cất cánh từ SGN'),
+(247, 83, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-08-30 22:18:00', 'Chuyến bay VJ648 hạ cánh an toàn tại VCL'),
+(248, 84, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-01 06:30:00', 'Khởi tạo lịch bay VN236'),
+(249, 84, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-01 06:30:00', 'Chuyến bay VN236 cất cánh từ HAN'),
+(250, 84, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-01 08:36:00', 'Chuyến bay VN236 hạ cánh an toàn tại SGN'),
+(251, 85, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-02 08:45:00', 'Khởi tạo lịch bay VJ170'),
+(252, 85, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-02 08:45:00', 'Chuyến bay VJ170 cất cánh từ SGN'),
+(253, 85, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-02 10:45:00', 'Chuyến bay VJ170 hạ cánh an toàn tại HAN'),
+(254, 86, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-05 11:00:00', 'Khởi tạo lịch bay QH228'),
+(255, 86, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-05 11:00:00', 'Chuyến bay QH228 cất cánh từ HAN'),
+(256, 86, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-05 12:18:00', 'Chuyến bay QH228 hạ cánh an toàn tại DAD'),
+(257, 87, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-10 13:30:00', 'Khởi tạo lịch bay VN184'),
+(258, 87, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-10 13:30:00', 'Chuyến bay VN184 cất cánh từ SGN'),
+(259, 87, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-10 14:54:00', 'Chuyến bay VN184 hạ cánh an toàn tại DAD'),
+(260, 88, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-15 15:15:00', 'Khởi tạo lịch bay VJ238'),
+(261, 88, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-15 15:15:00', 'Chuyến bay VJ238 cất cánh từ SGN'),
+(262, 88, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-15 16:21:00', 'Chuyến bay VJ238 hạ cánh an toàn tại CXR'),
+(263, 89, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-20 17:00:00', 'Khởi tạo lịch bay QH202'),
+(264, 89, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-20 17:00:00', 'Chuyến bay QH202 cất cánh từ HAN'),
+(265, 89, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-20 19:12:00', 'Chuyến bay QH202 hạ cánh an toàn tại VCA'),
+(266, 90, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-25 18:30:00', 'Khởi tạo lịch bay VN270'),
+(267, 90, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-25 18:30:00', 'Chuyến bay VN270 cất cánh từ SGN'),
+(268, 90, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-25 20:36:00', 'Chuyến bay VN270 hạ cánh an toàn tại HAN'),
+(269, 91, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-09-29 20:15:00', 'Khởi tạo lịch bay VJ654'),
+(270, 91, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-09-29 20:15:00', 'Chuyến bay VJ654 cất cánh từ HPH'),
+(271, 91, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-09-29 22:27:00', 'Chuyến bay VJ654 hạ cánh an toàn tại SGN'),
+(272, 92, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-04 07:15:00', 'Khởi tạo lịch bay VN240'),
+(273, 92, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-04 07:15:00', 'Chuyến bay VN240 cất cánh từ SGN'),
+(274, 92, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-04 09:21:00', 'Chuyến bay VN240 hạ cánh an toàn tại HAN'),
+(275, 93, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-08 09:30:00', 'Khởi tạo lịch bay VJ176'),
+(276, 93, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-08 09:30:00', 'Chuyến bay VJ176 cất cánh từ HAN'),
+(277, 93, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-08 11:30:00', 'Chuyến bay VJ176 hạ cánh an toàn tại SGN'),
+(278, 94, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-12 11:45:00', 'Khởi tạo lịch bay QH232'),
+(279, 94, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-12 11:45:00', 'Chuyến bay QH232 cất cánh từ SGN'),
+(280, 94, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-12 13:09:00', 'Chuyến bay QH232 hạ cánh an toàn tại DAD'),
+(281, 95, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-16 14:00:00', 'Khởi tạo lịch bay VN188'),
+(282, 95, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-16 14:00:00', 'Chuyến bay VN188 cất cánh từ HAN'),
+(283, 95, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-16 16:18:00', 'Chuyến bay VN188 hạ cánh an toàn tại PQC'),
+(284, 96, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-21 16:15:00', 'Khởi tạo lịch bay VJ244'),
+(285, 96, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-21 16:15:00', 'Chuyến bay VJ244 cất cánh từ SGN'),
+(286, 96, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-21 17:21:00', 'Chuyến bay VJ244 hạ cánh an toàn tại CXR'),
+(287, 97, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-25 18:00:00', 'Khởi tạo lịch bay QH206'),
+(288, 97, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-25 18:00:00', 'Chuyến bay QH206 cất cánh từ DAD'),
+(289, 97, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-25 19:18:00', 'Chuyến bay QH206 hạ cánh an toàn tại HAN'),
+(290, 98, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-28 19:30:00', 'Khởi tạo lịch bay VN274'),
+(291, 98, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-28 19:30:00', 'Chuyến bay VN274 cất cánh từ HAN'),
+(292, 98, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-28 21:36:00', 'Chuyến bay VN274 hạ cánh an toàn tại SGN'),
+(293, 99, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-10-31 21:00:00', 'Khởi tạo lịch bay VJ660'),
+(294, 99, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-10-31 21:00:00', 'Chuyến bay VJ660 cất cánh từ SGN'),
+(295, 99, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-10-31 23:00:00', 'Chuyến bay VJ660 hạ cánh an toàn tại THD'),
+(296, 100, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-01 06:15:00', 'Khởi tạo lịch bay VN242'),
+(297, 100, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-01 06:15:00', 'Chuyến bay VN242 cất cánh từ HAN'),
+(298, 100, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-01 08:21:00', 'Chuyến bay VN242 hạ cánh an toàn tại SGN'),
+(299, 101, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-02 08:30:00', 'Khởi tạo lịch bay VJ180'),
+(300, 101, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-02 08:30:00', 'Chuyến bay VJ180 cất cánh từ SGN'),
+(301, 101, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-02 10:30:00', 'Chuyến bay VJ180 hạ cánh an toàn tại HAN'),
+(302, 102, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-03 11:00:00', 'Khởi tạo lịch bay QH236'),
+(303, 102, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-03 11:00:00', 'Chuyến bay QH236 cất cánh từ HAN'),
+(304, 102, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-03 12:18:00', 'Chuyến bay QH236 hạ cánh an toàn tại DAD'),
+(305, 103, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-04 13:15:00', 'Khởi tạo lịch bay VN192'),
+(306, 103, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-04 13:15:00', 'Chuyến bay VN192 cất cánh từ SGN'),
+(307, 103, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-04 14:21:00', 'Chuyến bay VN192 hạ cánh an toàn tại CXR'),
+(308, 104, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-05 15:30:00', 'Khởi tạo lịch bay VJ250'),
+(309, 104, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-05 15:30:00', 'Chuyến bay VJ250 cất cánh từ DAD'),
+(310, 104, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-05 16:54:00', 'Chuyến bay VJ250 hạ cánh an toàn tại SGN'),
+(311, 105, 1, 'Tao_Moi', 'Ha_Canh', NULL, '2026-11-06 06:30:00', 'Khởi tạo lịch bay VN246'),
+(312, 105, 1, 'Cat_Canh', 'Cat_Canh', 'Ha_Canh', '2026-11-06 06:30:00', 'Chuyến bay VN246 cất cánh từ SGN'),
+(313, 105, 1, 'Ha_Canh', 'Ha_Canh', 'Cat_Canh', '2026-11-06 08:36:00', 'Chuyến bay VN246 hạ cánh an toàn tại HAN'),
+(314, 106, 1, 'Tao_Moi', 'Cat_Canh', NULL, '2026-11-06 14:15:00', 'Khởi tạo lịch bay VJ184'),
+(315, 107, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-06 18:45:00', 'Khởi tạo lịch bay QH242'),
+(316, 108, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-06 21:30:00', 'Khởi tạo lịch bay VN196'),
+(317, 109, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-07 09:00:00', 'Khởi tạo lịch bay VJ256'),
+(318, 110, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-08 14:30:00', 'Khởi tạo lịch bay QH248'),
+(319, 111, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-09 17:15:00', 'Khởi tạo lịch bay VN280'),
+(320, 112, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-10 19:40:00', 'Khởi tạo lịch bay VJ188'),
+(321, 113, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-12 11:20:00', 'Khởi tạo lịch bay QH250'),
+(322, 114, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-11-15 15:00:00', 'Khởi tạo lịch bay VN202'),
+(323, 115, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-12-05 08:30:00', 'Khởi tạo lịch bay VN284'),
+(324, 116, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-12-12 11:00:00', 'Khởi tạo lịch bay VJ190'),
+(325, 117, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-12-20 14:15:00', 'Khởi tạo lịch bay QH254'),
+(326, 118, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-12-24 16:45:00', 'Khởi tạo lịch bay VN290'),
+(327, 119, 1, 'Tao_Moi', 'Dang_Mo', NULL, '2026-12-31 19:30:00', 'Khởi tạo lịch bay VJ260'),
+(328, 106, NULL, 'Tu_Dong', 'Ha_Canh', 'Cat_Canh', '2026-11-06 21:47:06', 'Tự động: đã tới giờ dự kiến hạ cánh.'),
+(329, 107, NULL, 'Tu_Dong', 'Delay', 'Dang_Mo', '2026-11-06 21:47:06', 'Tự động chuyển Trễ chuyến: quá 15 phút kể từ giờ cất cánh mà chưa xác nhận điều kiện bay.'),
+(330, 108, NULL, 'Tu_Dong', 'Delay', 'Dang_Mo', '2026-11-06 21:47:06', 'Tự động chuyển Trễ chuyến: quá 15 phút kể từ giờ cất cánh mà chưa xác nhận điều kiện bay.'),
+(331, 107, 1, 'Xac_Nhan_Cat_Canh', 'Cat_Canh', 'Delay', '2026-11-06 22:24:31', 'Chuyến bay QH242 đã khắc phục xong các sự cố trễ trước đó, Lý do không có lý do trước đó. Nguyễn Đình Khánh xác nhận đủ điều kiện an toàn và cho cất cánh lúc 22:24. Tổng thời gian trễ 219 phút (0 phút delay + 219 phút quá hạn).'),
+(332, 108, 1, 'Xac_Nhan_Cat_Canh', 'Cat_Canh', 'Delay', '2026-11-06 22:24:35', 'Chuyến bay VN196 đã khắc phục xong các sự cố trễ trước đó, Lý do không có lý do trước đó. Nguyễn Đình Khánh xác nhận đủ điều kiện an toàn và cho cất cánh lúc 22:24. Tổng thời gian trễ 54 phút (0 phút delay + 54 phút quá hạn).');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nha_ga`
+--
+
 CREATE TABLE `nha_ga` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_san_bay` int(11) NOT NULL,
   `ma_nha_ga` varchar(10) NOT NULL,
   `ten_nha_ga` varchar(100) NOT NULL,
@@ -304,70 +1159,106 @@ CREATE TABLE `nha_ga` (
   `cong_suat` varchar(50) DEFAULT NULL,
   `so_do` varchar(255) DEFAULT NULL,
   `mo_ta` varchar(500) DEFAULT NULL,
-  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_nha_ga_san_bay_ma` (`id_san_bay`,`ma_nha_ga`),
-  KEY `id_san_bay` (`id_san_bay`),
-  CONSTRAINT `nha_ga_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `nha_ga` WRITE;
-/*!40000 ALTER TABLE `nha_ga` DISABLE KEYS */;
-INSERT INTO `nha_ga` VALUES (1,1,'T1','Nhà ga T1 - Quốc nội','Quoc_Noi',2001,'90.000 m²','15 triệu khách/năm','assets/img/so_do_nha_ga/HAN-T1-01.jpg','Nhà ga quốc nội phục vụ các chuyến bay nội địa, được cải tạo và mở rộng năm 2015.','Hoat_Dong'),(2,1,'T2','Nhà ga T2 - Quốc tế','Quoc_Te',2015,'150.000 m²','10 triệu khách/năm','assets/img/so_do_nha_ga/HAN-T2-01.jpg','Nhà ga quốc tế hiện đại, có thể mở rộng công suất lên 15 triệu khách/năm.','Hoat_Dong'),(3,2,'T1','Nhà ga T1 - Quốc nội','Quoc_Noi',1980,'40.000 m²','13 triệu khách/năm','assets/img/so_do_nha_ga/SGN-T1-01.jpg','Nhà ga quốc nội của sân bay lớn nhất Việt Nam.','Hoat_Dong'),(4,2,'T2','Nhà ga T2 - Quốc tế','Quoc_Te',2007,'100.000 m²','12 triệu khách/năm','assets/img/so_do_nha_ga/SGN-T2-01.jpg','Nhà ga quốc tế phục vụ các chuyến bay đến và đi quốc tế.','Hoat_Dong'),(5,4,'T1','Nhà ga T1 - Quốc nội','Quoc_Noi',2011,'36.000 m²','6 triệu khách/năm','assets/img/so_do_nha_ga/DAD-T1-01.jpg','Nhà ga quốc nội của sân bay Đà Nẵng.','Hoat_Dong'),(6,4,'T2','Nhà ga T2 - Quốc tế','Quoc_Te',2017,'48.000 m²','4 triệu khách/năm',NULL,'Nhà ga quốc tế được thiết kế theo kiến trúc đặc trưng của miền Trung.','Hoat_Dong'),(7,3,'T1','Nhà ga T1 - Quốc nội','Quoc_Noi',2009,'13.000 m²','2,5 triệu khách/năm','assets/img/so_do_nha_ga/CXR-T1-01.jpg','Nhà ga quốc nội phục vụ Khánh Hòa và Nam Trung Bộ.','Hoat_Dong'),(8,3,'T2','Nhà ga T2 - Quốc tế','Quoc_Te',2018,'50.000 m²','6 triệu khách/năm','assets/img/so_do_nha_ga/CXR-T2-01.jpg','Nhà ga quốc tế Cam Ranh có công suất lớn, phục vụ khách quốc tế đến Khánh Hòa.','Hoat_Dong'),(9,5,'T1','Nhà ga hành khách Cát Bi','Hon_Hop',2016,NULL,'2 triệu khách/năm','assets/img/so_do_nha_ga/HPH-T1-01.jpg','Nhà ga hành khách phục vụ cả chuyến bay nội địa và quốc tế tại Cát Bi.','Hoat_Dong'),(11,6,'T1','Nhà ga hành khách Phú Quốc','Hon_Hop',2012,'24.000 m²','4 triệu khách/năm','assets/img/so_do_nha_ga/PQC-T1-01.jpg','Nhà ga hành khách phục vụ cả chuyến bay nội địa và quốc tế tại Phú Quốc.','Hoat_Dong'),(12,7,'T1','Nhà ga hành khách Cần Thơ','Hon_Hop',2011,'20.000 m²','3 triệu khách/năm','assets/img/so_do_nha_ga/VCA-T1-01.jpg','Nhà ga hành khách trung tâm vùng Đồng bằng sông Cửu Long.','Hoat_Dong'),(13,8,'T1','Nhà ga hành khách Điện Biên','Quoc_Noi',2024,NULL,'500.000 khách/năm',NULL,'Nhà ga mới được đưa vào khai thác năm 2024, phục vụ tỉnh Điện Biên.','Hoat_Dong'),(14,9,'T1','Nhà ga hành khách Thọ Xuân','Quoc_Noi',2013,NULL,'1,2 triệu khách/năm',NULL,'Nhà ga hành khách phục vụ Thanh Hóa và khu vực Bắc Trung Bộ.','Hoat_Dong'),(15,10,'T1','Nhà ga hành khách Đồng Hới','Quoc_Noi',2008,NULL,'500.000 khách/năm',NULL,'Nhà ga hành khách phục vụ Quảng Bình và vùng Phong Nha - Kẻ Bàng.','Hoat_Dong'),(16,11,'T1','Nhà ga hành khách Tuy Hòa','Quoc_Noi',2013,NULL,'1 triệu khách/năm',NULL,'Nhà ga hành khách phục vụ Phú Yên và khu vực Nam Trung Bộ.','Hoat_Dong'),(17,12,'T1','Nhà ga hành khách Chu Lai','Quoc_Noi',2015,NULL,'1 triệu khách/năm',NULL,'Nhà ga hành khách phục vụ Quảng Nam và vùng kinh tế trọng điểm miền Trung.','Hoat_Dong'),(18,13,'T1','Nhà ga hành khách Pleiku','Quoc_Noi',2018,NULL,'1,5 triệu khách/năm',NULL,'Nhà ga hành khách phục vụ Gia Lai và khu vực Tây Nguyên.','Hoat_Dong'),(19,14,'T1','Nhà ga hành khách Phù Cát','Quoc_Noi',2018,NULL,'1,5 triệu khách/năm',NULL,'Nhà ga hành khách phục vụ Bình Định và vùng duyên hải Nam Trung Bộ.','Hoat_Dong'),(20,15,'T1','Nhà ga hành khách Rạch Giá','Quoc_Noi',2013,NULL,'500.000 khách/năm',NULL,'Nhà ga hành khách phục vụ Kiên Giang và khu vực Tây Nam Bộ.','Hoat_Dong'),(21,4,'T3','Nhà ga T3 - Quốc nội','Quoc_Noi',NULL,NULL,NULL,'assets/img/so_do_nha_ga/DAD-T3-01.jpg','Nhà ga T3 phục vụ các chuyến bay nội địa tại Cảng HKQT Đà Nẵng.','Hoat_Dong'),(22,2,'T3','Nhà ga T3 - Quốc nội','Quoc_Noi',2025,'112.500 m²','20 triệu khách/năm','assets/img/so_do_nha_ga/SGN-T3-01.jpg','Nhà ga quốc nội mới, khai thác từ tháng 4/2025, giảm tải cho nhà ga T1.','Hoat_Dong');
-/*!40000 ALTER TABLE `nha_ga` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `nhat_ky_trang_thai_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `nhat_ky_trang_thai_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_chuyen_bay` int(11) NOT NULL,
-  `id_nguoi_dung` int(11) DEFAULT NULL,
-  `hanh_dong` varchar(30) NOT NULL DEFAULT 'Sua',
-  `trang_thai` enum('Dang_Mo','Cat_Canh','Ha_Canh','Delay','Huy') NOT NULL,
-  `trang_thai_cu` varchar(20) DEFAULT NULL,
-  `thoi_gian_cap_nhat` datetime DEFAULT current_timestamp(),
-  `ghi_chu` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_chuyen_bay` (`id_chuyen_bay`),
-  KEY `id_nguoi_dung` (`id_nguoi_dung`),
-  CONSTRAINT `nhat_ky_trang_thai_bay_ibfk_1` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `nhat_ky_trang_thai_bay_ibfk_2` FOREIGN KEY (`id_nguoi_dung`) REFERENCES `nguoi_dung` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+--
+-- Dumping data for table `nha_ga`
+--
 
-LOCK TABLES `nhat_ky_trang_thai_bay` WRITE;
-/*!40000 ALTER TABLE `nhat_ky_trang_thai_bay` DISABLE KEYS */;
-INSERT INTO `nhat_ky_trang_thai_bay` VALUES (1,1,1,'Them','Dang_Mo',NULL,'2026-11-02 16:05:29','Thêm chuyến bay mới.'),(2,1,1,'Xac_Nhan_Cat_Canh','Cat_Canh','Dang_Mo','2026-11-02 16:09:23','Đã đủ điều kiện bay và xác nhận cất cánh.'),(3,1,NULL,'Tu_Dong','Ha_Canh','Cat_Canh','2026-11-02 16:13:24','Tự động: đã tới giờ dự kiến hạ cánh.'),(4,2,1,'Them','Dang_Mo',NULL,'2026-11-02 16:21:45','Thêm chuyến bay mới.'),(5,2,1,'Xac_Nhan_Cat_Canh','Cat_Canh','Dang_Mo','2026-11-02 16:22:30','Đã đủ điều kiện bay và xác nhận cất cánh.'),(6,2,NULL,'Tu_Dong','Ha_Canh','Cat_Canh','2026-11-02 16:24:32','Tự động: đã tới giờ dự kiến hạ cánh.'),(7,3,1,'Them','Dang_Mo',NULL,'2026-11-02 17:03:21','Thêm chuyến bay mới.'),(8,3,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 17:03:35','Chưa đủ điều kiện bay - trễ chuyến 5 phút. Lý do: test. Giờ cất cánh mới: 02/11/2026 17:08 (tổng lùi 6 phút).'),(9,3,1,'Xac_Nhan_Cat_Canh','Cat_Canh','Delay','2026-11-02 17:06:00','Chuyến bay CB0002 đã khắc phục xong các sự cố trễ trước đó, Lý do test. Nguyễn Đình Khánh xác nhận đủ điều kiện an toàn và cho cất cánh lúc 17:06. Tổng thời gian trễ 6 phút (6 phút delay + 0 phút quá hạn). Cất cánh sớm hơn giờ dự kiến (02/11/2026 17:08).'),(10,3,NULL,'Tu_Dong','Ha_Canh','Cat_Canh','2026-11-02 17:14:29','Tự động: đã tới giờ dự kiến hạ cánh.'),(11,4,1,'Them','Dang_Mo',NULL,'2026-11-02 17:37:41','Thêm chuyến bay mới.'),(12,4,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 17:39:19','Chưa đủ điều kiện bay - trễ chuyến 4 phút. Lý do: tesst. Giờ cất cánh mới: 02/11/2026 17:43 (tổng lùi 5 phút).'),(13,4,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 17:43:25','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: tesst.'),(14,4,1,'Xac_Nhan_Cat_Canh','Cat_Canh','Dang_Mo','2026-11-02 17:44:04','Đã đủ điều kiện bay và xác nhận cất cánh.'),(15,5,1,'Them','Dang_Mo',NULL,'2026-11-02 17:45:57','Thêm chuyến bay mới.'),(16,5,1,'Xac_Nhan_Cat_Canh','Cat_Canh','Dang_Mo','2026-11-02 17:46:16','Đã đủ điều kiện bay và xác nhận cất cánh.'),(17,6,1,'Them','Dang_Mo',NULL,'2026-11-02 17:46:48','Thêm chuyến bay mới.'),(18,4,NULL,'Tu_Dong','Ha_Canh','Cat_Canh','2026-11-02 17:48:14','Tự động: đã tới giờ dự kiến hạ cánh.'),(19,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 17:48:22','Chưa đủ điều kiện bay - trễ chuyến 5 phút. Lý do: test. Giờ cất cánh mới: 02/11/2026 17:53 (tổng lùi 5 phút).'),(20,5,NULL,'Tu_Dong','Ha_Canh','Cat_Canh','2026-11-02 17:51:28','Tự động: đã tới giờ dự kiến hạ cánh.'),(21,6,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 17:53:22','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: test.'),(22,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 17:59:14','Chưa đủ điều kiện bay - trễ chuyến 2 phút. Lý do: test. Giờ cất cánh mới: 02/11/2026 18:01 (tổng lùi 7 phút).'),(23,6,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 18:09:47','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: test.'),(24,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 18:10:15','Chưa đủ điều kiện bay - trễ chuyến 4 phút. Lý do: Test 1. Giờ cất cánh mới: 02/11/2026 18:14 (tổng lùi 13 phút).'),(25,6,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 18:14:34','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: Test 1.'),(26,6,1,'Sua','Dang_Mo','Dang_Mo','2026-11-02 18:20:31','Giờ dự kiến: 02/11/2026 18:14 -> 02/11/2026 18:14\nHành lý: 233000 kg -> 230000 kg'),(27,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 18:23:40','Chưa đủ điều kiện bay - trễ chuyến 4 phút. Lý do: ưad. Giờ cất cánh mới: 02/11/2026 18:27 (tổng lùi 13 phút).'),(28,6,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 18:27:45','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: ưad.'),(29,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 18:27:56','Chưa đủ điều kiện bay - trễ chuyến 2 phút. Lý do: test2. Giờ cất cánh mới: 02/11/2026 18:29 (tổng lùi 2 phút).'),(30,6,NULL,'Tu_Dong','Dang_Mo','Delay','2026-11-02 18:30:06','Hết thời gian delay, chuyển về Đang mở. Lý do trễ trước đó: test2.'),(31,6,1,'Tre_Tiep','Delay','Dang_Mo','2026-11-02 18:31:09','Chưa đủ điều kiện bay - trễ chuyến 2 phút. Lý do: ư. Giờ cất cánh mới: 02/11/2026 18:33 (tổng lùi 3 phút).');
-/*!40000 ALTER TABLE `nhat_ky_trang_thai_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `quay_checkin`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+INSERT INTO `nha_ga` (`id`, `id_san_bay`, `ma_nha_ga`, `ten_nha_ga`, `loai_nha_ga`, `nam_khai_thac`, `dien_tich`, `cong_suat`, `so_do`, `mo_ta`, `trang_thai`) VALUES
+(1, 1, 'T1', 'Nhà ga T1 - Quốc nội', 'Quoc_Noi', 2001, '90.000 m²', '15 triệu khách/năm', 'assets/img/so_do_nha_ga/HAN-T1-01.jpg', 'Nhà ga quốc nội phục vụ các chuyến bay nội địa, được cải tạo và mở rộng năm 2015.', 'Hoat_Dong'),
+(2, 1, 'T2', 'Nhà ga T2 - Quốc tế', 'Quoc_Te', 2015, '150.000 m²', '10 triệu khách/năm', 'assets/img/so_do_nha_ga/HAN-T2-01.jpg', 'Nhà ga quốc tế hiện đại, có thể mở rộng công suất lên 15 triệu khách/năm.', 'Hoat_Dong'),
+(3, 2, 'T1', 'Nhà ga T1 - Quốc nội', 'Quoc_Noi', 1980, '40.000 m²', '13 triệu khách/năm', 'assets/img/so_do_nha_ga/SGN-T1-01.jpg', 'Nhà ga quốc nội của sân bay lớn nhất Việt Nam.', 'Hoat_Dong'),
+(4, 2, 'T2', 'Nhà ga T2 - Quốc tế', 'Quoc_Te', 2007, '100.000 m²', '12 triệu khách/năm', 'assets/img/so_do_nha_ga/SGN-T2-01.jpg', 'Nhà ga quốc tế phục vụ các chuyến bay đến và đi quốc tế.', 'Hoat_Dong'),
+(5, 4, 'T1', 'Nhà ga T1 - Quốc nội', 'Quoc_Noi', 2011, '36.000 m²', '6 triệu khách/năm', 'assets/img/so_do_nha_ga/DAD-T1-01.jpg', 'Nhà ga quốc nội của sân bay Đà Nẵng.', 'Hoat_Dong'),
+(6, 4, 'T2', 'Nhà ga T2 - Quốc tế', 'Quoc_Te', 2017, '48.000 m²', '4 triệu khách/năm', NULL, 'Nhà ga quốc tế được thiết kế theo kiến trúc đặc trưng của miền Trung.', 'Hoat_Dong'),
+(7, 3, 'T1', 'Nhà ga T1 - Quốc nội', 'Quoc_Noi', 2009, '13.000 m²', '2,5 triệu khách/năm', 'assets/img/so_do_nha_ga/CXR-T1-01.jpg', 'Nhà ga quốc nội phục vụ Khánh Hòa và Nam Trung Bộ.', 'Hoat_Dong'),
+(8, 3, 'T2', 'Nhà ga T2 - Quốc tế', 'Quoc_Te', 2018, '50.000 m²', '6 triệu khách/năm', 'assets/img/so_do_nha_ga/CXR-T2-01.jpg', 'Nhà ga quốc tế Cam Ranh có công suất lớn, phục vụ khách quốc tế đến Khánh Hòa.', 'Hoat_Dong'),
+(9, 5, 'T1', 'Nhà ga hành khách Cát Bi', 'Hon_Hop', 2016, NULL, '2 triệu khách/năm', 'assets/img/so_do_nha_ga/HPH-T1-01.jpg', 'Nhà ga hành khách phục vụ cả chuyến bay nội địa và quốc tế tại Cát Bi.', 'Hoat_Dong'),
+(11, 6, 'T1', 'Nhà ga hành khách Phú Quốc', 'Hon_Hop', 2012, '24.000 m²', '4 triệu khách/năm', 'assets/img/so_do_nha_ga/PQC-T1-01.jpg', 'Nhà ga hành khách phục vụ cả chuyến bay nội địa và quốc tế tại Phú Quốc.', 'Hoat_Dong'),
+(12, 7, 'T1', 'Nhà ga hành khách Cần Thơ', 'Hon_Hop', 2011, '20.000 m²', '3 triệu khách/năm', 'assets/img/so_do_nha_ga/VCA-T1-01.jpg', 'Nhà ga hành khách trung tâm vùng Đồng bằng sông Cửu Long.', 'Hoat_Dong'),
+(13, 8, 'T1', 'Nhà ga hành khách Điện Biên', 'Quoc_Noi', 2024, NULL, '500.000 khách/năm', NULL, 'Nhà ga mới được đưa vào khai thác năm 2024, phục vụ tỉnh Điện Biên.', 'Hoat_Dong'),
+(14, 9, 'T1', 'Nhà ga hành khách Thọ Xuân', 'Quoc_Noi', 2013, NULL, '1,2 triệu khách/năm', NULL, 'Nhà ga hành khách phục vụ Thanh Hóa và khu vực Bắc Trung Bộ.', 'Hoat_Dong'),
+(15, 10, 'T1', 'Nhà ga hành khách Đồng Hới', 'Quoc_Noi', 2008, NULL, '500.000 khách/năm', NULL, 'Nhà ga hành khách phục vụ Quảng Bình và vùng Phong Nha - Kẻ Bàng.', 'Hoat_Dong'),
+(16, 11, 'T1', 'Nhà ga hành khách Tuy Hòa', 'Quoc_Noi', 2013, NULL, '1 triệu khách/năm', NULL, 'Nhà ga hành khách phục vụ Phú Yên và khu vực Nam Trung Bộ.', 'Hoat_Dong'),
+(17, 12, 'T1', 'Nhà ga hành khách Chu Lai', 'Quoc_Noi', 2015, NULL, '1 triệu khách/năm', NULL, 'Nhà ga hành khách phục vụ Quảng Nam và vùng kinh tế trọng điểm miền Trung.', 'Hoat_Dong'),
+(18, 13, 'T1', 'Nhà ga hành khách Pleiku', 'Quoc_Noi', 2018, NULL, '1,5 triệu khách/năm', NULL, 'Nhà ga hành khách phục vụ Gia Lai và khu vực Tây Nguyên.', 'Hoat_Dong'),
+(19, 14, 'T1', 'Nhà ga hành khách Phù Cát', 'Quoc_Noi', 2018, NULL, '1,5 triệu khách/năm', NULL, 'Nhà ga hành khách phục vụ Bình Định và vùng duyên hải Nam Trung Bộ.', 'Hoat_Dong'),
+(20, 15, 'T1', 'Nhà ga hành khách Rạch Giá', 'Quoc_Noi', 2013, NULL, '500.000 khách/năm', NULL, 'Nhà ga hành khách phục vụ Kiên Giang và khu vực Tây Nam Bộ.', 'Hoat_Dong'),
+(21, 4, 'T3', 'Nhà ga T3 - Quốc nội', 'Quoc_Noi', NULL, NULL, NULL, 'assets/img/so_do_nha_ga/DAD-T3-01.jpg', 'Nhà ga T3 phục vụ các chuyến bay nội địa tại Cảng HKQT Đà Nẵng.', 'Hoat_Dong'),
+(22, 2, 'T3', 'Nhà ga T3 - Quốc nội', 'Quoc_Noi', 2025, '112.500 m²', '20 triệu khách/năm', 'assets/img/so_do_nha_ga/SGN-T3-01.jpg', 'Nhà ga quốc nội mới, khai thác từ tháng 4/2025, giảm tải cho nhà ga T1.', 'Hoat_Dong');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quay_checkin`
+--
+
 CREATE TABLE `quay_checkin` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_nha_ga` int(11) NOT NULL,
   `so_quay` varchar(20) NOT NULL,
   `khu_vuc` varchar(50) DEFAULT NULL,
-  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_quay_checkin_nha_ga` (`id_nha_ga`,`so_quay`),
-  KEY `id_nha_ga` (`id_nha_ga`),
-  CONSTRAINT `quay_checkin_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai` enum('Hoat_Dong','Bao_Tri') DEFAULT 'Hoat_Dong'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `quay_checkin` WRITE;
-/*!40000 ALTER TABLE `quay_checkin` DISABLE KEYS */;
-INSERT INTO `quay_checkin` VALUES (1,1,'A01-A12','Sảnh A','Hoat_Dong'),(2,1,'B01-B12','Sảnh B','Hoat_Dong'),(3,3,'C01-C15','Sảnh C','Hoat_Dong'),(4,1,'C01-C10','Sảnh C','Hoat_Dong'),(5,2,'D01-D12','Sảnh D','Hoat_Dong'),(6,2,'E01-E12','Sảnh E','Hoat_Dong'),(7,2,'F01-F10','Sảnh F','Bao_Tri'),(8,3,'A01-A12','Sảnh A','Hoat_Dong'),(9,3,'B01-B12','Sảnh B','Hoat_Dong'),(10,4,'D01-D12','Sảnh D','Hoat_Dong'),(11,4,'E01-E12','Sảnh E','Hoat_Dong'),(12,4,'F01-F12','Sảnh F','Hoat_Dong'),(13,5,'A01-A10','Sảnh A','Hoat_Dong'),(14,5,'B01-B10','Sảnh B','Hoat_Dong'),(15,6,'C01-C12','Sảnh C','Hoat_Dong'),(16,6,'D01-D12','Sảnh D','Hoat_Dong'),(17,7,'A01-A08','Sảnh A','Hoat_Dong'),(18,7,'B01-B08','Sảnh B','Hoat_Dong'),(19,8,'C01-C12','Sảnh C','Hoat_Dong'),(20,8,'D01-D12','Sảnh D','Hoat_Dong'),(21,8,'E01-E08','Sảnh E','Bao_Tri'),(22,9,'A01-A08','Sảnh A','Hoat_Dong'),(23,9,'B01-B08','Sảnh B','Hoat_Dong'),(24,9,'C01-C10','Sảnh C','Hoat_Dong'),(25,9,'D01-D10','Sảnh D','Hoat_Dong'),(26,11,'A01-A10','Sảnh A','Hoat_Dong'),(27,11,'B01-B10','Sảnh B','Hoat_Dong'),(28,11,'C01-C06','Sảnh C','Hoat_Dong'),(29,12,'A01-A08','Sảnh A','Hoat_Dong'),(30,12,'B01-B08','Sảnh B','Hoat_Dong'),(31,13,'A01-A06','Sảnh A','Hoat_Dong'),(32,13,'B01-B06','Sảnh B','Bao_Tri'),(33,14,'A01-A08','Sảnh A','Hoat_Dong'),(34,14,'B01-B08','Sảnh B','Hoat_Dong'),(35,15,'A01-A06','Sảnh A','Hoat_Dong'),(36,16,'A01-A08','Sảnh A','Hoat_Dong'),(37,16,'B01-B08','Sảnh B','Hoat_Dong'),(38,17,'A01-A06','Sảnh A','Hoat_Dong'),(39,18,'A01-A08','Sảnh A','Hoat_Dong'),(40,19,'A01-A08','Sảnh A','Hoat_Dong'),(41,19,'B01-B08','Sảnh B','Hoat_Dong'),(42,20,'A01-A06','Sảnh A','Hoat_Dong');
-/*!40000 ALTER TABLE `quay_checkin` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `san_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `quay_checkin`
+--
+
+INSERT INTO `quay_checkin` (`id`, `id_nha_ga`, `so_quay`, `khu_vuc`, `trang_thai`) VALUES
+(1, 1, 'A01-A12', 'Sảnh A', 'Hoat_Dong'),
+(2, 1, 'B01-B12', 'Sảnh B', 'Hoat_Dong'),
+(3, 3, 'C01-C15', 'Sảnh C', 'Hoat_Dong'),
+(4, 1, 'C01-C10', 'Sảnh C', 'Hoat_Dong'),
+(5, 2, 'D01-D12', 'Sảnh D', 'Hoat_Dong'),
+(6, 2, 'E01-E12', 'Sảnh E', 'Hoat_Dong'),
+(7, 2, 'F01-F10', 'Sảnh F', 'Bao_Tri'),
+(8, 3, 'A01-A12', 'Sảnh A', 'Hoat_Dong'),
+(9, 3, 'B01-B12', 'Sảnh B', 'Hoat_Dong'),
+(10, 4, 'D01-D12', 'Sảnh D', 'Hoat_Dong'),
+(11, 4, 'E01-E12', 'Sảnh E', 'Hoat_Dong'),
+(12, 4, 'F01-F12', 'Sảnh F', 'Hoat_Dong'),
+(13, 5, 'A01-A10', 'Sảnh A', 'Hoat_Dong'),
+(14, 5, 'B01-B10', 'Sảnh B', 'Hoat_Dong'),
+(15, 6, 'C01-C12', 'Sảnh C', 'Hoat_Dong'),
+(16, 6, 'D01-D12', 'Sảnh D', 'Hoat_Dong'),
+(17, 7, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(18, 7, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(19, 8, 'C01-C12', 'Sảnh C', 'Hoat_Dong'),
+(20, 8, 'D01-D12', 'Sảnh D', 'Hoat_Dong'),
+(21, 8, 'E01-E08', 'Sảnh E', 'Bao_Tri'),
+(22, 9, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(23, 9, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(24, 9, 'C01-C10', 'Sảnh C', 'Hoat_Dong'),
+(25, 9, 'D01-D10', 'Sảnh D', 'Hoat_Dong'),
+(26, 11, 'A01-A10', 'Sảnh A', 'Hoat_Dong'),
+(27, 11, 'B01-B10', 'Sảnh B', 'Hoat_Dong'),
+(28, 11, 'C01-C06', 'Sảnh C', 'Hoat_Dong'),
+(29, 12, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(30, 12, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(31, 13, 'A01-A06', 'Sảnh A', 'Hoat_Dong'),
+(32, 13, 'B01-B06', 'Sảnh B', 'Bao_Tri'),
+(33, 14, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(34, 14, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(35, 15, 'A01-A06', 'Sảnh A', 'Hoat_Dong'),
+(36, 16, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(37, 16, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(38, 17, 'A01-A06', 'Sảnh A', 'Hoat_Dong'),
+(39, 18, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(40, 19, 'A01-A08', 'Sảnh A', 'Hoat_Dong'),
+(41, 19, 'B01-B08', 'Sảnh B', 'Hoat_Dong'),
+(42, 20, 'A01-A06', 'Sảnh A', 'Hoat_Dong');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `san_bay`
+--
+
 CREATE TABLE `san_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `ma_iata` varchar(3) NOT NULL,
   `ma_icao` varchar(4) DEFAULT NULL,
   `ten_san_bay` varchar(120) NOT NULL,
@@ -377,75 +1268,917 @@ CREATE TABLE `san_bay` (
   `hinh_anh` varchar(255) DEFAULT NULL,
   `mo_ta` varchar(500) DEFAULT NULL,
   `thu_tu_hien_thi` int(11) NOT NULL DEFAULT 0,
-  `trang_thai` enum('Hoat_Dong','Bao_Tri','Dong_Cua_Khan_Cap') DEFAULT 'Hoat_Dong',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `ma_iata` (`ma_iata`),
-  UNIQUE KEY `ma_icao` (`ma_icao`),
-  KEY `thu_tu_hien_thi` (`thu_tu_hien_thi`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `trang_thai` enum('Hoat_Dong','Bao_Tri','Dong_Cua_Khan_Cap') DEFAULT 'Hoat_Dong'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `san_bay` WRITE;
-/*!40000 ALTER TABLE `san_bay` DISABLE KEYS */;
-INSERT INTO `san_bay` VALUES (1,'HAN','VVNB','Cảng hàng không quốc tế Nội Bài','Nội Bài','Quoc_Te','Huyện Sóc Sơn, TP. Hà Nội','assets/img/san_bay/HAN.jpg','Cửa ngõ hàng không quốc tế của Thủ đô, khai thác hai nhà ga T1 (quốc nội) và T2 (quốc tế).',1,'Hoat_Dong'),(2,'SGN','VVTS','Cảng hàng không quốc tế Tân Sơn Nhất','Tân Sơn Nhất','Quoc_Te','Quận Tân Bình, TP. Hồ Chí Minh','assets/img/san_bay/SGN.jpg','Sân bay lớn nhất Việt Nam về lưu lượng hành khách, gồm T1 (quốc nội) và T2 (quốc tế).',2,'Hoat_Dong'),(3,'CXR','VVCR','Cảng hàng không quốc tế Cam Ranh','Cam Ranh','Quoc_Te','TP. Cam Ranh, tỉnh Khánh Hòa','assets/img/san_bay/CXR.jpg','Sân bay phục vụ Khánh Hòa và khu vực Nam Trung Bộ, có T1 quốc nội và T2 quốc tế.',4,'Hoat_Dong'),(4,'DAD','VVDN','Cảng hàng không quốc tế Đà Nẵng','Đà Nẵng','Quoc_Te','Quận Hải Châu, TP. Đà Nẵng','assets/img/san_bay/DAD.jpg','Sân bay trung tâm miền Trung, khai thác T1 quốc nội và T2 quốc tế.',3,'Hoat_Dong'),(5,'HPH','VVCI','Cảng hàng không quốc tế Cát Bi','Cát Bi','Quoc_Te','Quận Hải An, TP. Hải Phòng','assets/img/san_bay/HPH.jpg','Cửa ngõ hàng không của thành phố cảng và vùng duyên hải Bắc Bộ.',5,'Hoat_Dong'),(6,'PQC','VVPQ','Cảng hàng không quốc tế Phú Quốc','Phú Quốc','Quoc_Te','TP. Phú Quốc, tỉnh Kiên Giang','assets/img/san_bay/PQC.jpg','Sân bay phục vụ đảo ngọc Phú Quốc với nhà ga hành khách hiện đại.',6,'Hoat_Dong'),(7,'VCA','VVCT','Cảng hàng không quốc tế Cần Thơ','Cần Thơ','Quoc_Te','Quận Bình Thủy, TP. Cần Thơ','assets/img/san_bay/VCA.jpg','Sân bay trung tâm vùng Đồng bằng sông Cửu Long.',7,'Hoat_Dong'),(8,'DIN','VVDB','Cảng hàng không Điện Biên Phủ','Điện Biên','Quoc_Noi','TP. Điện Biên Phủ, tỉnh Điện Biên','assets/img/san_bay/DIN.jpg','Sân bay phục vụ tỉnh Điện Biên, nhà ga mới đưa vào khai thác năm 2024.',1,'Hoat_Dong'),(9,'THD','VVTX','Cảng hàng không Thọ Xuân','Thọ Xuân','Quoc_Noi','Huyện Thọ Xuân, tỉnh Thanh Hóa','assets/img/san_bay/THD.jpg','Sân bay phục vụ Thanh Hóa và khu vực Bắc Trung Bộ.',2,'Hoat_Dong'),(10,'VDH','VVDH','Cảng hàng không Đồng Hới','Đồng Hới','Quoc_Noi','TP. Đồng Hới, tỉnh Quảng Bình','assets/img/san_bay/VDH.jpg','Sân bay phục vụ Quảng Bình, gần Di sản Phong Nha - Kẻ Bàng.',3,'Hoat_Dong'),(11,'TBB','VVTH','Cảng hàng không Tuy Hòa','Tuy Hòa','Quoc_Noi','TP. Tuy Hòa, tỉnh Phú Yên','assets/img/san_bay/TBB.jpg','Sân bay phục vụ Phú Yên và khu vực Nam Trung Bộ.',4,'Hoat_Dong'),(12,'VCL','VVCA','Cảng hàng không Chu Lai','Chu Lai','Quoc_Noi','Huyện Núi Thành, tỉnh Quảng Nam','assets/img/san_bay/VCL.jpg','Sân bay phục vụ Quảng Nam và vùng kinh tế trọng điểm miền Trung.',5,'Hoat_Dong'),(13,'PXU','VVPK','Cảng hàng không Pleiku','Pleiku','Quoc_Noi','TP. Pleiku, tỉnh Gia Lai','assets/img/san_bay/PXU.jpg','Sân bay phục vụ Gia Lai và khu vực Tây Nguyên.',6,'Hoat_Dong'),(14,'UIH','VVPC','Cảng hàng không Phù Cát','Phù Cát','Quoc_Noi','Huyện Phù Cát, tỉnh Bình Định','assets/img/san_bay/UIH.jpg','Sân bay phục vụ Bình Định và vùng duyên hải Nam Trung Bộ.',7,'Hoat_Dong'),(15,'VKG','VVRG','Cảng hàng không Rạch Giá','Rạch Giá','Quoc_Noi','TP. Rạch Giá, tỉnh Kiên Giang','assets/img/san_bay/VKG.jpg','Sân bay phục vụ Kiên Giang và khu vực Tây Nam Bộ.',8,'Hoat_Dong');
-/*!40000 ALTER TABLE `san_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `thiet_bi_san_bay`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `san_bay`
+--
+
+INSERT INTO `san_bay` (`id`, `ma_iata`, `ma_icao`, `ten_san_bay`, `ten_ngan`, `phan_cap`, `vi_tri`, `hinh_anh`, `mo_ta`, `thu_tu_hien_thi`, `trang_thai`) VALUES
+(1, 'HAN', 'VVNB', 'Cảng hàng không quốc tế Nội Bài', 'Nội Bài', 'Quoc_Te', 'Huyện Sóc Sơn, TP. Hà Nội', 'assets/img/san_bay/HAN.jpg', 'Cửa ngõ hàng không quốc tế của Thủ đô, khai thác hai nhà ga T1 (quốc nội) và T2 (quốc tế).', 1, 'Hoat_Dong'),
+(2, 'SGN', 'VVTS', 'Cảng hàng không quốc tế Tân Sơn Nhất', 'Tân Sơn Nhất', 'Quoc_Te', 'Quận Tân Bình, TP. Hồ Chí Minh', 'assets/img/san_bay/SGN.jpg', 'Sân bay lớn nhất Việt Nam về lưu lượng hành khách, gồm T1 (quốc nội) và T2 (quốc tế).', 2, 'Hoat_Dong'),
+(3, 'CXR', 'VVCR', 'Cảng hàng không quốc tế Cam Ranh', 'Cam Ranh', 'Quoc_Te', 'TP. Cam Ranh, tỉnh Khánh Hòa', 'assets/img/san_bay/CXR.jpg', 'Sân bay phục vụ Khánh Hòa và khu vực Nam Trung Bộ, có T1 quốc nội và T2 quốc tế.', 4, 'Hoat_Dong'),
+(4, 'DAD', 'VVDN', 'Cảng hàng không quốc tế Đà Nẵng', 'Đà Nẵng', 'Quoc_Te', 'Quận Hải Châu, TP. Đà Nẵng', 'assets/img/san_bay/DAD.jpg', 'Sân bay trung tâm miền Trung, khai thác T1 quốc nội và T2 quốc tế.', 3, 'Hoat_Dong'),
+(5, 'HPH', 'VVCI', 'Cảng hàng không quốc tế Cát Bi', 'Cát Bi', 'Quoc_Te', 'Quận Hải An, TP. Hải Phòng', 'assets/img/san_bay/HPH.jpg', 'Cửa ngõ hàng không của thành phố cảng và vùng duyên hải Bắc Bộ.', 5, 'Hoat_Dong'),
+(6, 'PQC', 'VVPQ', 'Cảng hàng không quốc tế Phú Quốc', 'Phú Quốc', 'Quoc_Te', 'TP. Phú Quốc, tỉnh Kiên Giang', 'assets/img/san_bay/PQC.jpg', 'Sân bay phục vụ đảo ngọc Phú Quốc với nhà ga hành khách hiện đại.', 6, 'Hoat_Dong'),
+(7, 'VCA', 'VVCT', 'Cảng hàng không quốc tế Cần Thơ', 'Cần Thơ', 'Quoc_Te', 'Quận Bình Thủy, TP. Cần Thơ', 'assets/img/san_bay/VCA.jpg', 'Sân bay trung tâm vùng Đồng bằng sông Cửu Long.', 7, 'Hoat_Dong'),
+(8, 'DIN', 'VVDB', 'Cảng hàng không Điện Biên Phủ', 'Điện Biên', 'Quoc_Noi', 'TP. Điện Biên Phủ, tỉnh Điện Biên', 'assets/img/san_bay/DIN.jpg', 'Sân bay phục vụ tỉnh Điện Biên, nhà ga mới đưa vào khai thác năm 2024.', 1, 'Hoat_Dong'),
+(9, 'THD', 'VVTX', 'Cảng hàng không Thọ Xuân', 'Thọ Xuân', 'Quoc_Noi', 'Huyện Thọ Xuân, tỉnh Thanh Hóa', 'assets/img/san_bay/THD.jpg', 'Sân bay phục vụ Thanh Hóa và khu vực Bắc Trung Bộ.', 2, 'Hoat_Dong'),
+(10, 'VDH', 'VVDH', 'Cảng hàng không Đồng Hới', 'Đồng Hới', 'Quoc_Noi', 'TP. Đồng Hới, tỉnh Quảng Bình', 'assets/img/san_bay/VDH.jpg', 'Sân bay phục vụ Quảng Bình, gần Di sản Phong Nha - Kẻ Bàng.', 3, 'Hoat_Dong'),
+(11, 'TBB', 'VVTH', 'Cảng hàng không Tuy Hòa', 'Tuy Hòa', 'Quoc_Noi', 'TP. Tuy Hòa, tỉnh Phú Yên', 'assets/img/san_bay/TBB.jpg', 'Sân bay phục vụ Phú Yên và khu vực Nam Trung Bộ.', 4, 'Hoat_Dong'),
+(12, 'VCL', 'VVCA', 'Cảng hàng không Chu Lai', 'Chu Lai', 'Quoc_Noi', 'Huyện Núi Thành, tỉnh Quảng Nam', 'assets/img/san_bay/VCL.jpg', 'Sân bay phục vụ Quảng Nam và vùng kinh tế trọng điểm miền Trung.', 5, 'Hoat_Dong'),
+(13, 'PXU', 'VVPK', 'Cảng hàng không Pleiku', 'Pleiku', 'Quoc_Noi', 'TP. Pleiku, tỉnh Gia Lai', 'assets/img/san_bay/PXU.jpg', 'Sân bay phục vụ Gia Lai và khu vực Tây Nguyên.', 6, 'Hoat_Dong'),
+(14, 'UIH', 'VVPC', 'Cảng hàng không Phù Cát', 'Phù Cát', 'Quoc_Noi', 'Huyện Phù Cát, tỉnh Bình Định', 'assets/img/san_bay/UIH.jpg', 'Sân bay phục vụ Bình Định và vùng duyên hải Nam Trung Bộ.', 7, 'Hoat_Dong'),
+(15, 'VKG', 'VVRG', 'Cảng hàng không Rạch Giá', 'Rạch Giá', 'Quoc_Noi', 'TP. Rạch Giá, tỉnh Kiên Giang', 'assets/img/san_bay/VKG.jpg', 'Sân bay phục vụ Kiên Giang và khu vực Tây Nam Bộ.', 8, 'Hoat_Dong');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `thiet_bi_san_bay`
+--
+
 CREATE TABLE `thiet_bi_san_bay` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_san_bay` int(11) NOT NULL,
   `ten_thiet_bi` varchar(100) NOT NULL,
-  `loai_thiet_bi` enum('Den_Tin_Hieu','Thiet_Bi_Dan_Duong','Xe_Thang','Xe_Keo','Khac') NOT NULL,
+  `loai_thiet_bi` enum('Den_Tin_Hieu','Thiet_Bi_Dan_Duong','Xe_Thang','Xe_Keo','Bang_Chuyen','Khac') NOT NULL DEFAULT 'Khac',
   `trang_thai` enum('Tot','Bao_Tri','Hong') DEFAULT 'Tot',
-  PRIMARY KEY (`id`),
-  KEY `id_san_bay` (`id_san_bay`),
-  CONSTRAINT `thiet_bi_san_bay_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `id_bang_chuyen` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `thiet_bi_san_bay` WRITE;
-/*!40000 ALTER TABLE `thiet_bi_san_bay` DISABLE KEYS */;
-INSERT INTO `thiet_bi_san_bay` VALUES (1,2,'Xe kéo đẩy máy bay Goldhofer','Xe_Keo','Tot'),(2,1,'Xe thang hành khách T1','Xe_Thang','Bao_Tri'),(3,3,'Hệ thống đèn chớp đường băng','Den_Tin_Hieu','Tot');
-/*!40000 ALTER TABLE `thiet_bi_san_bay` ENABLE KEYS */;
-UNLOCK TABLES;
-DROP TABLE IF EXISTS `yeu_cau_bao_tri`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+--
+-- Dumping data for table `thiet_bi_san_bay`
+--
+
+INSERT INTO `thiet_bi_san_bay` (`id`, `id_san_bay`, `ten_thiet_bi`, `loai_thiet_bi`, `trang_thai`, `id_bang_chuyen`) VALUES
+(1, 2, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(2, 1, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(3, 3, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(4, 11, 'Thang cuốn 01', 'Khac', 'Tot', NULL),
+(5, 1, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(6, 1, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(7, 1, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(8, 1, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(9, 1, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(10, 1, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(11, 1, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(12, 1, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(14, 1, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(15, 1, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(16, 1, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(17, 1, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(18, 1, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(19, 1, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(20, 1, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(21, 1, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(22, 1, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(23, 1, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(24, 2, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(25, 2, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(26, 2, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(27, 2, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(28, 2, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(29, 2, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(30, 2, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(31, 2, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(33, 2, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(34, 2, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(35, 2, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(36, 2, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(37, 2, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(38, 2, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(39, 2, 'Cầu ống lồng 01', 'Khac', 'Bao_Tri', NULL),
+(40, 2, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(41, 2, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(42, 2, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(43, 3, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(44, 3, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(45, 3, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(46, 3, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(47, 3, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(48, 3, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(49, 3, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(50, 3, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(52, 3, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(53, 3, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(54, 3, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(55, 3, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(56, 3, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(57, 3, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(58, 3, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(59, 3, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(60, 3, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(61, 3, 'Hệ thống camera giám sát', 'Khac', 'Hong', NULL),
+(62, 4, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(63, 4, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(64, 4, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Bao_Tri', NULL),
+(65, 4, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(66, 4, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(67, 4, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(68, 4, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(69, 4, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(70, 4, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(72, 4, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(73, 4, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(74, 4, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(75, 4, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(76, 4, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(77, 4, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(78, 4, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(79, 4, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(80, 4, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(81, 4, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(82, 5, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(83, 5, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(84, 5, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(85, 5, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(86, 5, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(87, 5, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(88, 5, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(89, 5, 'Xe buýt sân đỗ 01', 'Khac', 'Hong', NULL),
+(90, 5, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(92, 5, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(93, 5, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(94, 5, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(95, 5, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(96, 5, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(97, 5, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(98, 5, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(99, 5, 'Hệ thống điều hòa 01', 'Khac', 'Hong', NULL),
+(100, 5, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(101, 5, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(102, 6, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(103, 6, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(104, 6, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(105, 6, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(106, 6, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(107, 6, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(108, 6, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(109, 6, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(110, 6, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(112, 6, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(113, 6, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(114, 6, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(115, 6, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(116, 6, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(117, 6, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(118, 6, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(119, 6, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(120, 6, 'Máy phát điện dự phòng 01', 'Khac', 'Bao_Tri', NULL),
+(121, 6, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(122, 7, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(123, 7, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(124, 7, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(125, 7, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(126, 7, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(127, 7, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(128, 7, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(129, 7, 'Xe buýt sân đỗ 01', 'Khac', 'Hong', NULL),
+(130, 7, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(132, 7, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(133, 7, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(134, 7, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(135, 7, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(136, 7, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(137, 7, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(138, 7, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(139, 7, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(140, 7, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(141, 7, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(142, 8, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(143, 8, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(144, 8, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(145, 8, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(146, 8, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(147, 8, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(148, 8, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(149, 8, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(150, 8, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(152, 8, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(153, 8, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(154, 8, 'Xe tiếp nhiên liệu 01', 'Khac', 'Bao_Tri', NULL),
+(155, 8, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(156, 8, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(157, 8, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(158, 8, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(159, 8, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(160, 8, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(161, 8, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(162, 9, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(163, 9, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(164, 9, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(165, 9, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(166, 9, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(167, 9, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(168, 9, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(169, 9, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(170, 9, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(172, 9, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(173, 9, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(174, 9, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(175, 9, 'Xe cứu hỏa 01', 'Khac', 'Hong', NULL),
+(176, 9, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(177, 9, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(178, 9, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(179, 9, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(180, 9, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(181, 9, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(182, 10, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(183, 10, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(184, 10, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(185, 10, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(186, 10, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(187, 10, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(188, 10, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(189, 10, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(190, 10, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(192, 10, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(193, 10, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(194, 10, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(195, 10, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(196, 10, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(197, 10, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(198, 10, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(199, 10, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(200, 10, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(201, 10, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(202, 11, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(203, 11, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(204, 11, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(205, 11, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(206, 11, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(207, 11, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(208, 11, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(209, 11, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(210, 11, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(212, 11, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(213, 11, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(214, 11, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(215, 11, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(216, 11, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(217, 11, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(218, 11, 'Cầu ống lồng 01', 'Khac', 'Hong', NULL),
+(219, 11, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(220, 11, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(221, 11, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(222, 12, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(223, 12, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(224, 12, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(225, 12, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(226, 12, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(227, 12, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(228, 12, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(229, 12, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(230, 12, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(232, 12, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(233, 12, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(234, 12, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(235, 12, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(236, 12, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(237, 12, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(238, 12, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(239, 12, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(240, 12, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(241, 12, 'Hệ thống camera giám sát', 'Khac', 'Bao_Tri', NULL),
+(242, 13, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(243, 13, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(244, 13, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(245, 13, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(246, 13, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(247, 13, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(248, 13, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(249, 13, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(250, 13, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(252, 13, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(253, 13, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(254, 13, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(255, 13, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(256, 13, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(257, 13, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(258, 13, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(259, 13, 'Hệ thống điều hòa 01', 'Khac', 'Hong', NULL),
+(260, 13, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(261, 13, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(262, 14, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(263, 14, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(264, 14, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(265, 14, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(266, 14, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(267, 14, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(268, 14, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(269, 14, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(270, 14, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(272, 14, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(273, 14, 'Xe nâng hàng 01', 'Khac', 'Bao_Tri', NULL),
+(274, 14, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(275, 14, 'Xe cứu hỏa 01', 'Khac', 'Tot', NULL),
+(276, 14, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(277, 14, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(278, 14, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(279, 14, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(280, 14, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(281, 14, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(282, 15, 'Xe kéo đẩy 01', 'Xe_Keo', 'Tot', NULL),
+(283, 15, 'Xe thang 01', 'Xe_Thang', 'Tot', NULL),
+(284, 15, 'Đèn chớp đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(285, 15, 'Đèn tiếp cận đường băng 01', 'Den_Tin_Hieu', 'Tot', NULL),
+(286, 15, 'Đèn đường lăn', 'Den_Tin_Hieu', 'Tot', NULL),
+(287, 15, 'Hệ thống dẫn đường ILS 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(288, 15, 'Đài dẫn đường VOR/DME 01', 'Thiet_Bi_Dan_Duong', 'Tot', NULL),
+(289, 15, 'Xe buýt sân đỗ 01', 'Khac', 'Tot', NULL),
+(290, 15, 'Xe kéo hành lý 01', 'Xe_Keo', 'Tot', NULL),
+(292, 15, 'Băng tải hàng 01', 'Khac', 'Tot', NULL),
+(293, 15, 'Xe nâng hàng 01', 'Khac', 'Tot', NULL),
+(294, 15, 'Xe tiếp nhiên liệu 01', 'Khac', 'Tot', NULL),
+(295, 15, 'Xe cứu hỏa 01', 'Khac', 'Hong', NULL),
+(296, 15, 'Xe cứu thương 01', 'Khac', 'Tot', NULL),
+(297, 15, 'Xe quét sân đỗ 01', 'Khac', 'Tot', NULL),
+(298, 15, 'Cầu ống lồng 01', 'Khac', 'Tot', NULL),
+(299, 15, 'Hệ thống điều hòa 01', 'Khac', 'Tot', NULL),
+(300, 15, 'Máy phát điện dự phòng 01', 'Khac', 'Tot', NULL),
+(301, 15, 'Hệ thống camera giám sát', 'Khac', 'Tot', NULL),
+(302, 1, 'Băng chuyền 01 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 1),
+(303, 1, 'Băng chuyền 02 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 3),
+(304, 1, 'Băng chuyền 03 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 4),
+(305, 1, 'Băng chuyền 04 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 5),
+(306, 1, 'Băng chuyền 05 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 6),
+(307, 1, 'Băng chuyền 06 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 7),
+(308, 1, 'Băng chuyền 07 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 8),
+(309, 1, 'Băng chuyền 08 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 9),
+(310, 1, 'Băng chuyền 09 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 10),
+(311, 1, 'Băng chuyền 10 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 11),
+(312, 1, 'Băng chuyền 11 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 12),
+(313, 1, 'Băng chuyền 12 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 13),
+(314, 2, 'Băng chuyền 01 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 14),
+(315, 2, 'Băng chuyền 02 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 15),
+(316, 2, 'Băng chuyền 03 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 16),
+(317, 2, 'Băng chuyền 04 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 17),
+(318, 2, 'Băng chuyền 05 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 18),
+(319, 2, 'Băng chuyền 06 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 19),
+(320, 2, 'Băng chuyền 07 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 20),
+(321, 2, 'Băng chuyền 08 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 21),
+(322, 2, 'Băng chuyền 09 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 22),
+(323, 2, 'Băng chuyền 10 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 23),
+(324, 2, 'Băng chuyền 11 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 24),
+(325, 2, 'Băng chuyền 12 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 25),
+(326, 3, 'Băng chuyền 01 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 2),
+(327, 3, 'Băng chuyền 02 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 34),
+(328, 3, 'Băng chuyền 03 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 35),
+(329, 3, 'Băng chuyền 04 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 36),
+(330, 3, 'Băng chuyền 05 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 37),
+(331, 3, 'Băng chuyền 06 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 38),
+(332, 4, 'Băng chuyền 01 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 26),
+(333, 4, 'Băng chuyền 02 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 27),
+(334, 4, 'Băng chuyền 03 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 28),
+(335, 4, 'Băng chuyền 04 - Nhà ga T1 - Quốc nội (Sảnh đến)', 'Bang_Chuyen', 'Tot', 29),
+(336, 4, 'Băng chuyền 05 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 30),
+(337, 4, 'Băng chuyền 06 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 31),
+(338, 4, 'Băng chuyền 07 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 32),
+(339, 4, 'Băng chuyền 08 - Nhà ga T2 - Quốc tế (Sảnh đến)', 'Bang_Chuyen', 'Tot', 33),
+(340, 5, 'Băng chuyền 01 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 39),
+(341, 5, 'Băng chuyền 02 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 40),
+(342, 5, 'Băng chuyền 03 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 41),
+(343, 5, 'Băng chuyền 04 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 42),
+(344, 5, 'Băng chuyền 05 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 43),
+(345, 5, 'Băng chuyền 06 - Nhà ga hành khách Cát Bi (Sảnh đến)', 'Bang_Chuyen', 'Tot', 44),
+(346, 6, 'Băng chuyền 01 - Nhà ga hành khách Phú Quốc (Sảnh đến)', 'Bang_Chuyen', 'Tot', 45),
+(347, 6, 'Băng chuyền 02 - Nhà ga hành khách Phú Quốc (Sảnh đến)', 'Bang_Chuyen', 'Tot', 46),
+(348, 6, 'Băng chuyền 03 - Nhà ga hành khách Phú Quốc (Sảnh đến)', 'Bang_Chuyen', 'Tot', 47),
+(349, 6, 'Băng chuyền 04 - Nhà ga hành khách Phú Quốc (Sảnh đến)', 'Bang_Chuyen', 'Tot', 48),
+(350, 7, 'Băng chuyền 01 - Nhà ga hành khách Cần Thơ (Sảnh đến)', 'Bang_Chuyen', 'Tot', 49),
+(351, 7, 'Băng chuyền 02 - Nhà ga hành khách Cần Thơ (Sảnh đến)', 'Bang_Chuyen', 'Tot', 50),
+(352, 7, 'Băng chuyền 03 - Nhà ga hành khách Cần Thơ (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 51),
+(353, 8, 'Băng chuyền 01 - Nhà ga hành khách Điện Biên (Sảnh đến)', 'Bang_Chuyen', 'Tot', 52),
+(354, 8, 'Băng chuyền 02 - Nhà ga hành khách Điện Biên (Sảnh đến)', 'Bang_Chuyen', 'Tot', 53),
+(355, 9, 'Băng chuyền 01 - Nhà ga hành khách Thọ Xuân (Sảnh đến)', 'Bang_Chuyen', 'Tot', 54),
+(356, 9, 'Băng chuyền 02 - Nhà ga hành khách Thọ Xuân (Sảnh đến)', 'Bang_Chuyen', 'Tot', 55),
+(357, 10, 'Băng chuyền 01 - Nhà ga hành khách Đồng Hới (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 56),
+(358, 11, 'Băng chuyền 01 - Nhà ga hành khách Tuy Hòa (Sảnh đến)', 'Bang_Chuyen', 'Tot', 57),
+(359, 11, 'Băng chuyền 02 - Nhà ga hành khách Tuy Hòa (Sảnh đến)', 'Bang_Chuyen', 'Tot', 58),
+(360, 12, 'Băng chuyền 01 - Nhà ga hành khách Chu Lai (Sảnh đến)', 'Bang_Chuyen', 'Tot', 59),
+(361, 13, 'Băng chuyền 01 - Nhà ga hành khách Pleiku (Sảnh đến)', 'Bang_Chuyen', 'Tot', 60),
+(362, 13, 'Băng chuyền 02 - Nhà ga hành khách Pleiku (Sảnh đến)', 'Bang_Chuyen', 'Bao_Tri', 61),
+(363, 14, 'Băng chuyền 01 - Nhà ga hành khách Phù Cát (Sảnh đến)', 'Bang_Chuyen', 'Tot', 62),
+(364, 14, 'Băng chuyền 02 - Nhà ga hành khách Phù Cát (Sảnh đến)', 'Bang_Chuyen', 'Tot', 63),
+(365, 15, 'Băng chuyền 01 - Nhà ga hành khách Rạch Giá (Sảnh đến)', 'Bang_Chuyen', 'Tot', 64),
+(366, 1, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(367, 1, 'Xe kéo đẩy 03', 'Xe_Keo', 'Tot', NULL),
+(368, 1, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(369, 1, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(370, 1, 'Xe thang 04', 'Xe_Thang', 'Tot', NULL),
+(371, 1, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(372, 1, 'Xe buýt sân đỗ 03', 'Khac', 'Tot', NULL),
+(373, 1, 'Xe buýt sân đỗ 04', 'Khac', 'Tot', NULL),
+(374, 1, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(375, 1, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(376, 1, 'Xe kéo hành lý 04', 'Xe_Keo', 'Tot', NULL),
+(377, 1, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(378, 1, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(379, 1, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(380, 1, 'Xe tiếp nhiên liệu 03', 'Khac', 'Tot', NULL),
+(381, 1, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(382, 1, 'Xe cứu hỏa 03', 'Khac', 'Tot', NULL),
+(383, 1, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(384, 1, 'Cầu ống lồng 03', 'Khac', 'Tot', NULL),
+(385, 1, 'Cầu ống lồng 04', 'Khac', 'Tot', NULL),
+(386, 1, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(387, 1, 'Xe cấp điện mặt đất 02', 'Khac', 'Tot', NULL),
+(388, 1, 'Xe điều hòa máy bay 01', 'Khac', 'Tot', NULL),
+(389, 1, 'Máy phát điện dự phòng 02', 'Khac', 'Tot', NULL),
+(390, 2, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(391, 2, 'Xe kéo đẩy 03', 'Xe_Keo', 'Tot', NULL),
+(392, 2, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(393, 2, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(394, 2, 'Xe thang 04', 'Xe_Thang', 'Tot', NULL),
+(395, 2, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(396, 2, 'Xe buýt sân đỗ 03', 'Khac', 'Tot', NULL),
+(397, 2, 'Xe buýt sân đỗ 04', 'Khac', 'Tot', NULL),
+(398, 2, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(399, 2, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(400, 2, 'Xe kéo hành lý 04', 'Xe_Keo', 'Tot', NULL),
+(401, 2, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(402, 2, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(403, 2, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(404, 2, 'Xe tiếp nhiên liệu 03', 'Khac', 'Tot', NULL),
+(405, 2, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(406, 2, 'Xe cứu hỏa 03', 'Khac', 'Tot', NULL),
+(407, 2, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(408, 2, 'Cầu ống lồng 03', 'Khac', 'Tot', NULL),
+(409, 2, 'Cầu ống lồng 04', 'Khac', 'Tot', NULL),
+(410, 2, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(411, 2, 'Xe cấp điện mặt đất 02', 'Khac', 'Tot', NULL),
+(412, 2, 'Xe điều hòa máy bay 01', 'Khac', 'Tot', NULL),
+(413, 2, 'Máy phát điện dự phòng 02', 'Khac', 'Tot', NULL),
+(414, 3, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(415, 3, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(416, 3, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(417, 3, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(418, 3, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(419, 3, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(420, 3, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(421, 3, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(422, 3, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(423, 3, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(424, 3, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(425, 3, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(426, 4, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(427, 4, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(428, 4, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(429, 4, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(430, 4, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(431, 4, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(432, 4, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(433, 4, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(434, 4, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(435, 4, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(436, 4, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(437, 4, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(438, 5, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(439, 5, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(440, 5, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(441, 5, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(442, 5, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(443, 5, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(444, 5, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(445, 5, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(446, 5, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(447, 5, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(448, 5, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(449, 5, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(450, 6, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(451, 6, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(452, 6, 'Xe thang 03', 'Xe_Thang', 'Tot', NULL),
+(453, 6, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(454, 6, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(455, 6, 'Xe kéo hành lý 03', 'Xe_Keo', 'Tot', NULL),
+(456, 6, 'Xe nâng hàng 02', 'Khac', 'Tot', NULL),
+(457, 6, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(458, 6, 'Xe tiếp nhiên liệu 02', 'Khac', 'Tot', NULL),
+(459, 6, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(460, 6, 'Cầu ống lồng 02', 'Khac', 'Tot', NULL),
+(461, 6, 'Xe cấp điện mặt đất 01', 'Khac', 'Tot', NULL),
+(462, 7, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(463, 7, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(464, 7, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(465, 7, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(466, 7, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(467, 7, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(468, 8, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(469, 8, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(470, 8, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(471, 8, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(472, 8, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(473, 8, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(474, 9, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(475, 9, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(476, 9, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(477, 9, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(478, 9, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(479, 9, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(480, 10, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(481, 10, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(482, 10, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(483, 10, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(484, 10, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(485, 10, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(486, 11, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(487, 11, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(488, 11, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(489, 11, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(490, 11, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(491, 11, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(492, 12, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(493, 12, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(494, 12, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(495, 12, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(496, 12, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(497, 12, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(498, 13, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(499, 13, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(500, 13, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(501, 13, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(502, 13, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(503, 13, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(504, 14, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(505, 14, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(506, 14, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(507, 14, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(508, 14, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(509, 14, 'Băng tải hàng 02', 'Khac', 'Tot', NULL),
+(510, 15, 'Xe kéo đẩy 02', 'Xe_Keo', 'Tot', NULL),
+(511, 15, 'Xe thang 02', 'Xe_Thang', 'Tot', NULL),
+(512, 15, 'Xe buýt sân đỗ 02', 'Khac', 'Tot', NULL),
+(513, 15, 'Xe kéo hành lý 02', 'Xe_Keo', 'Tot', NULL),
+(514, 15, 'Xe cứu hỏa 02', 'Khac', 'Tot', NULL),
+(515, 15, 'Băng tải hàng 02', 'Khac', 'Tot', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `yeu_cau_bao_tri`
+--
+
 CREATE TABLE `yeu_cau_bao_tri` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `id_thiet_bi` int(11) NOT NULL,
   `mo_ta_su_co` text NOT NULL,
-  `hinh_anh_minh_hoa` varchar(255) DEFAULT NULL,
+  `hinh_anh_minh_hoa` varchar(500) DEFAULT NULL COMMENT 'Đường dẫn tương đối tới ảnh trong assets/img/su_co/',
   `muc_do` enum('Thap','Trung_Binh','Khan_Cap') NOT NULL,
   `trang_thai_xu_ly` enum('Moi','Dang_Xu_Ly','Hoan_Thanh') DEFAULT 'Moi',
   `ngay_tao` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `id_thiet_bi` (`id_thiet_bi`),
-  CONSTRAINT `yeu_cau_bao_tri_ibfk_1` FOREIGN KEY (`id_thiet_bi`) REFERENCES `thiet_bi_san_bay` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `ngay_hoan_thanh` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-LOCK TABLES `yeu_cau_bao_tri` WRITE;
-/*!40000 ALTER TABLE `yeu_cau_bao_tri` DISABLE KEYS */;
-INSERT INTO `yeu_cau_bao_tri` VALUES (1,2,'Bơm thủy lực nâng thang bị rò rỉ dầu',NULL,'Trung_Binh','Dang_Xu_Ly','2026-10-18 19:45:46'),(2,3,'Cháy 3 bóng đèn LED đoạn giữa đường băng',NULL,'Khan_Cap','Moi','2026-10-18 19:45:46');
-/*!40000 ALTER TABLE `yeu_cau_bao_tri` ENABLE KEYS */;
-UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+--
+-- Dumping data for table `yeu_cau_bao_tri`
+--
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+INSERT INTO `yeu_cau_bao_tri` (`id`, `id_thiet_bi`, `mo_ta_su_co`, `hinh_anh_minh_hoa`, `muc_do`, `trang_thai_xu_ly`, `ngay_tao`, `ngay_hoan_thanh`) VALUES
+(1, 302, 'Băng chuyền hành lý dừng đột ngột khi có hành lý nặng, động cơ kéo quá nhiệt', 'assets/img/su_co/bang-chuyen-hanh-ly/01.jpg', 'Trung_Binh', 'Hoan_Thanh', '2026-11-03 10:00:00', '2026-11-03 17:45:36'),
+(2, 39, 'Cầu ống lồng hành khách không di chuyển được, mô tơ thủy lực báo lỗi', 'assets/img/su_co/cau-ong-long-hanh-khach/01.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-01 11:00:00', NULL),
+(3, 61, 'Camera giám sát mất tín hiệu, hình ảnh đen tại khu vực sảnh', 'assets/img/su_co/he-thong-camera-giam-sat/01.jpg', 'Thap', 'Moi', '2026-10-30 12:00:00', NULL),
+(4, 64, 'Cụm đèn chớp đường băng không sáng, mất nguồn cấp', 'assets/img/su_co/he-thong-den-chop-duong-bang/01.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-10-28 13:00:00', NULL),
+(5, 99, 'Hệ thống điều hòa nhà ga không làm lạnh, dàn nóng quá tải', 'assets/img/su_co/he-thong-dieu-hoa-nha-ga/01.jpg', 'Khan_Cap', 'Moi', '2026-10-26 09:00:00', NULL),
+(6, 120, 'Máy phát điện dự phòng không khởi động khi mất điện lưới', 'assets/img/su_co/may-phat-dien-du-phong/01.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-10-24 10:00:00', NULL),
+(7, 129, 'Xe buýt sân đỗ không nổ máy, hệ thống khởi động hỏng', 'assets/img/su_co/xe-buyt-san-do/01.jpg', 'Thap', 'Moi', '2026-10-22 11:00:00', NULL),
+(8, 154, 'Xe chở nhiên liệu bị rò rỉ tại van xả đáy bồn', 'assets/img/su_co/xe-cho-nhien-lieu/01.jpg', 'Khan_Cap', 'Dang_Xu_Ly', '2026-10-20 12:00:00', NULL),
+(9, 175, 'Xe cứu hỏa sân bay không khởi động được', 'assets/img/su_co/xe-cuu-hoa-san-bay/01.jpg', 'Trung_Binh', 'Moi', '2026-10-18 13:00:00', NULL),
+(10, 357, 'Băng chuyền hành lý phát tiếng ồn lớn, con lăn bị mòn và rơi vòng bi', 'assets/img/su_co/bang-chuyen-hanh-ly/02.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-10-16 09:00:00', NULL),
+(11, 218, 'Cầu ống lồng hành khách bị rò rỉ dầu tại cụm xy-lanh nâng', 'assets/img/su_co/cau-ong-long-hanh-khach/02.jpg', 'Thap', 'Moi', '2026-10-14 10:00:00', NULL),
+(12, 241, 'Camera giám sát bị mờ, không lấy nét được', 'assets/img/su_co/he-thong-camera-giam-sat/02.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-10-12 11:00:00', NULL),
+(13, 259, 'Điều hòa nhà ga rò rỉ gas tại đường ống', 'assets/img/su_co/he-thong-dieu-hoa-nha-ga/02.jpg', 'Khan_Cap', 'Moi', '2026-10-10 12:00:00', NULL),
+(14, 273, 'Xe nâng hàng hóa không nâng được hàng', 'assets/img/su_co/xe-nang-hang-hoa/01.jpg', 'Trung_Binh', 'Dang_Xu_Ly', '2026-10-08 13:00:00', NULL),
+(15, 295, 'Bơm chữa cháy của xe cứu hỏa bị mất áp', 'assets/img/su_co/xe-cuu-hoa-san-bay/02.jpg', 'Thap', 'Moi', '2026-10-06 09:00:00', NULL),
+(16, 89, 'Xe gặp sự cố trên đường không đến kịp', 'assets/img/su_co/xe-buyt-san-do/18.jpg', 'Khan_Cap', 'Moi', '2026-11-03 18:17:42', NULL),
+(17, 307, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 06 tại Nhà ga T1 - Quốc nội', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL),
+(18, 313, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 12 tại Nhà ga T2 - Quốc tế', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL),
+(19, 325, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 12 tại Nhà ga T2 - Quốc tế', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL),
+(20, 331, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 06 tại Nhà ga T2 - Quốc tế', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL),
+(21, 352, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 03 tại Nhà ga hành khách Cần Thơ', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL),
+(22, 362, 'Hệ thống ghi nhận sự cố / bảo trì định kỳ cho Băng chuyền số 02 tại Nhà ga hành khách Pleiku', NULL, 'Trung_Binh', 'Dang_Xu_Ly', '2026-11-06 11:04:02', NULL);
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `bang_chuyen_hanh_ly`
+--
+ALTER TABLE `bang_chuyen_hanh_ly`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_bang_chuyen_nha_ga` (`id_nha_ga`,`so_bang_chuyen`),
+  ADD KEY `id_nha_ga` (`id_nha_ga`);
+
+--
+-- Indexes for table `bang_gia_dich_vu`
+--
+ALTER TABLE `bang_gia_dich_vu`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `chuyen_bay_ngay`
+--
+ALTER TABLE `chuyen_bay_ngay`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_hang_hang_khong` (`id_hang_hang_khong`),
+  ADD KEY `id_loai_tau_bay` (`id_loai_tau_bay`),
+  ADD KEY `id_san_bay_di` (`id_san_bay_di`),
+  ADD KEY `id_san_bay_den` (`id_san_bay_den`),
+  ADD KEY `id_cua_ra_may_bay` (`id_cua_ra_may_bay`),
+  ADD KEY `id_quay_checkin` (`id_quay_checkin`),
+  ADD KEY `id_bang_chuyen` (`id_bang_chuyen`);
+
+--
+-- Indexes for table `cua_ra_may_bay`
+--
+ALTER TABLE `cua_ra_may_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_cua_ra_nha_ga` (`id_nha_ga`,`so_cua`),
+  ADD KEY `id_nha_ga` (`id_nha_ga`);
+
+--
+-- Indexes for table `hang_hang_khong`
+--
+ALTER TABLE `hang_hang_khong`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ma_iata` (`ma_iata`);
+
+--
+-- Indexes for table `hoa_don`
+--
+ALTER TABLE `hoa_don`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_hoa_don_chuyen_bay` (`id_chuyen_bay`),
+  ADD KEY `id_hang_hang_khong` (`id_hang_hang_khong`);
+
+--
+-- Indexes for table `hoa_don_dieu_chinh_log`
+--
+ALTER TABLE `hoa_don_dieu_chinh_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_hoa_don` (`id_hoa_don`);
+
+--
+-- Indexes for table `lich_su_chuyen_bay`
+--
+ALTER TABLE `lich_su_chuyen_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_chuyen_bay` (`id_chuyen_bay`),
+  ADD KEY `idx_gio_ha_canh` (`gio_ha_canh`);
+
+--
+-- Indexes for table `loai_tau_bay`
+--
+ALTER TABLE `loai_tau_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ma_loai` (`ma_loai`),
+  ADD KEY `idx_loai_tau_bay_san_bay` (`id_san_bay`),
+  ADD KEY `idx_loai_tau_bay_hang` (`id_hang_hang_khong`);
+
+--
+-- Indexes for table `nguoi_dung`
+--
+ALTER TABLE `nguoi_dung`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ten_dang_nhap` (`ten_dang_nhap`),
+  ADD KEY `id_san_bay` (`id_san_bay`);
+
+--
+-- Indexes for table `nhat_ky_trang_thai_bay`
+--
+ALTER TABLE `nhat_ky_trang_thai_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_chuyen_bay` (`id_chuyen_bay`),
+  ADD KEY `id_nguoi_dung` (`id_nguoi_dung`);
+
+--
+-- Indexes for table `nha_ga`
+--
+ALTER TABLE `nha_ga`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_nha_ga_san_bay_ma` (`id_san_bay`,`ma_nha_ga`),
+  ADD KEY `id_san_bay` (`id_san_bay`);
+
+--
+-- Indexes for table `quay_checkin`
+--
+ALTER TABLE `quay_checkin`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_quay_checkin_nha_ga` (`id_nha_ga`,`so_quay`),
+  ADD KEY `id_nha_ga` (`id_nha_ga`);
+
+--
+-- Indexes for table `san_bay`
+--
+ALTER TABLE `san_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ma_iata` (`ma_iata`),
+  ADD UNIQUE KEY `ma_icao` (`ma_icao`),
+  ADD KEY `thu_tu_hien_thi` (`thu_tu_hien_thi`);
+
+--
+-- Indexes for table `thiet_bi_san_bay`
+--
+ALTER TABLE `thiet_bi_san_bay`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_san_bay` (`id_san_bay`),
+  ADD KEY `fk_thiet_bi_bang_chuyen` (`id_bang_chuyen`);
+
+--
+-- Indexes for table `yeu_cau_bao_tri`
+--
+ALTER TABLE `yeu_cau_bao_tri`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_thiet_bi` (`id_thiet_bi`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `bang_chuyen_hanh_ly`
+--
+ALTER TABLE `bang_chuyen_hanh_ly`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+
+--
+-- AUTO_INCREMENT for table `bang_gia_dich_vu`
+--
+ALTER TABLE `bang_gia_dich_vu`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `chuyen_bay_ngay`
+--
+ALTER TABLE `chuyen_bay_ngay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
+
+--
+-- AUTO_INCREMENT for table `cua_ra_may_bay`
+--
+ALTER TABLE `cua_ra_may_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=141;
+
+--
+-- AUTO_INCREMENT for table `hang_hang_khong`
+--
+ALTER TABLE `hang_hang_khong`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `hoa_don`
+--
+ALTER TABLE `hoa_don`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
+
+--
+-- AUTO_INCREMENT for table `hoa_don_dieu_chinh_log`
+--
+ALTER TABLE `hoa_don_dieu_chinh_log`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `lich_su_chuyen_bay`
+--
+ALTER TABLE `lich_su_chuyen_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+
+--
+-- AUTO_INCREMENT for table `loai_tau_bay`
+--
+ALTER TABLE `loai_tau_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+
+--
+-- AUTO_INCREMENT for table `nguoi_dung`
+--
+ALTER TABLE `nguoi_dung`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `nhat_ky_trang_thai_bay`
+--
+ALTER TABLE `nhat_ky_trang_thai_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=333;
+
+--
+-- AUTO_INCREMENT for table `nha_ga`
+--
+ALTER TABLE `nha_ga`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `quay_checkin`
+--
+ALTER TABLE `quay_checkin`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+
+--
+-- AUTO_INCREMENT for table `san_bay`
+--
+ALTER TABLE `san_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `thiet_bi_san_bay`
+--
+ALTER TABLE `thiet_bi_san_bay`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=516;
+
+--
+-- AUTO_INCREMENT for table `yeu_cau_bao_tri`
+--
+ALTER TABLE `yeu_cau_bao_tri`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `bang_chuyen_hanh_ly`
+--
+ALTER TABLE `bang_chuyen_hanh_ly`
+  ADD CONSTRAINT `bang_chuyen_hanh_ly_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `chuyen_bay_ngay`
+--
+ALTER TABLE `chuyen_bay_ngay`
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_2` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`),
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_3` FOREIGN KEY (`id_loai_tau_bay`) REFERENCES `loai_tau_bay` (`id`),
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_4` FOREIGN KEY (`id_san_bay_di`) REFERENCES `san_bay` (`id`),
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_5` FOREIGN KEY (`id_san_bay_den`) REFERENCES `san_bay` (`id`),
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_6` FOREIGN KEY (`id_cua_ra_may_bay`) REFERENCES `cua_ra_may_bay` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_7` FOREIGN KEY (`id_quay_checkin`) REFERENCES `quay_checkin` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `chuyen_bay_ngay_ibfk_8` FOREIGN KEY (`id_bang_chuyen`) REFERENCES `bang_chuyen_hanh_ly` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `cua_ra_may_bay`
+--
+ALTER TABLE `cua_ra_may_bay`
+  ADD CONSTRAINT `cua_ra_may_bay_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hoa_don`
+--
+ALTER TABLE `hoa_don`
+  ADD CONSTRAINT `hoa_don_ibfk_1` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `hoa_don_ibfk_2` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `lich_su_chuyen_bay`
+--
+ALTER TABLE `lich_su_chuyen_bay`
+  ADD CONSTRAINT `fk_lich_su_chuyen_bay` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `loai_tau_bay`
+--
+ALTER TABLE `loai_tau_bay`
+  ADD CONSTRAINT `fk_loai_tau_bay_hang` FOREIGN KEY (`id_hang_hang_khong`) REFERENCES `hang_hang_khong` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `loai_tau_bay_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `nguoi_dung`
+--
+ALTER TABLE `nguoi_dung`
+  ADD CONSTRAINT `nguoi_dung_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `nhat_ky_trang_thai_bay`
+--
+ALTER TABLE `nhat_ky_trang_thai_bay`
+  ADD CONSTRAINT `nhat_ky_trang_thai_bay_ibfk_1` FOREIGN KEY (`id_chuyen_bay`) REFERENCES `chuyen_bay_ngay` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `nhat_ky_trang_thai_bay_ibfk_2` FOREIGN KEY (`id_nguoi_dung`) REFERENCES `nguoi_dung` (`id`);
+
+--
+-- Constraints for table `nha_ga`
+--
+ALTER TABLE `nha_ga`
+  ADD CONSTRAINT `nha_ga_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quay_checkin`
+--
+ALTER TABLE `quay_checkin`
+  ADD CONSTRAINT `quay_checkin_ibfk_1` FOREIGN KEY (`id_nha_ga`) REFERENCES `nha_ga` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `thiet_bi_san_bay`
+--
+ALTER TABLE `thiet_bi_san_bay`
+  ADD CONSTRAINT `fk_thiet_bi_bang_chuyen` FOREIGN KEY (`id_bang_chuyen`) REFERENCES `bang_chuyen_hanh_ly` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `thiet_bi_san_bay_ibfk_1` FOREIGN KEY (`id_san_bay`) REFERENCES `san_bay` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `yeu_cau_bao_tri`
+--
+ALTER TABLE `yeu_cau_bao_tri`
+  ADD CONSTRAINT `yeu_cau_bao_tri_ibfk_1` FOREIGN KEY (`id_thiet_bi`) REFERENCES `thiet_bi_san_bay` (`id`) ON DELETE CASCADE;
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
-
--- ============================================================
--- DỌN 2 BẢNG CỦA TÍNH NĂNG CŨ (nếu CSDL đích còn)
--- Bảng con trước, bảng cha sau.
--- ============================================================
-DROP TABLE IF EXISTS `nhat_ky_lich_bay_mua`;
-DROP TABLE IF EXISTS `lich_bay_mua`;

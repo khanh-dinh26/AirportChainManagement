@@ -1,19 +1,5 @@
 <?php
-/**
- * ============================================================
- * POPUP: XÁC NHẬN ĐIỀU KIỆN CẤT CÁNH — views/pages/chuyen_bay/cat_canh.php
- * Mở từ 2 mục trên trang danh sách chuyến bay:
- *   - "Các chuyến đã đến giờ bay" (Đang mở, đã tới giờ cất cánh).
- *   - "Các chuyến bay trễ chuyến đã đến giờ bay" (Trễ chuyến, đã tới giờ cất cánh).
- * Nội dung:
- *   - Thông tin đầy đủ của chuyến bay.
- *   - Lý do trễ trước đó (đọc từ nhật ký chuyến bay, chỉ chuyến Trễ chuyến mới có).
- *   - Danh sách chuyến trùng lịch + giờ sân bay trống gợi ý.
- *   - Đủ điều kiện / đủ yêu cầu an toàn -> Cất cánh (server kiểm tra trùng lịch).
- *   - Chưa đủ -> trễ tiếp: nhập lý do + số phút hoặc giờ cất cánh mới.
- * Không thêm bảng mới: lý do trễ được ghi vào nhật ký chuyến bay.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
@@ -35,7 +21,7 @@ if ($popup && isset($_GET['done'])) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'flight-departure-done' }, window.location.origin);
         } else {
-          window.location.replace(<?= json_encode(BASE_URL . '/index.php?page=chuyen_bay') ?>);
+          window.location.replace('<?= BASE_URL ?>/index.php?page=chuyen_bay');
         }
       })();
     </script>
@@ -404,8 +390,8 @@ $delayToggleLabel = $isDelayed
         const delayNewTime = form.querySelector('[data-delay-new-time]');
         const confirmWarning = form.querySelector('[data-confirm-warning]');
         const hasConflicts = <?= $conflicts ? 'true' : 'false' ?>;
-        const suggestedSlot = <?= json_encode($suggestedInput) ?>;
-        const suggestedText = <?= json_encode((string) $suggestedText) ?>;
+        const suggestedSlot = '<?= addslashes((string) $suggestedInput) ?>';
+        const suggestedText = '<?= addslashes((string) $suggestedText) ?>';
 
         const openDelayPanel = function () {
           delayPanel.classList.remove('d-none');

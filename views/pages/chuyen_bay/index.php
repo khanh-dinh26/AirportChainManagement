@@ -1,56 +1,10 @@
 ﻿<?php
-/**
- * ============================================================
- * TRANG: QUẢN LÝ CHUYẾN BAY  —  views/pages/chuyen_bay/index.php
- * Phân hệ: Điều hành chuyến bay (Thành viên 3)
- * ------------------------------------------------------------
- * Phạm vi gợi ý: lịch bay, giờ cất/hạ cánh, hãng hàng không, trạng thái.
- * Ghi chú cho Thành viên 3:
- *   - Dữ liệu trong bảng là MẪU, thay bằng dữ liệu do
- *     ChuyenBayController truyền vào.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
 
-// Endpoint JSON cho đồng hồ thời gian thực: tự chuyển trạng thái chuyến bay theo giờ thực tế.
-// Trang danh sách gọi định kỳ để cập nhật mà không cần tải lại toàn bộ trang.
-if (isset($_GET['sync_status'])) {
-    $syncController = new ChuyenBayController($conn);
-    $syncResult = $syncController->syncRealtimeStatuses();
-    $pendingDate = trim((string) ($_GET['pending_date'] ?? ''));
-    $pendingDateValid = preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $pendingDate, $pendingParts)
-        && checkdate((int) $pendingParts[2], (int) $pendingParts[3], (int) $pendingParts[1]);
-    $pending = $syncController->getPendingDepartures($pendingDateValid ? $pendingDate : null);
-    $effectivePendingDate = $pendingDateValid
-        ? $pendingDate
-        : substr($syncController->getCurrentDateTime(), 0, 10);
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-    echo json_encode([
-        'server_time' => $syncController->getCurrentDateTime(),
-        'departed' => (int) ($syncResult['departed'] ?? 0),
-        'landed' => (int) ($syncResult['landed'] ?? 0),
-        'overdue' => (int) ($syncResult['overdue'] ?? 0),
-        'cancelled' => (int) ($syncResult['cancelled'] ?? 0),
-        'pending_date' => $effectivePendingDate,
-        'pending' => array_map(
-            static function ($row) {
-                return [
-                    'id' => (int) $row['id'],
-                    'so_hieu' => $row['so_hieu'],
-                    'trang_thai' => $row['trang_thai_tong'],
-                ];
-            },
-            $pending
-        ),
-    ]);
-    exit();
-}
 
-// Các liên kết cũ dạng ?page=chuyen_bay&edit=ID / &cancel=ID: mở popup ngay trên trang này
-// thay vì chuyển sang trang riêng (xem đoạn script cuối trang).
 $legacyEditId = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 $legacyCancelId = isset($_GET['cancel']) ? (int) $_GET['cancel'] : 0;
 
@@ -788,7 +742,7 @@ ob_start();
                 });
 
                 // Liên kết cũ (?edit=ID / ?cancel=ID): mở popup ngay tại trang này.
-                const baseUrl = <?= json_encode(BASE_URL) ?>;
+                const baseUrl = '<?= BASE_URL ?>';
                 const params = new URLSearchParams(window.location.search);
                 const legacyEditId = parseInt(params.get('edit') || '<?= (int) $legacyEditId ?>', 10);
                 const legacyCancelId = parseInt(params.get('cancel') || '<?= (int) $legacyCancelId ?>', 10);
@@ -946,59 +900,7 @@ ob_start();
                   });
                 });
 
-                const pendingDate = <?= json_encode($flightData['pendingDate']) ?>;
-                const syncUrl = <?= json_encode(BASE_URL . '/index.php?page=chuyen_bay&sync_status=1') ?>
-                  + '&pending_date=' + encodeURIComponent(pendingDate);
-                const popup = document.getElementById('flight-popup');
-                const popupOpen = function () {
-                  return popup && !popup.hidden;
-                };
-                let syncing = false;
-                // id => trạng thái hiện tại: phát hiện chuyến mới hoặc chuyến vừa bị đổi trạng thái.
-                const knownPending = <?= json_encode((object) array_column($flightData['pendingDepartures'], 'trang_thai_tong', 'id')) ?>;
-                const knownPendingCount = Object.keys(knownPending).length;
-                const syncStatuses = function () {
-                  // Không tải lại trang khi đang mở form trong popup (tránh mất dữ liệu đang nhập).
-                  if (syncing || document.hidden || popupOpen()) {
-                    return;
-                  }
-                  syncing = true;
-                  fetch(syncUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' })
-                    .then(function (response) {
-                      return response.ok ? response.json() : null;
-                    })
-                    .then(function (data) {
-                      if (!data) {
-                        return;
-                      }
-                      if (typeof data.server_time === 'string') {
-                        clockOffset = parseServerTime(data.server_time) - Date.now();
-                        renderClock();
-                        renderOverdue();
-                      }
-                      const departed = Number(data.departed) || 0;
-                      const landed = Number(data.landed) || 0;
-                      const overdue = Number(data.overdue) || 0;
-                      const cancelled = Number(data.cancelled) || 0;
-                      const pendingList = Array.isArray(data.pending) ? data.pending : [];
-                      const pendingChanged = pendingList.length !== knownPendingCount
-                        || pendingList.some(function (item) {
-                          return knownPending[String(item.id)] !== item.trang_thai;
-                        });
-                      if (departed + landed + overdue + cancelled === 0 && !pendingChanged) {
-                        return;
-                      }
-                      window.setTimeout(function () {
-                        window.location.reload();
-                      }, 1200);
-                    })
-                    .catch(function () {})
-                    .then(function () {
-                      syncing = false;
-                    });
-                };
-                window.setInterval(syncStatuses, 15000);
-                syncStatuses();
+                
               })();
             </script>
 <?php

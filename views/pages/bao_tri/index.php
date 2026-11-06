@@ -45,9 +45,18 @@ foreach ($thiet_bi_list as $tb) {
 // Thiết bị được chọn sẵn khi mở modal tạo phiếu từ trang chi tiết thiết bị.
 $selectedThietBiId = (int) ($_GET['id_thiet_bi'] ?? 0);
 
+// Ràng buộc sân bay theo quyền tài khoản đăng nhập
+$userSanBayId = pham_vi_san_bay();
+$coSanBayRieng = ($userSanBayId !== null && (int) $userSanBayId > 0);
+
 // Bộ lọc sân bay cho form tạo phiếu (thuần PHP/HTML, không dùng JavaScript).
 $coLocSanBay   = array_key_exists('loc_san_bay', $_GET);
 $sanBayDangLoc = $coLocSanBay ? (int) $_GET['loc_san_bay'] : 0;
+
+// Nếu tài khoản bị giới hạn theo sân bay thì cố định luôn vào sân bay đó, không cho chọn sân bay khác
+if ($coSanBayRieng) {
+    $sanBayDangLoc = (int) $userSanBayId;
+}
 
 // Mở từ trang chi tiết thiết bị thì tự chọn sân bay của thiết bị đó.
 if (!$coLocSanBay && $selectedThietBiId > 0 && isset($sanBayCuaThietBi[$selectedThietBiId])) {
@@ -71,7 +80,7 @@ $thietBiHienThi = $sanBayDangLoc > 0
     ? [$sanBayDangLoc => $thietBiTheoSanBay[$sanBayDangLoc]]
     : $thietBiTheoSanBay;
 
-$nhanSanBayDangLoc = $sanBayDangLoc > 0 ? $sanBayThietBi[$sanBayDangLoc] : 'Tất cả sân bay';
+$nhanSanBayDangLoc = $sanBayDangLoc > 0 ? $sanBayThietBi[$sanBayDangLoc] : '-- Vui lòng chọn sân bay phát sinh sự cố --';
 $soThietBiDangLoc  = $sanBayDangLoc > 0 ? count($thietBiTheoSanBay[$sanBayDangLoc]) : count($thiet_bi_list);
 
 $pageTitle  = 'Bảo trì & khắc phục';
@@ -118,6 +127,7 @@ $loaiThietBiLabels = [
     'Thiet_Bi_Dan_Duong' => 'Thiết bị dẫn đường',
     'Xe_Thang'           => 'Xe thang',
     'Xe_Keo'             => 'Xe kéo',
+    'Bang_Chuyen'        => 'Băng chuyền hành lý',
     'Khac'               => 'Khác',
 ];
 
@@ -782,55 +792,80 @@ $chiTietThoiGianHoanThanh = $chiTietNgayHoanThanh !== '' ? strtotime($chiTietNga
                                 <div class="form-label fw-semibold mb-1">
                                     <i class="bi bi-airplane-engines me-1"></i>Sân bay
                                 </div>
-                                <details class="maint-airport-picker">
-                                    <summary class="maint-airport-summary">
-                                        <span class="maint-airport-summary-icon"><i class="bi bi-geo-alt-fill"></i></span>
-                                        <span class="maint-airport-summary-text">
-                                            <span class="maint-airport-summary-value"><?= htmlspecialchars($nhanSanBayDangLoc, ENT_QUOTES, 'UTF-8') ?></span>
-                                        </span>
-                                        <span class="badge text-bg-light maint-airport-summary-count"><?= $soThietBiDangLoc ?> thiết bị</span>
-                                        <i class="bi bi-chevron-down maint-airport-summary-caret"></i>
-                                    </summary>
-                                    <div class="maint-airport-menu">
-                                        <a href="<?= htmlspecialchars($ticketFormLocUrl(0), ENT_QUOTES, 'UTF-8') ?>"
-                                           class="maint-airport-option<?= $sanBayDangLoc === 0 ? ' is-active' : '' ?>">
-                                            <span class="maint-airport-option-code"><i class="bi bi-grid-3x3-gap-fill"></i></span>
-                                            <span class="maint-airport-option-name">Tất cả sân bay</span>
-                                            <span class="maint-airport-option-count"><?= count($thiet_bi_list) ?></span>
-                                            <i class="bi bi-check2 maint-airport-option-check"></i>
-                                        </a>
-                                        <?php foreach ($thietBiTheoSanBay as $idSanBay => $dsThietBi): ?>
-                                            <a href="<?= htmlspecialchars($ticketFormLocUrl((int) $idSanBay), ENT_QUOTES, 'UTF-8') ?>"
-                                               class="maint-airport-option<?= $sanBayDangLoc === (int) $idSanBay ? ' is-active' : '' ?>"
-                                               title="<?= htmlspecialchars((string) ($dsThietBi[0]['ten_san_bay'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                                <span class="maint-airport-option-code"><i class="bi bi-geo-alt"></i></span>
-                                                <span class="maint-airport-option-name"><?= htmlspecialchars($sanBayTen[$idSanBay] ?? 'Khác', ENT_QUOTES, 'UTF-8') ?></span>
-                                                <span class="maint-airport-option-count"><?= count($dsThietBi) ?></span>
-                                                <i class="bi bi-check2 maint-airport-option-check"></i>
-                                            </a>
-                                        <?php endforeach; ?>
+                                <?php if ($coSanBayRieng): ?>
+                                    <div class="p-2 px-3 bg-light rounded border d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                                            <div>
+                                                <strong class="text-dark"><?= htmlspecialchars($nhanSanBayDangLoc, ENT_QUOTES, 'UTF-8') ?></strong>
+                                                <div class="small text-secondary">Sân bay phụ trách (ràng buộc theo tài khoản)</div>
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Cố định</span>
                                     </div>
-                                </details>
+                                <?php else: ?>
+                                    <details class="maint-airport-picker" <?= $sanBayDangLoc === 0 ? 'open' : '' ?>>
+                                        <summary class="maint-airport-summary <?= $sanBayDangLoc === 0 ? 'border-warning bg-warning-subtle' : '' ?>">
+                                            <span class="maint-airport-summary-icon"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+                                            <span class="maint-airport-summary-text">
+                                                <span class="maint-airport-summary-value fw-bold"><?= htmlspecialchars($nhanSanBayDangLoc, ENT_QUOTES, 'UTF-8') ?></span>
+                                            </span>
+                                            <?php if ($sanBayDangLoc > 0): ?>
+                                                <span class="badge text-bg-light maint-airport-summary-count"><?= $soThietBiDangLoc ?> thiết bị</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-danger text-white">Bắt buộc chọn</span>
+                                            <?php endif; ?>
+                                            <i class="bi bi-chevron-down maint-airport-summary-caret"></i>
+                                        </summary>
+                                        <div class="maint-airport-menu">
+                                            <div class="p-2 small text-muted border-bottom bg-light">
+                                                <i class="bi bi-info-circle me-1"></i>Chọn sân bay phát sinh sự cố để tải danh mục thiết bị:
+                                            </div>
+                                            <?php foreach ($thietBiTheoSanBay as $idSanBay => $dsThietBi): ?>
+                                                <a href="<?= htmlspecialchars($ticketFormLocUrl((int) $idSanBay), ENT_QUOTES, 'UTF-8') ?>"
+                                                   class="maint-airport-option<?= $sanBayDangLoc === (int) $idSanBay ? ' is-active' : '' ?>"
+                                                   title="<?= htmlspecialchars((string) ($dsThietBi[0]['ten_san_bay'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                                    <span class="maint-airport-option-code"><i class="bi bi-geo-alt"></i></span>
+                                                    <span class="maint-airport-option-name"><?= htmlspecialchars($sanBayTen[$idSanBay] ?? 'Khác', ENT_QUOTES, 'UTF-8') ?></span>
+                                                    <span class="maint-airport-option-count"><?= count($dsThietBi) ?> thiết bị</span>
+                                                    <i class="bi bi-check2 maint-airport-option-check"></i>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </details>
+                                    <?php if ($sanBayDangLoc === 0): ?>
+                                        <div class="small text-danger mt-1">
+                                            <i class="bi bi-exclamation-circle-fill me-1"></i>Ràng buộc: Admin tổng bắt buộc phải chọn 1 sân bay ở trên trước.
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+
                                 <label for="modal_id_thiet_bi" class="form-label fw-semibold mt-2">
                                     Thiết bị gặp sự cố <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-body-tertiary"><i class="bi bi-hdd-stack"></i></span>
-                                    <select name="id_thiet_bi" id="modal_id_thiet_bi" class="form-select form-select-sm" required>
-                                        <option value="">-- Chọn thiết bị --</option>
-                                        <?php foreach ($thietBiHienThi as $idSanBay => $dsThietBi): ?>
-                                            <optgroup label="<?= htmlspecialchars($sanBayThietBi[$idSanBay], ENT_QUOTES, 'UTF-8') ?>">
-                                                <?php foreach ($dsThietBi as $tb): ?>
-                                                    <?php
-                                                    $loaiThietBi = $loaiThietBiLabels[$tb['loai_thiet_bi']] ?? str_replace('_', ' ', $tb['loai_thiet_bi']);
-                                                    $trangThaiThietBi = $trangThaiThietBiLabels[$tb['trang_thai']] ?? $tb['trang_thai'];
-                                                    $nhanThietBi = $tb['ten_thiet_bi'] . ' — ' . $loaiThietBi . ' (' . $trangThaiThietBi . ')';
-                                                    ?>
-                                                    <option value="<?= (int) $tb['id'] ?>"<?= $selectedThietBiId === (int) $tb['id'] ? ' selected' : '' ?>><?= htmlspecialchars($nhanThietBi, ENT_QUOTES, 'UTF-8') ?></option>
-                                                <?php endforeach; ?>
-                                            </optgroup>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <?php if ($sanBayDangLoc === 0): ?>
+                                        <select name="id_thiet_bi" id="modal_id_thiet_bi" class="form-select form-select-sm bg-light text-muted" required disabled>
+                                            <option value="">-- Vui lòng chọn sân bay ở trên trước --</option>
+                                        </select>
+                                    <?php else: ?>
+                                        <select name="id_thiet_bi" id="modal_id_thiet_bi" class="form-select form-select-sm" required>
+                                            <option value="">-- Chọn thiết bị gặp sự cố --</option>
+                                            <?php foreach ($thietBiHienThi as $idSanBay => $dsThietBi): ?>
+                                                <optgroup label="<?= htmlspecialchars($sanBayThietBi[$idSanBay], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <?php foreach ($dsThietBi as $tb): ?>
+                                                        <?php
+                                                        $loaiThietBi = $loaiThietBiLabels[$tb['loai_thiet_bi']] ?? str_replace('_', ' ', $tb['loai_thiet_bi']);
+                                                        $trangThaiThietBi = $trangThaiThietBiLabels[$tb['trang_thai']] ?? $tb['trang_thai'];
+                                                        $nhanThietBi = $tb['ten_thiet_bi'] . ' — ' . $loaiThietBi . ' (' . $trangThaiThietBi . ')';
+                                                        ?>
+                                                        <option value="<?= (int) $tb['id'] ?>"<?= $selectedThietBiId === (int) $tb['id'] ? ' selected' : '' ?>><?= htmlspecialchars($nhanThietBi, ENT_QUOTES, 'UTF-8') ?></option>
+                                                    <?php endforeach; ?>
+                                                </optgroup>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php endif; ?>
                                 </div>
                                 <?php if (empty($thietBiTheoSanBay)): ?>
                                     <div class="form-text text-danger mt-1">
@@ -875,11 +910,12 @@ $chiTietThoiGianHoanThanh = $chiTietNgayHoanThanh !== '' ? strtotime($chiTietNga
                             <div class="maint-image-upload">
                                 <div class="maint-image-upload-head">
                                     <i class="bi bi-image"></i>
-                                    <span class="fw-semibold">Chọn ảnh</span>
+                                    <span class="fw-semibold">Chọn ảnh minh chứng sự cố</span> <span class="text-danger">*</span>
                                 </div>
-                                <label for="modal_anh_tai_len" class="visually-hidden">Chọn ảnh minh họa</label>
+                                <label for="modal_anh_tai_len" class="visually-hidden">Chọn ảnh minh họa sự cố (bắt buộc)</label>
                                 <input type="file" name="anh_tai_len" id="modal_anh_tai_len" class="form-control form-control-sm"
-                                       accept="image/png, image/jpeg, image/jpg, image/gif, image/webp">
+                                       accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" required>
+                                <div class="form-text small text-danger"><i class="bi bi-exclamation-circle me-1"></i>Bắt buộc tải lên ảnh hiện trạng sự cố.</div>
                             </div>
                             <div class="maint-image-preview d-none" id="modal_anh_preview_wrap">
                                 <img id="modal_anh_preview" alt="Ảnh minh chứng đã chọn">
@@ -889,8 +925,11 @@ $chiTietThoiGianHoanThanh = $chiTietNgayHoanThanh !== '' ? strtotime($chiTietNga
                 </div>
 
                 <div class="modal-footer border-0 d-flex flex-wrap justify-content-between gap-2 px-3 py-2">
-                    <div class="d-flex gap-2 ms-auto">
-                        <button type="submit" class="btn btn-sm btn-danger px-3">
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <?php if ($sanBayDangLoc === 0): ?>
+                            <span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>Chưa chọn sân bay</span>
+                        <?php endif; ?>
+                        <button type="submit" class="btn btn-sm btn-danger px-3" <?= $sanBayDangLoc === 0 ? 'disabled title="Vui lòng chọn sân bay ở trên trước"' : '' ?>>
                             <i class="bi bi-send me-1"></i> Gửi yêu cầu
                         </button>
                     </div>

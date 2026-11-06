@@ -1,4 +1,13 @@
 <?php
+/**
+ * @var string|null $formMode
+ * @var array|null $formRecord
+ * @var array|null $selectedAirport
+ * @var callable $e
+ * @var string $listUrl
+ * @var array $data
+ */
+
 if (!$formMode) {
     return;
 }
@@ -114,11 +123,11 @@ $airportGroupLabels = ['Quoc_Te' => 'Cảng hàng không quốc tế', 'Quoc_Noi
       </div>
 
       <div class="col-md-6">
-        <label class="form-label" for="ng-so-do">Ảnh sơ đồ nhà ga</label>
-        <input type="file" class="form-control form-control-sm" id="ng-so-do" name="so_do_file" accept="image/jpeg,image/png,image/webp" />
+        <label class="form-label" for="ng-so-do">Ảnh sơ đồ nhà ga <?= $soDoPreview === '' ? '<span class="text-danger">*</span>' : '' ?></label>
+        <input type="file" class="form-control form-control-sm" id="ng-so-do" name="so_do_file" accept="image/jpeg,image/png,image/webp" <?= $soDoPreview === '' ? 'required' : '' ?> />
         <div class="form-text">
           Chọn tệp JPG, PNG hoặc WebP, tối đa 5 MB.
-          <?= $isEdit && $soDoPreview !== '' ? 'Để trống nếu muốn giữ ảnh hiện tại.' : '' ?>
+          <?= $isEdit && $soDoPreview !== '' ? 'Để trống nếu muốn giữ ảnh hiện tại.' : '<span class="text-danger fw-semibold">Bắt buộc tải lên ảnh sơ đồ nhà ga.</span>' ?>
         </div>
         <?php if ($soDoPreview !== ''): ?>
           <div class="ht-upload-preview mt-2">

@@ -1,18 +1,5 @@
 <?php
-/**
- * ============================================================
- * LAYOUT: SIDEBAR (AdminLTE 4)
- * ------------------------------------------------------------
- * Menu chính của hệ thống, chia theo 5 phân hệ tương ứng 5
- * thành viên thực hiện. Biến $navActive dùng để tô đậm mục
- * đang mở (nhận 1 trong các giá trị: ha_tang, chuyen_bay,
- * bao_tri, ke_toan, auth).
- *
- * Giao diện giữ nguyên sidebar tối mặc định của AdminLTE 4.
- * Menu con dùng <details>/<summary> — mở/đóng bằng CSS,
- * KHÔNG cần JavaScript.
- * ============================================================
- */
+
 
 $navActive    = $navActive ?? '';
 $navSubActive = $navSubActive ?? '';
@@ -33,16 +20,17 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 };
 ?>
 <!--begin::Sidebar-->
-<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+<aside class="app-sidebar shadow-sm">
   <!--begin::Sidebar Brand-->
   <div class="sidebar-brand">
     <a href="<?= $baseUrl ?>/index.php" class="brand-link">
       <img
-        src="<?= $adminLteUrl ?>/assets/img/AdminLTELogo.png"
-        alt="Logo"
-        class="brand-image opacity-75 shadow"
+        src="<?= $baseUrl ?>/assets/logo/logo.png"
+        alt="AeroChain Logo"
+        class="brand-image"
+        style="max-height: 50px; width: auto; object-fit: contain;"
       />
-      <span class="brand-text fw-light">ACV Airports</span>
+      <span class="brand-text fw-bold">AeroChain</span>
     </a>
   </div>
   <!--end::Sidebar Brand-->
@@ -60,47 +48,52 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 
         <li class="nav-header">PHÂN HỆ CHỨC NĂNG</li>
 
-        <!--Thành viên 1 - Xác thực & tài khoản-->
+        <?php if (co_quyen_nhan_su()): ?>
+        <!--Thành viên 1 - Quản lý nhân sự-->
         <li class="nav-item">
-          <details class="nav-group<?= $navActive === 'auth' ? ' is-active' : '' ?>"<?= $navActive === 'auth' ? ' open' : '' ?>>
-            <summary class="nav-link<?= $isActive('auth') ?>">
-              <i class="nav-icon bi bi-person-badge"></i>
+          <a href="<?= $baseUrl ?>/index.php?page=nhan_su" class="nav-link<?= $isActive('nhan_su') ?>">
+            <i class="nav-icon bi bi-people-fill"></i>
+            <p>Quản lý nhân sự</p>
+          </a>
+        </li>
+        <?php endif; ?>
+
+        <?php if (co_quyen_ha_tang()): ?>
+        <!--Thành viên 2 - Hạ tầng-->
+        <li class="nav-item">
+          <details class="nav-group<?= $navActive === 'ha_tang' ? ' is-active' : '' ?>"<?= $navActive === 'ha_tang' ? ' open' : '' ?>>
+            <summary class="nav-link<?= $isActive('ha_tang') ?>">
+              <i class="nav-icon bi bi-buildings"></i>
               <p>
-                Tài khoản &amp; phân quyền
+                Quản lý hạ tầng
                 <i class="nav-arrow bi bi-chevron-right"></i>
               </p>
             </summary>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=login" class="nav-link<?= $isSubActive('login') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Đăng nhập</p>
+                <a href="<?= $baseUrl ?>/index.php?page=ha_tang" class="nav-link<?= $navActive === 'ha_tang' && ($navSubActive === 'san_bay' || empty($navSubActive)) ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-geo-alt"></i>
+                  <p>Quản lý sân bay</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=register" class="nav-link<?= $isSubActive('register') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Đăng ký</p>
+                <a href="<?= $baseUrl ?>/views/pages/bao_tri/hang_hang_khong.php" class="nav-link<?= $isSubActive('airlines') ?>">
+                  <i class="nav-icon bi bi-building"></i>
+                  <p>Quản lý hãng hàng không</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=forgot" class="nav-link<?= $isSubActive('forgot') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Quên mật khẩu</p>
+                <a href="<?= $baseUrl ?>/views/pages/bao_tri/tau_bay.php" class="nav-link<?= $isSubActive('aircraft_types') ?>">
+                  <i class="nav-icon bi bi-airplane"></i>
+                  <p>Quản lý loại tàu bay</p>
                 </a>
               </li>
             </ul>
           </details>
         </li>
+        <?php endif; ?>
 
-        <!--Thành viên 2 - Hạ tầng-->
-        <li class="nav-item">
-          <a href="<?= $baseUrl ?>/index.php?page=ha_tang" class="nav-link<?= $isActive('ha_tang') ?>">
-            <i class="nav-icon bi bi-buildings"></i>
-            <p>Quản lý hạ tầng</p>
-          </a>
-        </li>
-
+        <?php if (!la_bao_tri() && !la_ke_toan()): ?>
         <!--Thành viên 3 - Chuyến bay-->
         <li class="nav-item">
           <a href="<?= $baseUrl ?>/index.php?page=chuyen_bay" class="nav-link<?= $isActive('chuyen_bay') ?>">
@@ -108,14 +101,16 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             <p>Quản lý chuyến bay</p>
           </a>
         </li>
+        <?php endif; ?>
 
+        <?php if (co_quyen_bao_tri()): ?>
         <!--Thành viên 4 - Bảo trì-->
         <li class="nav-item">
           <details class="nav-group<?= $navActive === 'bao_tri' ? ' is-active' : '' ?>"<?= $navActive === 'bao_tri' ? ' open' : '' ?>>
             <summary class="nav-link<?= $isActive('bao_tri') ?>">
               <i class="nav-icon bi bi-tools"></i>
               <p>
-                Bảo trì &amp; khắc phục
+                Kỹ thuật &amp; Bảo trì
                 <i class="nav-arrow bi bi-chevron-right"></i>
               </p>
             </summary>
@@ -132,23 +127,45 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
                   <p>Quản lý trang thiết bị</p>
                 </a>
               </li>
+            </ul>
+          </details>
+        </li>
+        <?php endif; ?>
+
+        <?php if (co_quyen_ke_toan()): ?>
+        <!--Thành viên 5 - Kế toán-->
+        <li class="nav-item">
+          <details class="nav-group<?= $navActive === 'ke_toan' ? ' is-active' : '' ?>"<?= $navActive === 'ke_toan' ? ' open' : '' ?>>
+            <summary class="nav-link<?= $isActive('ke_toan') ?>">
+              <i class="nav-icon bi bi-cash-coin"></i>
+              <p>
+                Kế toán &amp; doanh thu
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </summary>
+            <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="<?= $baseUrl ?>/views/pages/bao_tri/tau_bay.php" class="nav-link<?= $isSubActive('aircraft_types') ?>">
-                  <i class="nav-icon bi bi-airplane"></i>
-                  <p>Quản lý loại tàu bay</p>
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan" class="nav-link<?= $navActive === 'ke_toan' && empty($_GET['view']) ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-wallet2"></i>
+                  <p>Thu phí &amp; Hóa đơn</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan&view=lich_su" class="nav-link<?= $navActive === 'ke_toan' && (isset($_GET['view']) && $_GET['view'] === 'lich_su') ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-clock-history"></i>
+                  <p>Lịch sử &amp; Sản lượng</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan&view=thong_ke" class="nav-link<?= $navActive === 'ke_toan' && (isset($_GET['view']) && $_GET['view'] === 'thong_ke') ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-bar-chart-line"></i>
+                  <p>Thống kê doanh thu</p>
                 </a>
               </li>
             </ul>
           </details>
         </li>
-
-        <!--Thành viên 5 - Kế toán-->
-        <li class="nav-item">
-          <a href="<?= $baseUrl ?>/index.php?page=ke_toan" class="nav-link<?= $isActive('ke_toan') ?>">
-            <i class="nav-icon bi bi-cash-coin"></i>
-            <p>Kế toán &amp; doanh thu</p>
-          </a>
-        </li>
+        <?php endif; ?>
       </ul>
     </nav>
   </div>

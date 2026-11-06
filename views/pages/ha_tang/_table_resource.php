@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var string $tab
+ * @var array $data
+ * @var callable $e
+ * @var string $addUrl
+ * @var callable $url
+ */
+
 $tableMeta = [
     'cua_ra' => [
         'items' => $data['gates'],
@@ -71,7 +79,14 @@ $terminal = $selectedTerminal;
               · <?= $e($terminal['ten_nha_ga'] ?? '') ?>
             </span>
           </td>
-          <td><?= $statusBadge($item['trang_thai']) ?></td>
+          <td>
+            <?= $statusBadge($item['trang_thai']) ?>
+            <?php if ($tab === 'bang_chuyen' && $item['trang_thai'] === 'Bao_Tri'): ?>
+              <a href="<?= $e(BASE_URL . '/index.php?page=bao_tri') ?>" class="badge text-bg-warning text-decoration-none ms-1" title="Xem phiếu bảo trì bên phân hệ Kỹ thuật & Bảo trì">
+                <i class="bi bi-tools"></i> Phiếu bảo trì
+              </a>
+            <?php endif; ?>
+          </td>
           <td>
             <div class="ht-actions">
               <a

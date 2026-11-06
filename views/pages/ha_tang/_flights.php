@@ -1,4 +1,13 @@
 <?php
+/**
+ * @var array|null $selectedAirport
+ * @var array|null $flights
+ * @var array $filters
+ * @var callable $url
+ * @var callable $e
+ * @var array $data
+ */
+
 if (!$selectedAirport || !$flights) {
     return;
 }

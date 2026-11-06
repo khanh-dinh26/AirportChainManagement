@@ -34,6 +34,7 @@ $loaiThietBiLabels = [
     'Thiet_Bi_Dan_Duong' => 'Thiết bị dẫn đường',
     'Xe_Thang'           => 'Xe thang',
     'Xe_Keo'             => 'Xe kéo',
+    'Bang_Chuyen'        => 'Băng chuyền hành lý',
     'Khac'               => 'Khác',
 ];
 
@@ -42,6 +43,7 @@ $loaiThietBiIcons = [
     'Thiet_Bi_Dan_Duong' => 'bi-broadcast-pin',
     'Xe_Thang'           => 'bi-truck',
     'Xe_Keo'             => 'bi-truck',
+    'Bang_Chuyen'        => 'bi-luggage',
     'Khac'               => 'bi-box-seam',
 ];
 
@@ -50,6 +52,7 @@ $loaiAvatarClasses = [
     'Thiet_Bi_Dan_Duong' => 'maint-avatar--info',
     'Xe_Thang'           => 'maint-avatar--primary',
     'Xe_Keo'             => 'maint-avatar--success',
+    'Bang_Chuyen'        => 'maint-avatar--primary',
     'Khac'               => 'maint-avatar--secondary',
 ];
 
@@ -211,6 +214,17 @@ ob_start();
                             <span class="text-secondary"><i class="bi bi-tags me-1"></i>Phân loại</span>
                             <strong class="text-end"><?= $loaiLabel ?></strong>
                         </div>
+                        <?php if (!empty($thietBi['id_bang_chuyen'])): ?>
+                            <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
+                                <span class="text-secondary"><i class="bi bi-link-45deg me-1"></i>Hạ tầng liên kết</span>
+                                <strong class="text-end text-primary">
+                                    Băng chuyền <?= htmlspecialchars($thietBi['so_bang_chuyen'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                    <?php if (!empty($thietBi['ten_nha_ga'])): ?>
+                                        (<?= htmlspecialchars($thietBi['ten_nha_ga'], ENT_QUOTES, 'UTF-8') ?>)
+                                    <?php endif; ?>
+                                </strong>
+                            </div>
+                        <?php endif; ?>
                         <div class="list-group-item d-flex justify-content-between align-items-center gap-3 px-0">
                             <span class="text-secondary"><i class="bi bi-clipboard-check me-1"></i>Tổng phiếu</span>
                             <strong><?= $soPhieu ?></strong>

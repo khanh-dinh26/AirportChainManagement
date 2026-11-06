@@ -1,6 +1,6 @@
 <?php
 
-// Khởi tạo session (config.php đã mở session, đây là lớp bảo hiểm)
+
 require_once __DIR__ . '/../config/config.php';
 
 require_once __DIR__ . '/../config/database.php';
@@ -14,9 +14,7 @@ $trangChu = BASE_URL . '/index.php';
 
 $nguoiDungModel = new NguoiDung($conn);
 
-/* ------------------------------------------------------------
- * 1. XỬ LÝ ĐĂNG NHẬP
- * ------------------------------------------------------------ */
+
 if (isset($_POST['btn_login'])) {
     $username = isset($_POST['username']) ? trim((string) $_POST['username']) : '';
     $password = isset($_POST['password']) ? (string) $_POST['password'] : '';
@@ -37,8 +35,11 @@ if (isset($_POST['btn_login'])) {
             // Lưu thông tin vào Session
             $_SESSION['user_id']    = $user['id'];
             $_SESSION['ho_ten']     = $user['ho_ten'];
-            $_SESSION['vai_tro']    = $user['vai_tro'];
-            $_SESSION['id_san_bay'] = $user['id_san_bay'];
+            $_SESSION['anh_dai_dien']     = !empty($user['anh_dai_dien']) ? $user['anh_dai_dien'] : null;
+            $_SESSION['vai_tro']          = $user['vai_tro'];
+            $_SESSION['id_san_bay']       = $user['id_san_bay'];
+            $_SESSION['san_bay_iata']     = $user['san_bay_iata'] ?? null;
+            $_SESSION['san_bay_ten_ngan'] = $user['san_bay_ten_ngan'] ?? null;
 
             // Chống tấn công cố định session (session fixation)
             session_regenerate_id(true);
@@ -58,9 +59,7 @@ if (isset($_POST['btn_login'])) {
     exit();
 }
 
-/* ------------------------------------------------------------
- * 2. XỬ LÝ ĐĂNG XUẤT
- * ------------------------------------------------------------ */
+
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
@@ -75,8 +74,5 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit();
 }
 
-/* ------------------------------------------------------------
- * 3. TRUY CẬP TRỰC TIẾP MÀ KHÔNG GỬI FORM -> về trang đăng nhập
- * ------------------------------------------------------------ */
 header('Location: ' . $trangDangNhap);
 exit();

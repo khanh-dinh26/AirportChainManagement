@@ -1,13 +1,5 @@
 <?php
-/**
- * Lightbox xem ảnh sự cố — thuần CSS (:target), không dùng JavaScript.
- *
- * Đầu vào: $lightboxImages = [
- *     ['id' => 'anh-su-co-1', 'url' => 'assets/img/su_co/abc.jpg', 'alt' => 'Mô tả ảnh'],
- *     ...
- * ];
- * Mỗi ảnh được mở bằng liên kết href="#<id>" và đóng bằng nút &times; (href="#!").
- */
+
 if (empty($lightboxImages)) {
     return;
 }
