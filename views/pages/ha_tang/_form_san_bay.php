@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var string|null $formMode
+ * @var array|null $formRecord
+ * @var callable $e
+ * @var string $listUrl
+ * @var array $data
+ */
+
 if (!$formMode) {
     return;
 }

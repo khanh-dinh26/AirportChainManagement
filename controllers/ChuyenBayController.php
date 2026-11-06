@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/config.php';
 
 class ChuyenBayController
 {
+    /** @var mysqli */
     private $db;
 
     private const STATUSES = [
@@ -27,21 +28,14 @@ class ChuyenBayController
         'Tre_Tiep' => 'Chưa đủ điều kiện - trễ tiếp',
     ];
 
-    /**
-     * Số phút quá hạn xác nhận: chuyến `Dang_Mo` đã qua giờ cất cánh quá số phút này mà người điều khiển
-     * chưa bấm xác nhận / chưa delay thì hệ thống tự chuyển sang `Delay`.
-     */
+  
     public const OVERDUE_LIMIT_MINUTES = 15;
 
-    /**
-     * Giới hạn tổng thời gian trễ (phút): delay đã ghi nhận + số phút quá hạn chờ xác nhận.
-     * Vượt quá 5 giờ thì hệ thống mặc định tự hủy chuyến.
-     */
+ 
     public const DELAY_CANCEL_LIMIT_MINUTES = 300;
 
     private const EDITABLE_STATUS_TRANSITIONS = [
-        // Cất cánh chỉ được xác nhận ở popup "Xác nhận điều kiện cất cánh" khi đã tới giờ,
-        // không cho chọn trong form sửa.
+
         'Dang_Mo' => ['Dang_Mo', 'Delay'],
         'Delay' => ['Delay', 'Dang_Mo'],
         'Huy' => ['Huy'],
@@ -402,39 +396,39 @@ class ChuyenBayController
         $delayMinutesInput = trim((string) ($_POST['thoi_gian_tre_phut'] ?? ''));
 
         if ($update && $id <= 0) {
-            throw new RuntimeException('Chuyến bay cần sửa không hợp lệ.');
+            throw new \RuntimeException('Chuyến bay cần sửa không hợp lệ.');
         }
         if ($update && !preg_match('/^[A-Z0-9-]{2,20}$/', $flightNumber)) {
-            throw new RuntimeException('Mã chuyến bay chỉ gồm 2-20 ký tự chữ in hoa, số hoặc dấu gạch ngang.');
+            throw new \RuntimeException('Mã chuyến bay chỉ gồm 2-20 ký tự chữ in hoa, số hoặc dấu gạch ngang.');
         }
         if ($airlineId <= 0) {
-            throw new RuntimeException('Vui lòng chọn hãng hàng không.');
+            throw new \RuntimeException('Vui lòng chọn hãng hàng không.');
         }
         if ($aircraftId <= 0) {
-            throw new RuntimeException('Vui lòng chọn loại tàu bay.');
+            throw new \RuntimeException('Vui lòng chọn loại tàu bay.');
         }
         if ($originId <= 0 || $destinationId <= 0) {
-            throw new RuntimeException('Vui lòng chọn sân bay đi và sân bay đến.');
+            throw new \RuntimeException('Vui lòng chọn sân bay đi và sân bay đến.');
         }
         if ($originId === $destinationId) {
-            throw new RuntimeException('Sân bay đi và sân bay đến phải khác nhau.');
+            throw new \RuntimeException('Sân bay đi và sân bay đến phải khác nhau.');
         }
         if ($planned === null) {
-            throw new RuntimeException('Vui lòng nhập giờ cất cánh hợp lệ.');
+            throw new \RuntimeException('Vui lòng nhập giờ cất cánh hợp lệ.');
         }
         if ($actualInput === '') {
-            throw new RuntimeException('Vui lòng nhập giờ dự kiến hạ cánh.');
+            throw new \RuntimeException('Vui lòng nhập giờ dự kiến hạ cánh.');
         }
         if ($actual === null) {
-            throw new RuntimeException('Giờ dự kiến hạ cánh không hợp lệ. Vui lòng chọn lại.');
+            throw new \RuntimeException('Giờ dự kiến hạ cánh không hợp lệ. Vui lòng chọn lại.');
         }
         if ($actual <= $planned) {
-            throw new RuntimeException('Giờ cất cánh phải nhỏ hơn giờ dự kiến hạ cánh. Vui lòng kiểm tra lại thời gian.');
+            throw new \RuntimeException('Giờ cất cánh phải nhỏ hơn giờ dự kiến hạ cánh. Vui lòng kiểm tra lại thời gian.');
         }
         // Trùng chuyến = cùng số hiệu + tuyến + ngày cất cánh (không xét giờ), bỏ qua chính chuyến đang sửa.
         $plannedDate = substr((string) $planned, 0, 10);
         if ($update && $this->flightExistsOnDate($flightNumber, $originId, $destinationId, $plannedDate, $id)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Chuyến bay ' . $flightNumber . ' theo tuyến này ngày ' . date('d/m/Y', strtotime($plannedDate))
                 . ' đã tồn tại. Vui lòng chọn ngày hoặc tuyến khác.'
             );
@@ -442,7 +436,7 @@ class ChuyenBayController
         // Cùng sân bay đi + cùng ngày: giờ cất cánh phải cách nhau ít nhất 10 phút.
         $conflict = $this->findDepartureConflict($originId, $planned, $update ? $id : 0);
         if ($conflict !== null) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Sân bay ' . $conflict['ma_iata'] . ' đã có chuyến ' . $conflict['so_hieu']
                 . ' cất cánh lúc ' . date('H:i', strtotime($conflict['gio_du_kien']))
                 . ' ngày ' . date('d/m/Y', strtotime($conflict['gio_du_kien']))
@@ -450,17 +444,17 @@ class ChuyenBayController
             );
         }
         if ($update && ($passengerInput === '' || $cargoInputWasEmpty)) {
-            throw new RuntimeException('Vui lòng nhập số hành khách và khối lượng hành lý.');
+            throw new \RuntimeException('Vui lòng nhập số hành khách và khối lượng hành lý.');
         }
         if ($update && ($passengers === false || $passengers < 0)) {
-            throw new RuntimeException('Số hành khách phải là số nguyên không âm.');
+            throw new \RuntimeException('Số hành khách phải là số nguyên không âm.');
         }
         if ($update && (!is_numeric($cargoInput) || (float) $cargoInput < 0)) {
-            throw new RuntimeException('Tải trọng hàng hóa phải là số không âm.');
+            throw new \RuntimeException('Tải trọng hàng hóa phải là số không âm.');
         }
         $aircraft = $this->getAircraftCapacity($aircraftId);
         if ($aircraft === null) {
-            throw new RuntimeException('Loại tàu bay đã chọn không tồn tại.');
+            throw new \RuntimeException('Loại tàu bay đã chọn không tồn tại.');
         }
         if (!$update) {
             $passengers = (int) $aircraft['suc_chua_hanh_khach'];
@@ -468,22 +462,22 @@ class ChuyenBayController
             $cargoInKilograms = false;
         }
         if ($passengers > (int) $aircraft['suc_chua_hanh_khach']) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Số hành khách vượt sức chứa của loại tàu bay (' . (int) $aircraft['suc_chua_hanh_khach'] . ' khách).'
             );
         }
         $cargo = (float) $cargoInput / ($cargoInKilograms ? 1000 : 1);
         $maxBaggageKg = (float) $aircraft['tai_trong_cat_canh_mtow'] * 1000;
         if ($cargo * 1000 > $maxBaggageKg) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Khối lượng hành lý vượt mức loại tàu bay (' . $maxBaggageKg . ' kg theo tải trọng cất cánh tối đa).'
             );
         }
         if (!isset(self::STATUSES[$status])) {
-            throw new RuntimeException('Vui lòng chọn trạng thái chuyến bay hợp lệ.');
+            throw new \RuntimeException('Vui lòng chọn trạng thái chuyến bay hợp lệ.');
         }
         if ($gateId === null || $checkinId === null || $beltId === null) {
-            throw new RuntimeException('Vui lòng chọn cửa ra máy bay, quầy check-in và băng chuyền hành lý.');
+            throw new \RuntimeException('Vui lòng chọn cửa ra máy bay, quầy check-in và băng chuyền hành lý.');
         }
         $this->validateResourceAirport($gateId, 'cua_ra_may_bay', $originId);
         $this->validateResourceAirport($checkinId, 'quay_checkin', $originId);
@@ -494,7 +488,7 @@ class ChuyenBayController
         if ($checkinId !== null) {
             $checkinConflict = $this->findCheckinConflict($checkinId, $planned, $update ? $id : 0);
             if ($checkinConflict !== null) {
-                throw new RuntimeException(
+                throw new \RuntimeException(
                     'Quầy ' . $checkinConflict['so_quay'] . ' (' . $checkinConflict['ma_iata'] . ') đang được chuyến '
                     . $checkinConflict['so_hieu'] . ' cất cánh lúc '
                     . date('H:i d/m/Y', strtotime($checkinConflict['gio_du_kien']))
@@ -508,7 +502,7 @@ class ChuyenBayController
         try {
             if ($update) {
                 if (empty($_SESSION['user_id'])) {
-                    throw new RuntimeException('Vui lòng đăng nhập để lưu chỉnh sửa và ghi nhật ký người thay đổi.');
+                    throw new \RuntimeException('Vui lòng đăng nhập để lưu chỉnh sửa và ghi nhật ký người thay đổi.');
                 }
 
                 $stmt = $this->db->prepare('SELECT * FROM chuyen_bay_ngay WHERE id = ? FOR UPDATE');
@@ -517,29 +511,29 @@ class ChuyenBayController
                 $oldFlight = $stmt->get_result()->fetch_assoc();
                 $stmt->close();
                 if (!$oldFlight) {
-                    throw new RuntimeException('Không tìm thấy chuyến bay cần cập nhật.');
+                    throw new \RuntimeException('Không tìm thấy chuyến bay cần cập nhật.');
                 }
                 $oldStatus = $oldFlight['trang_thai_tong'];
                 if (in_array($oldStatus, ['Cat_Canh', 'Ha_Canh'], true)) {
-                    throw new RuntimeException('Không thể chỉnh sửa chuyến bay đã cất cánh hoặc hạ cánh.');
+                    throw new \RuntimeException('Không thể chỉnh sửa chuyến bay đã cất cánh hoặc hạ cánh.');
                 }
                 if (!in_array($status, self::EDITABLE_STATUS_TRANSITIONS[$oldStatus] ?? [], true)) {
-                    throw new RuntimeException('Trạng thái mới không hợp lệ với trạng thái hiện tại của chuyến bay.');
+                    throw new \RuntimeException('Trạng thái mới không hợp lệ với trạng thái hiện tại của chuyến bay.');
                 }
                 if ($status === 'Huy' && $oldFlight['trang_thai_tong'] !== 'Huy') {
-                    throw new RuntimeException('Không thể hủy chuyến tại màn hình sửa. Vui lòng dùng chức năng Hủy chuyến.');
+                    throw new \RuntimeException('Không thể hủy chuyến tại màn hình sửa. Vui lòng dùng chức năng Hủy chuyến.');
                 }
                 $delayMinutes = null;
                 if ($status !== $oldFlight['trang_thai_tong'] && $status === 'Delay') {
                     if (substr((string) $planned, 0, 10) > substr($this->getCurrentDateTime(), 0, 10)) {
-                        throw new RuntimeException('Không thể chuyển sang Trễ chuyến vì chuyến bay chưa tới ngày bay.');
+                        throw new \RuntimeException('Không thể chuyển sang Trễ chuyến vì chuyến bay chưa tới ngày bay.');
                     }
                     if (!$this->isValidReason($statusReason)) {
-                        throw new RuntimeException('Vui lòng nhập lý do trễ chuyến (tối đa 255 ký tự).');
+                        throw new \RuntimeException('Vui lòng nhập lý do trễ chuyến (tối đa 255 ký tự).');
                     }
                     $delayMinutes = filter_var($delayMinutesInput, FILTER_VALIDATE_INT);
                     if ($delayMinutes === false || $delayMinutes < 1 || $delayMinutes > 1440) {
-                        throw new RuntimeException('Vui lòng nhập khoảng thời gian dự kiến trễ (từ 1 đến 1440 phút).');
+                        throw new \RuntimeException('Vui lòng nhập khoảng thời gian dự kiến trễ (từ 1 đến 1440 phút).');
                     }
                     $delayMinutes = (int) $delayMinutes;
                 }
@@ -583,6 +577,7 @@ class ChuyenBayController
                     $gateId, $checkinId, $beltId, $planned, $actual, $passengers, $cargo, $status, $id
                 );
             } else {
+                $flightNumber = $this->generateFlightNumber($airlineId);
                 $stmt = $this->db->prepare(
                     'INSERT INTO chuyen_bay_ngay
                      (so_hieu, id_hang_hang_khong, id_loai_tau_bay, id_san_bay_di,
@@ -590,10 +585,9 @@ class ChuyenBayController
                       gio_du_kien, gio_thuc_te, luong_hanh_khach, luong_hang_hoa_tan, trang_thai_tong)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
-                $pendingFlightNumber = 'CB-PENDING';
                 $stmt->bind_param(
                     'siiiiiiissids',
-                    $pendingFlightNumber, $airlineId, $aircraftId, $originId, $destinationId,
+                    $flightNumber, $airlineId, $aircraftId, $originId, $destinationId,
                     $gateId, $checkinId, $beltId, $planned, $actual, $passengers, $cargo, $status
                 );
             }
@@ -614,17 +608,12 @@ class ChuyenBayController
             } else {
                 // Mỗi chuyến thêm mới đều có một dòng nhật ký riêng.
                 $newFlightId = (int) $this->db->insert_id;
-                $flightNumber = $this->generateFlightNumber();
-                $stmt = $this->db->prepare('UPDATE chuyen_bay_ngay SET so_hieu = ? WHERE id = ?');
-                $stmt->bind_param('si', $flightNumber, $newFlightId);
-                $stmt->execute();
-                $stmt->close();
                 $this->logFlightAction(
                     $newFlightId,
                     'Them',
                     null,
                     $status,
-                    'Thêm chuyến bay mới.',
+                    'Thêm chuyến bay mới ' . $flightNumber . '.',
                     $_SESSION['user_id'] ?? null
                 );
             }
@@ -643,15 +632,15 @@ class ChuyenBayController
     private function cancelFlight($id, $reason)
     {
         if ($id <= 0) {
-            throw new RuntimeException('Chuyến bay cần hủy không hợp lệ.');
+            throw new \RuntimeException('Chuyến bay cần hủy không hợp lệ.');
         }
 
         $reason = trim($reason);
         if (!$this->isValidReason($reason)) {
-            throw new RuntimeException('Vui lòng nhập lý do hủy chuyến (tối đa 255 ký tự).');
+            throw new \RuntimeException('Vui lòng nhập lý do hủy chuyến (tối đa 255 ký tự).');
         }
         if (empty($_SESSION['user_id'])) {
-            throw new RuntimeException('Bạn cần đăng nhập để hủy chuyến bay và ghi nhật ký điều hành.');
+            throw new \RuntimeException('Bạn cần đăng nhập để hủy chuyến bay và ghi nhật ký điều hành.');
         }
 
         $this->db->begin_transaction();
@@ -662,13 +651,13 @@ class ChuyenBayController
             $flight = $stmt->get_result()->fetch_assoc();
             $stmt->close();
             if (!$flight) {
-                throw new RuntimeException('Không tìm thấy chuyến bay cần hủy.');
+                throw new \RuntimeException('Không tìm thấy chuyến bay cần hủy.');
             }
             if ($flight['trang_thai_tong'] === 'Huy') {
-                throw new RuntimeException('Chuyến bay này đã được hủy trước đó.');
+                throw new \RuntimeException('Chuyến bay này đã được hủy trước đó.');
             }
             if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay'], true)) {
-                throw new RuntimeException('Chỉ được hủy chuyến bay đang mở hoặc trễ chuyến.');
+                throw new \RuntimeException('Chỉ được hủy chuyến bay đang mở hoặc trễ chuyến.');
             }
 
             $stmt = $this->db->prepare("UPDATE chuyen_bay_ngay SET trang_thai_tong = 'Huy' WHERE id = ?");
@@ -698,10 +687,10 @@ class ChuyenBayController
     private function deleteFlight(int $id): void
     {
         if ($id <= 0) {
-            throw new RuntimeException('Chuyến bay cần xóa không hợp lệ.');
+            throw new \RuntimeException('Chuyến bay cần xóa không hợp lệ.');
         }
         if (empty($_SESSION['user_id'])) {
-            throw new RuntimeException('Bạn cần đăng nhập để xóa chuyến bay.');
+            throw new \RuntimeException('Bạn cần đăng nhập để xóa chuyến bay.');
         }
 
         $this->db->begin_transaction();
@@ -716,13 +705,13 @@ class ChuyenBayController
             $stmt->close();
 
             if (!$flight) {
-                throw new RuntimeException('Không tìm thấy chuyến bay cần xóa.');
+                throw new \RuntimeException('Không tìm thấy chuyến bay cần xóa.');
             }
             if (strtotime((string) $flight['gio_du_kien']) <= strtotime($this->getCurrentDateTime())) {
-                throw new RuntimeException('Chỉ được xóa chuyến bay chưa tới giờ cất cánh.');
+                throw new \RuntimeException('Chỉ được xóa chuyến bay chưa tới giờ cất cánh.');
             }
             if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay', 'Huy'], true)) {
-                throw new RuntimeException('Không thể xóa chuyến bay đã cất cánh hoặc hạ cánh.');
+                throw new \RuntimeException('Không thể xóa chuyến bay đã cất cánh hoặc hạ cánh.');
             }
 
             $stmt = $this->db->prepare('DELETE FROM chuyen_bay_ngay WHERE id = ?');
@@ -1333,7 +1322,7 @@ class ChuyenBayController
             } elseif ($action === 'departure_delay') {
                 $this->delayDeparture($id);
             } else {
-                throw new RuntimeException('Thao tác không hợp lệ.');
+                throw new \RuntimeException('Thao tác không hợp lệ.');
             }
         } catch (RuntimeException $exception) {
             $this->setNamedFlash('chuyen_bay_departure_flash', 'danger', $exception->getMessage());
@@ -1350,10 +1339,10 @@ class ChuyenBayController
     {
         $flight = $this->getDepartureFlight($id);
         if ($flight === null) {
-            throw new RuntimeException('Không tìm thấy chuyến bay.');
+            throw new \RuntimeException('Không tìm thấy chuyến bay.');
         }
         if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay'], true)) {
-            throw new RuntimeException('Chuyến bay không ở trạng thái chờ cất cánh.');
+            throw new \RuntimeException('Chuyến bay không ở trạng thái chờ cất cánh.');
         }
 
         $wasDelayed = $flight['trang_thai_tong'] === 'Delay';
@@ -1364,7 +1353,7 @@ class ChuyenBayController
         );
         if ($totalLateness >= self::DELAY_CANCEL_LIMIT_MINUTES
             && $this->autoCancelOverdueFlight($id, (string) $flight['trang_thai_tong'], $totalLateness)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Chuyến ' . $flight['so_hieu'] . ' đã bị tự động hủy vì tổng thời gian trễ '
                     . $totalLateness . ' phút vượt giới hạn '
                     . (int) (self::DELAY_CANCEL_LIMIT_MINUTES / 60) . ' giờ.'
@@ -1391,7 +1380,7 @@ class ChuyenBayController
                     . ' — hãy dùng nút trễ để lùi tới giờ đó.';
             }
 
-            throw new RuntimeException($message);
+            throw new \RuntimeException($message);
         }
 
         // Giờ cất cánh thực tế = thời điểm bấm xác nhận.
@@ -1492,15 +1481,15 @@ class ChuyenBayController
     {
         $reason = trim((string) ($_POST['ly_do'] ?? ''));
         if (!$this->isValidReason($reason)) {
-            throw new RuntimeException('Vui lòng nhập lý do trễ / chưa đủ điều kiện bay (tối đa 255 ký tự).');
+            throw new \RuntimeException('Vui lòng nhập lý do trễ / chưa đủ điều kiện bay (tối đa 255 ký tự).');
         }
 
         $flight = $this->getDepartureFlight($id);
         if ($flight === null) {
-            throw new RuntimeException('Không tìm thấy chuyến bay.');
+            throw new \RuntimeException('Không tìm thấy chuyến bay.');
         }
         if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay'], true)) {
-            throw new RuntimeException('Chuyến bay không ở trạng thái chờ cất cánh.');
+            throw new \RuntimeException('Chuyến bay không ở trạng thái chờ cất cánh.');
         }
         $wasDelayed = $flight['trang_thai_tong'] === 'Delay';
 
@@ -1511,16 +1500,16 @@ class ChuyenBayController
                 ?: DateTime::createFromFormat('Y-m-d H:i:s', $newPlannedInput)
                 ?: DateTime::createFromFormat('Y-m-d H:i', $newPlannedInput);
             if (!$parsed) {
-                throw new RuntimeException('Giờ cất cánh mới không hợp lệ.');
+                throw new \RuntimeException('Giờ cất cánh mới không hợp lệ.');
             }
             $newPlanned = $parsed->format('Y-m-d H:i:s');
             if (strtotime($newPlanned) <= strtotime($now)) {
-                throw new RuntimeException('Giờ cất cánh mới phải sau giờ hiện tại (' . $now . ').');
+                throw new \RuntimeException('Giờ cất cánh mới phải sau giờ hiện tại (' . $now . ').');
             }
         } else {
             $minutes = filter_var($_POST['thoi_gian_tre_phut'] ?? '', FILTER_VALIDATE_INT);
             if ($minutes === false || $minutes < 1 || $minutes > 1440) {
-                throw new RuntimeException('Vui lòng nhập số phút trễ tiếp (từ 1 đến 1440) hoặc giờ cất cánh mới.');
+                throw new \RuntimeException('Vui lòng nhập số phút trễ tiếp (từ 1 đến 1440) hoặc giờ cất cánh mới.');
             }
             $minutes = (int) $minutes;
             $stmt = $this->db->prepare(
@@ -1532,7 +1521,7 @@ class ChuyenBayController
             $timing = $stmt->get_result()->fetch_assoc();
             $stmt->close();
             if (!$timing) {
-                throw new RuntimeException('Không tìm thấy chuyến bay.');
+                throw new \RuntimeException('Không tìm thấy chuyến bay.');
             }
             $newPlanned = (string) $timing['new_planned'];
         }
@@ -1546,11 +1535,11 @@ class ChuyenBayController
         $timing = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         if (strtotime($newPlanned) <= strtotime($now)) {
-            throw new RuntimeException('Giờ cất cánh mới phải sau giờ hiện tại (' . $now . ').');
+            throw new \RuntimeException('Giờ cất cánh mới phải sau giờ hiện tại (' . $now . ').');
         }
         $shiftMinutes = (int) ($timing['shift_minutes'] ?? 0);
         if ($shiftMinutes < 1) {
-            throw new RuntimeException('Giờ cất cánh mới phải sau giờ cất cánh hiện tại của chuyến.');
+            throw new \RuntimeException('Giờ cất cánh mới phải sau giờ cất cánh hiện tại của chuyến.');
         }
 
         $stmt = $this->db->prepare(
@@ -1586,7 +1575,7 @@ class ChuyenBayController
         $totalAfterDelay = $this->getTotalLatenessMinutes($this->getDelayHistory($id), (string) $newPlanned);
         if ($totalAfterDelay >= self::DELAY_CANCEL_LIMIT_MINUTES
             && $this->autoCancelOverdueFlight($id, 'Delay', $totalAfterDelay)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Chuyến ' . $flight['so_hieu'] . ' đã bị tự động hủy vì tổng thời gian trễ '
                     . $totalAfterDelay . ' phút vượt giới hạn '
                     . (int) (self::DELAY_CANCEL_LIMIT_MINUTES / 60) . ' giờ.'
@@ -1689,7 +1678,7 @@ class ChuyenBayController
             $startOverride !== null ? (string) $startOverride : (string) $flight['gio_du_kien']
         );
         if (!$base) {
-            $base = new DateTime('now');
+            $base = new \DateTime('now');
         }
         $candidate = ($planned && $planned > $base) ? clone $planned : clone $base;
 
@@ -2135,25 +2124,44 @@ class ChuyenBayController
         return $exists;
     }
 
-    private function generateFlightNumber(): string
+    private function generateFlightNumber(int $airlineId = 0): string
     {
-        $result = $this->db->query(
-            "SELECT so_hieu FROM chuyen_bay_ngay WHERE so_hieu REGEXP '^CB[0-9]{4}$' FOR UPDATE"
-        );
+        // Xác định tiền tố theo mã IATA thực tế của hãng hàng không (VN, VJ, QH...)
+        $prefix = 'VN';
+        if ($airlineId > 0) {
+            $stmt = $this->db->prepare('SELECT ma_iata FROM hang_hang_khong WHERE id = ?');
+            if ($stmt) {
+                $stmt->bind_param('i', $airlineId);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($row = $res->fetch_assoc()) {
+                    $prefix = strtoupper(trim((string) $row['ma_iata']));
+                }
+                $stmt->close();
+            }
+        }
+
+        // Lấy danh sách số hiệu chuyến bay đã có của hãng
+        $stmt = $this->db->prepare('SELECT so_hieu FROM chuyen_bay_ngay WHERE so_hieu LIKE ? FOR UPDATE');
+        $likePattern = $prefix . '%';
+        $stmt->bind_param('s', $likePattern);
+        $stmt->execute();
+        $result = $stmt->get_result();
         $usedNumbers = [];
         while ($row = $result->fetch_assoc()) {
             $usedNumbers[$row['so_hieu']] = true;
         }
-        $result->free();
+        $stmt->close();
 
-        for ($number = 0; $number <= 9999; $number++) {
-            $flightNumber = 'CB' . str_pad((string) $number, 4, '0', STR_PAD_LEFT);
+        // Tự động sinh số hiệu chuẩn ngành hàng không (VD: VN101, VJ101, QH101...)
+        for ($number = 101; $number <= 9999; $number++) {
+            $flightNumber = $prefix . $number;
             if (!isset($usedNumbers[$flightNumber])) {
                 return $flightNumber;
             }
         }
 
-        throw new RuntimeException('Đã sử dụng hết mã chuyến bay từ CB0000 đến CB9999.');
+        return $prefix . mt_rand(1000, 9999);
     }
 
     private function ensureCsrf()
@@ -2216,7 +2224,7 @@ class ChuyenBayController
 
         $allowedTables = ['cua_ra_may_bay', 'quay_checkin', 'bang_chuyen_hanh_ly'];
         if (!in_array($table, $allowedTables, true)) {
-            throw new RuntimeException('Loại tài nguyên sân bay không hợp lệ.');
+            throw new \RuntimeException('Loại tài nguyên sân bay không hợp lệ.');
         }
 
         $stmt = $this->db->prepare(
@@ -2230,7 +2238,7 @@ class ChuyenBayController
         $stmt->close();
 
         if (!$isValid) {
-            throw new RuntimeException('Cửa, quầy check-in và băng chuyền phải thuộc sân bay đi đang chọn.');
+            throw new \RuntimeException('Cửa, quầy check-in và băng chuyền phải thuộc sân bay đi đang chọn.');
         }
     }
 
@@ -2241,7 +2249,7 @@ class ChuyenBayController
         }
         $id = filter_var($value, FILTER_VALIDATE_INT);
         if ($id === false || $id <= 0) {
-            throw new RuntimeException('Giá trị tài nguyên được chọn không hợp lệ.');
+            throw new \RuntimeException('Giá trị tài nguyên được chọn không hợp lệ.');
         }
 
         return $id;

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var array $data
+ * @var callable $e
+ * @var string $addUrl
+ * @var array|null $selectedAirport
+ * @var callable $url
+ */
+
 $airports = $data['airports'];
 ?>
 <table class="table ht-table align-middle">

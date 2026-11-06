@@ -1,18 +1,5 @@
 <?php
-/**
- * ============================================================
- * LAYOUT: SIDEBAR (AdminLTE 4)
- * ------------------------------------------------------------
- * Menu chính của hệ thống, chia theo 5 phân hệ tương ứng 5
- * thành viên thực hiện. Biến $navActive dùng để tô đậm mục
- * đang mở (nhận 1 trong các giá trị: ha_tang, chuyen_bay,
- * bao_tri, ke_toan, auth).
- *
- * Giao diện giữ nguyên sidebar tối mặc định của AdminLTE 4.
- * Menu con dùng <details>/<summary> — mở/đóng bằng CSS,
- * KHÔNG cần JavaScript.
- * ============================================================
- */
+
 
 $navActive    = $navActive ?? '';
 $navSubActive = $navSubActive ?? '';

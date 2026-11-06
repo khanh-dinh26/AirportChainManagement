@@ -1,9 +1,5 @@
 <?php
-/**
- * ============================================================
- * POPUP: XEM CHI TIẾT CHUYẾN BAY — views/pages/chuyen_bay/chi_tiet.php
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

@@ -1,12 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: THỐNG KÊ DOANH THU & BIỂU ĐỒ CỘT (100% PHP & CSS NATIVE)
- * views/pages/ke_toan/thong_ke.php
- * Phân hệ: Kế toán & Doanh thu
- * TUYỆT ĐỐI KHÔNG DÙNG JSON / AJAX / JS THƯ VIỆN NGOÀI
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';

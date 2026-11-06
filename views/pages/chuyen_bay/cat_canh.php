@@ -1,19 +1,5 @@
 <?php
-/**
- * ============================================================
- * POPUP: XÁC NHẬN ĐIỀU KIỆN CẤT CÁNH — views/pages/chuyen_bay/cat_canh.php
- * Mở từ 2 mục trên trang danh sách chuyến bay:
- *   - "Các chuyến đã đến giờ bay" (Đang mở, đã tới giờ cất cánh).
- *   - "Các chuyến bay trễ chuyến đã đến giờ bay" (Trễ chuyến, đã tới giờ cất cánh).
- * Nội dung:
- *   - Thông tin đầy đủ của chuyến bay.
- *   - Lý do trễ trước đó (đọc từ nhật ký chuyến bay, chỉ chuyến Trễ chuyến mới có).
- *   - Danh sách chuyến trùng lịch + giờ sân bay trống gợi ý.
- *   - Đủ điều kiện / đủ yêu cầu an toàn -> Cất cánh (server kiểm tra trùng lịch).
- *   - Chưa đủ -> trễ tiếp: nhập lý do + số phút hoặc giờ cất cánh mới.
- * Không thêm bảng mới: lý do trễ được ghi vào nhật ký chuyến bay.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

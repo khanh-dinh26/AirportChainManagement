@@ -1,12 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: LỊCH SỬ BAY  —  views/pages/chuyen_bay/lich_su_bay.php
- * Lưu lại thông tin các chuyến đã hạ cánh (bảng lich_su_chuyen_bay):
- * hãng hàng không, số hiệu, tuyến đi/đến, giờ cất cánh, giờ hạ cánh,
- * tổng giờ bay, số hành khách, khối lượng hàng hóa (kg).
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

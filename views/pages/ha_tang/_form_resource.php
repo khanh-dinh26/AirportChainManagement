@@ -1,4 +1,15 @@
 <?php
+/**
+ * @var string|null $formMode
+ * @var string $tab
+ * @var array|null $formRecord
+ * @var array|null $selectedAirport
+ * @var array|null $selectedTerminal
+ * @var callable $e
+ * @var string $listUrl
+ * @var array $data
+ */
+
 if (!$formMode) {
     return;
 }

@@ -1,10 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: LỊCH SỬ HÓA ĐƠN & THỐNG KÊ SẢN LƯỢNG HÀNH KHÁCH
- * views/pages/ke_toan/lich_su.php
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';

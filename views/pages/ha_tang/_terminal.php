@@ -1,4 +1,13 @@
 <?php
+/**
+ * @var array|null $selectedAirport
+ * @var array|null $selectedTerminal
+ * @var callable $url
+ * @var callable $e
+ * @var callable $imageUrl
+ * @var array $data
+ */
+
 if (!$selectedAirport) {
     return;
 }

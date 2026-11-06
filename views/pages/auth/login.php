@@ -1,15 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: ĐĂNG NHẬP  —  views/pages/auth/login.php
- * Phân hệ: Xác thực & tài khoản (Thành viên 1)
- * ------------------------------------------------------------
- * Form gửi POST sang controllers/AuthController.php với
- * name="btn_login". Controller xử lý và quay về đây kèm
- * thông báo trong $_SESSION['error'] / $_SESSION['thong_bao'].
- * Chuyển cảnh 100% THUẦN CSS (KHÔNG DÙNG JAVASCRIPT).
- * ============================================================
- */
+
 
 // Nạp cấu hình dùng chung (BASE_URL, session) — an toàn khi mở trực tiếp file này
 require_once __DIR__ . '/../../../config/config.php';

@@ -1,25 +1,10 @@
 ﻿<?php
-/**
- * ============================================================
- * TRANG: QUẢN LÝ CHUYẾN BAY  —  views/pages/chuyen_bay/index.php
- * Phân hệ: Điều hành chuyến bay (Thành viên 3)
- * ------------------------------------------------------------
- * Phạm vi gợi ý: lịch bay, giờ cất/hạ cánh, hãng hàng không, trạng thái.
- * Ghi chú cho Thành viên 3:
- *   - Dữ liệu trong bảng là MẪU, thay bằng dữ liệu do
- *     ChuyenBayController truyền vào.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
 
-// Endpoint JSON cho đồng hồ thời gian thực: tự chuyển trạng thái chuyến bay theo giờ thực tế.
-// Trang danh sách gọi định kỳ để cập nhật mà không cần tải lại toàn bộ trang.
 
-
-// Các liên kết cũ dạng ?page=chuyen_bay&edit=ID / &cancel=ID: mở popup ngay trên trang này
-// thay vì chuyển sang trang riêng (xem đoạn script cuối trang).
 $legacyEditId = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 $legacyCancelId = isset($_GET['cancel']) ? (int) $_GET['cancel'] : 0;
 

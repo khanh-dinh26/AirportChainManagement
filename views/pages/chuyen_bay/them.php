@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: THÊM CHUYẾN BAY  —  views/pages/chuyen_bay/them.php
- * Toàn bộ form thêm chuyến bay (trước đây nằm trong modal ở index.php)
- * được đưa về đây. Hỗ trợ điền lại dữ liệu khi validate thất bại.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

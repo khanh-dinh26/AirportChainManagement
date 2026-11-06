@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: HỒ SƠ CÁ NHÂN & ĐỔI MẬT KHẨU
- * File: views/pages/auth/ho_so.php
- * TOÀN BỘ HOẠT ĐỘNG THUẦN HTML & CSS (KHÔNG DÙNG JS).
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';

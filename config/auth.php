@@ -1,10 +1,5 @@
 <?php
-/**
- * ============================================================
- * HELPER PHÂN QUYỀN & XÁC THỰC (RBAC + PHẠM VI SÂN BAY)
- * File: config/auth.php
- * ============================================================
- */
+
 
 if (!function_exists('da_dang_nhap')) {
     function da_dang_nhap(): bool {
@@ -64,12 +59,7 @@ if (!function_exists('co_vai_tro')) {
     }
 }
 
-/**
- * Trả về ID sân bay mà người dùng hiện tại bị giới hạn:
- * - 0 : Toàn quyền toàn quốc (Admin Tổng công ty)
- * - >0: Giới hạn trong sân bay có ID này (Quản lý sân bay, Điều hành, Kỹ thuật bảo trì, Kế toán...)
- * - -1: Bị chặn hoàn toàn (có vai trò giới hạn nhưng id_san_bay bị NULL/0 hoặc chưa login)
- */
+
 if (!function_exists('pham_vi_san_bay')) {
     function pham_vi_san_bay(): int {
         if (!da_dang_nhap()) {
@@ -137,9 +127,7 @@ if (!function_exists('yeu_cau_vai_tro')) {
     }
 }
 
-/* ============================================================
- * CÁC HÀM TIỆN ÍCH PHÂN QUYỀN THEO PHÂN HỆ
- * ============================================================ */
+
 
 /** Quyền vào Quản lý nhân sự: Chỉ Admin Tổng công ty hoặc Quản lý sân bay (xem nhân sự sân bay mình) */
 if (!function_exists('co_quyen_nhan_su')) {

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var string $tab
+ * @var array $data
+ * @var callable $e
+ * @var string $addUrl
+ * @var callable $url
+ */
+
 $tableMeta = [
     'cua_ra' => [
         'items' => $data['gates'],

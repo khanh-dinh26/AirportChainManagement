@@ -1,17 +1,5 @@
 <?php
-/**
- * ============================================================
- * LAYOUT: FOOTER (AdminLTE 4)
- * ------------------------------------------------------------
- * Đóng phần nội dung và in chân trang kiểu AdminLTE mặc định.
- *
- * KHÔNG nạp bất kỳ thư viện JavaScript nào
- * (OverlayScrollbars, Popper, Bootstrap JS, AdminLTE JS đều
- * đã được gỡ bỏ khỏi dự án).
- * ============================================================
- */
 
-// Nạp cấu hình dùng chung (phòng trường hợp footer được nhúng độc lập)
 require_once __DIR__ . '/../../config/config.php';
 ?>
       <!--begin::Footer-->

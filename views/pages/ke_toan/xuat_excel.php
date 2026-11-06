@@ -1,14 +1,5 @@
 <?php
-/**
- * ============================================================
- * XUẤT BÁO CÁO DOANH THU RA FILE EXCEL (.XLS)
- * views/pages/ke_toan/xuat_excel.php
- * Phân hệ: Kế toán & Doanh thu
- * Căn chuẩn 100% trang in A4: Tự động vừa vặn trang giấy,
- * chiều cao tiêu đề thoáng đãng, các cột phí ưu tiên độ rộng lớn
- * không bao giờ bị cắt mất hoặc tràn lề khi in.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';

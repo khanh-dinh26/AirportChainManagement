@@ -146,33 +146,27 @@ ob_start();
 <?php endif; ?>
 
 <!--PHẦN 1: THỐNG KÊ NHANH-->
-<div class="row">
-    <div class="col">
-        <div class="small-box text-bg-primary">
+<div class="row g-3">
+    <div class="col-xl-3 col-sm-6">
+        <div class="small-box text-bg-primary mb-0 h-100">
             <div class="inner"><h3><?= number_format($stats['doanh_thu_thang'] / 1000000, 1) ?> Tr</h3><p>Doanh thu tháng</p></div>
             <i class="small-box-icon bi bi-graph-up-arrow"></i>
         </div>
     </div>
-    <div class="col">
-        <div class="small-box text-bg-success">
+    <div class="col-xl-3 col-sm-6">
+        <div class="small-box text-bg-success mb-0 h-100">
             <div class="inner"><h3><?= $stats['hd_da_thu'] ?></h3><p>Hóa đơn đã thu</p></div>
             <i class="small-box-icon bi bi-receipt"></i>
         </div>
     </div>
-    <div class="col">
-        <div class="small-box text-bg-warning">
+    <div class="col-xl-3 col-sm-6">
+        <div class="small-box text-bg-warning mb-0 h-100">
             <div class="inner"><h3><?= $stats['hd_chua_thu'] ?></h3><p>Hóa đơn chờ thu</p></div>
             <i class="small-box-icon bi bi-hourglass-split"></i>
         </div>
     </div>
-    <div class="col">
-        <div class="small-box text-bg-danger">
-            <div class="inner"><h3><?= number_format($stats['no_qua_han'] / 1000000, 1) ?> Tr</h3><p>Công nợ quá hạn</p></div>
-            <i class="small-box-icon bi bi-exclamation-triangle"></i>
-        </div>
-    </div>
-    <div class="col">
-        <div class="small-box text-bg-info">
+    <div class="col-xl-3 col-sm-6">
+        <div class="small-box text-bg-info mb-0 h-100">
             <div class="inner"><h3><?= $stats['chuyen_bay_trong_ngay'] ?></h3><p>Chuyến bay trong ngày</p></div>
             <i class="small-box-icon bi bi-airplane"></i>
         </div>

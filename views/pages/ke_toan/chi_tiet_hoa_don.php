@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: CHI TIẾT HÓA ĐƠN — views/pages/ke_toan/chi_tiet_hoa_don.php
- * Render hoàn toàn phía server (không dùng JavaScript, không fetch).
- * Mở từ nút "Xem" ở danh sách hóa đơn chờ thanh toán hoặc lịch sử.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';

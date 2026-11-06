@@ -1,15 +1,5 @@
 <?php
-/**
- * ============================================================
- * CONTROLLER: QUẢN LÝ NHÂN SỰ  —  controllers/NhanSuController.php
- * Phân hệ: Xác thực & Nhân sự (Thành viên 1)
- * ------------------------------------------------------------
- * Cho phép Admin Tổng công ty quản lý danh sách tài khoản
- * nhân viên, xem thông tin chi tiết, đặt & crop ảnh đại diện,
- * thay đổi mật khẩu trực tiếp, phân quyền vai trò và
- * phân bổ sân bay công tác.
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
@@ -83,7 +73,25 @@ class NhanSuController
             $filters['id_san_bay'] = $phamViSanBay;
         }
 
-        $danhSach = $this->nguoiDungModel->layDanhSach($filters);
+        // Phân trang nhân sự
+        $perPage = 10;
+        $tongSo = $this->nguoiDungModel->demTongSo($filters);
+        $tongTrang = max(1, (int) ceil($tongSo / $perPage));
+        $trangHienTai = max(1, (int) ($_GET['p'] ?? 1));
+        if ($trangHienTai > $tongTrang) {
+            $trangHienTai = $tongTrang;
+        }
+        $offset = ($trangHienTai - 1) * $perPage;
+
+        $danhSach = $this->nguoiDungModel->layDanhSach($filters, $perPage, $offset);
+        $pagination = [
+            'page'        => $trangHienTai,
+            'perPage'     => $perPage,
+            'totalItems'  => $tongSo,
+            'totalPages'  => $tongTrang,
+            'startIndex'  => $tongSo > 0 ? $offset + 1 : 0,
+            'endIndex'    => min($offset + $perPage, $tongSo),
+        ];
         $thongKe = $this->nguoiDungModel->thongKeNhanSu();
         $danhSachSanBay = $this->nguoiDungModel->layDanhSachSanBay();
 
@@ -117,6 +125,7 @@ class NhanSuController
             'currentUserId'     => $currentUserId,
             'vaiTroMap'         => self::VAI_TRO,
             'flash'             => $flash,
+            'pagination'        => $pagination,
         ];
     }
 

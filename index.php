@@ -1,24 +1,4 @@
 <?php
-/**
- * ============================================================
- * ĐIỂM VÀO (ENTRY POINT) CỦA HỆ THỐNG
- * File: index.php (nằm ở gốc dự án)
- * ------------------------------------------------------------
- * CÁCH TRUY CẬP:
- *   http://localhost/AirportChainManagement/            -> Trang tổng quan
- *   http://localhost/AirportChainManagement/index.php?page=ha_tang
- *   http://localhost/AirportChainManagement/index.php?page=chuyen_bay
- *   http://localhost/AirportChainManagement/index.php?page=bao_tri
- *   http://localhost/AirportChainManagement/index.php?page=ke_toan
- *   http://localhost/AirportChainManagement/index.php?page=login
- *   http://localhost/AirportChainManagement/index.php?page=register
- *   http://localhost/AirportChainManagement/index.php?page=forgot
- *
- * LƯU Ý QUAN TRỌNG: KHÔNG mở file .php bằng cách nháy đúp chuột
- * (địa chỉ file:///... sẽ chỉ hiện mã nguồn). Luôn mở qua
- * http://localhost/... để Apache chạy PHP.
- * ============================================================
- */
 
 /* ---------- Nạp cấu hình dùng chung ---------- */
 require_once __DIR__ . '/config/config.php';
@@ -231,9 +211,7 @@ try {
 $soLoaiTauBay = 0;
 try {
     $sqlLtb = "SELECT COUNT(*) AS total FROM loai_tau_bay WHERE 1=1";
-    if ($isQuanLySb) {
-        $sqlLtb .= " AND id_san_bay = " . (int)$userSanBay;
-    }
+    // Loai tau bay hoat dong toan mang luoi khong gioi han theo san bay
     $resLtb = $conn->query($sqlLtb);
     if ($resLtb && ($rowLtb = $resLtb->fetch_assoc())) {
         $soLoaiTauBay = (int) $rowLtb['total'];

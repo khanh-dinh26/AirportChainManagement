@@ -37,13 +37,12 @@
   border: 1px solid var(--sky-border-medium);
   border-radius: 18px;
   min-height: 340px;
-  padding: 56px 48px;
+  padding: 28px !important;
   margin-bottom: 26px;
   box-shadow: var(--sky-shadow-soft);
   overflow: hidden;
   display: flex;
   align-items: flex-start;
-  padding: 28px !important;
 }
 
 .sky-hero::before {
@@ -180,17 +179,24 @@
 }
 
 .sky-metric-card__icon-box {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: var(--sky-50);
   color: var(--sky-600);
   display: flex;
-  align-items: flex-start;
-  padding: 28px !important;
+  align-items: center;
   justify-content: center;
   font-size: 1.25rem;
   border: 1px solid var(--sky-border-subtle);
+  flex-shrink: 0;
+}
+
+.sky-metric-card__icon-box i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .sky-metric-card__value {
@@ -206,8 +212,7 @@
   color: var(--sky-slate-500);
   font-size: 0.88rem;
   display: flex;
-  align-items: flex-start;
-  padding: 28px !important;
+  align-items: center;
   gap: 5px;
   margin: 0;
 }
@@ -240,17 +245,25 @@
 }
 
 .sky-portal-card__icon {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
   background: linear-gradient(135deg, var(--sky-50), var(--sky-100));
   color: var(--sky-600);
   display: flex;
-  align-items: flex-start;
-  padding: 28px !important;
+  align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.55rem;
+  line-height: 1;
   border: 1px solid var(--sky-border-medium);
+  flex-shrink: 0;
+}
+
+.sky-portal-card__icon i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .sky-portal-card__badge {
@@ -346,8 +359,7 @@
   font-weight: 700;
   margin-bottom: 16px;
   display: flex;
-  align-items: flex-start;
-  padding: 28px !important;
+  align-items: center;
   gap: 8px;
 }
 
@@ -407,8 +419,7 @@
   color: var(--sky-700);
   border-radius: 50%;
   display: flex;
-  align-items: flex-start;
-  padding: 28px !important;
+  align-items: center;
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 700;

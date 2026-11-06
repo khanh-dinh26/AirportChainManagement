@@ -1,4 +1,18 @@
 <?php
+/**
+ * @var bool|null $airportAdminOnly
+ * @var array $airports
+ * @var array|null $selectedAirport
+ * @var array|null $selectedTerminal
+ * @var string $activeTab
+ * @var string $tab
+ * @var array $data
+ * @var callable $url
+ * @var callable $e
+ * @var string|null $formMode
+ * @var array|null $formRecord
+ */
+
 // Chế độ chỉ quản lý sân bay (mở từ nút "Quản lí sân bay" ở trang Hạ tầng):
 // không có thanh tab, không có khối chọn sân bay / nhà ga, chỉ còn danh mục sân bay.
 $airportAdminOnly = isset($airportAdminOnly) && $airportAdminOnly;

@@ -83,25 +83,12 @@ $tongLoaiTauBay = count($tau_bay);
  * Lọc danh sách phía máy chủ: ?q=...&san_bay=<id>.
  * ------------------------------------------------------------ */
 $tuKhoa            = trim((string) ($_GET['q'] ?? ''));
-$locSanBay         = $isQuanLySanBay ? (int) $userSanBay : (int) ($_GET['san_bay'] ?? 0);
 $tongLoaiTauBayGoc = $tongLoaiTauBay;
 
-if (!$isQuanLySanBay && $locSanBay > 0 && !isset($sanBayLabels[$locSanBay])) {
-    $locSanBay = 0;
-}
-
-if ($tuKhoa !== '' || $locSanBay > 0) {
-    $tau_bay = array_values(array_filter($tau_bay, static function (array $tb) use ($tuKhoa, $locSanBay): bool {
-        if ($locSanBay > 0 && (int) ($tb['id_san_bay'] ?? 0) !== $locSanBay) {
-            return false;
-        }
-
-        if ($tuKhoa === '') {
-            return true;
-        }
-
+if ($tuKhoa !== '') {
+    $tau_bay = array_values(array_filter($tau_bay, static function (array $tb) use ($tuKhoa): bool {
         $maDayDu  = 'LTB-' . sprintf('%03d', (int) $tb['id']);
-        $haystack = $tb['ma_loai'] . ' ' . ($tb['hang'] ?? '') . ' ' . ($tb['ma_hang'] ?? '') . ' ' . $maDayDu . ' ' . ($tb['ma_iata'] ?? '') . ' ' . ($tb['ten_san_bay'] ?? '');
+        $haystack = $tb['ma_loai'] . ' ' . ($tb['hang'] ?? '') . ' ' . ($tb['ma_hang'] ?? '') . ' ' . $maDayDu;
 
         return mb_stripos($haystack, $tuKhoa, 0, 'UTF-8') !== false;
     }));
@@ -119,16 +106,14 @@ $denTauBay = min($viTriBatDau + $soTauBayMoiTrang, $tongKetQua);
 
 $filterQuery = array_filter([
     'q'       => $tuKhoa,
-    'san_bay' => $locSanBay > 0 ? $locSanBay : '',
-    'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
+        'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
 ], static fn($v) => $v !== '');
 
 $urlDongModal = baoTriUrl('tau_bay.php', $filterQuery);
-$tauBayPageUrl = static function (int $page) use ($tuKhoa, $locSanBay): string {
+$tauBayPageUrl = static function (int $page) use ($tuKhoa): string {
     return baoTriUrl('tau_bay.php', array_filter([
         'q'       => $tuKhoa,
-        'san_bay' => $locSanBay > 0 ? $locSanBay : '',
-        'trang'   => $page > 1 ? $page : '',
+                'trang'   => $page > 1 ? $page : '',
     ], static fn($v) => $v !== ''));
 };
 
@@ -198,29 +183,16 @@ ob_start();
     <?php if ($tongLoaiTauBayGoc > 0): ?>
         <div class="card-body pb-0">
             <form method="get" action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2 mb-3">
-                <div class="<?= $isQuanLySanBay ? 'col-12 col-lg-8' : 'col-12 col-lg-4' ?>">
+                <div class="col-12 col-md-8">
                     <label for="aircraftSearch" class="visually-hidden">Tìm kiếm loại tàu bay</label>
-                    <input type="search" id="aircraftSearch" name="q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên dòng máy bay, hãng hoặc mã LTB...">
+                    <input type="search" id="aircraftSearch" name="q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên dòng máy bay, hãng hàng không hoặc mã LTB...">
                 </div>
-                <?php if ($isQuanLySanBay): ?>
-                    <input type="hidden" name="san_bay" value="<?= (int) $userSanBay ?>">
-                <?php else: ?>
-                    <div class="col-12 col-lg-4">
-                        <label for="aircraftAirportFilter" class="visually-hidden">Sân bay</label>
-                        <select id="aircraftAirportFilter" name="san_bay" class="form-select">
-                            <option value=""<?= $locSanBay === 0 ? ' selected' : '' ?>>Tất cả sân bay</option>
-                            <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                                <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                <?php endif; ?>
-                <div class="col-6 col-lg-2 d-grid">
+                <div class="col-6 col-md-2 d-grid">
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-search me-1"></i>Tìm kiếm
                     </button>
                 </div>
-                <div class="col-6 col-lg-2 d-grid">
+                <div class="col-6 col-md-2 d-grid">
                     <a href="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">Xóa lọc</a>
                 </div>
             </form>
@@ -231,11 +203,7 @@ ob_start();
                     <?php else: ?>
                         Hiển thị <strong>0</strong> loại tàu bay
                     <?php endif; ?>
-                    <?php if ($isQuanLySanBay && $tenSanBayQuanLy !== ''): ?>
-                        · <span class="badge text-bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-geo-alt-fill me-1"></i><?= htmlspecialchars($tenSanBayQuanLy, ENT_QUOTES, 'UTF-8') ?></span>
-                    <?php elseif ($locSanBay > 0 && isset($sanBayLabels[$locSanBay])): ?>
-                        · <span class="badge text-bg-light border"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($sanBayLabels[$locSanBay], ENT_QUOTES, 'UTF-8') ?></span>
-                    <?php endif; ?>
+
                 </span>
             </div>
         </div>
@@ -252,20 +220,17 @@ ob_start();
                     $hangTauBay   = trim((string) ($tb['hang'] ?? ''));
                     $xoaUrl = baoTriUrl('tau_bay.php', array_filter([
                         'q'            => $tuKhoa,
-                        'san_bay'      => $locSanBay > 0 ? $locSanBay : '',
-                        'trang'        => $trangHienTai > 1 ? $trangHienTai : '',
+                                                'trang'        => $trangHienTai > 1 ? $trangHienTai : '',
                         'xac_nhan_xoa' => (int) $tb['id'],
                     ], static fn($v) => $v !== ''));
                     $suaUrl = baoTriUrl('tau_bay.php', array_filter([
                         'q'       => $tuKhoa,
-                        'san_bay' => $locSanBay > 0 ? $locSanBay : '',
-                        'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
+                                                'trang'   => $trangHienTai > 1 ? $trangHienTai : '',
                         'sua'     => (int) $tb['id'],
                     ], static fn($v) => $v !== ''));
                     $chiTietUrl = baoTriUrl('tau_bay.php', array_filter([
                         'q'        => $tuKhoa,
-                        'san_bay'  => $locSanBay > 0 ? $locSanBay : '',
-                        'trang'    => $trangHienTai > 1 ? $trangHienTai : '',
+                                                'trang'    => $trangHienTai > 1 ? $trangHienTai : '',
                         'chi_tiet' => (int) $tb['id'],
                     ], static fn($v) => $v !== ''));
                     ?>
@@ -292,8 +257,8 @@ ob_start();
                                     <span><?= htmlspecialchars($hangTauBay !== '' ? $hangTauBay : 'Chưa xác định hãng', ENT_QUOTES, 'UTF-8') ?></span>
                                 </div>
                                 <div>
-                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                    <span><?= htmlspecialchars($tenSanBay !== '' ? $tenSanBay : 'Chưa xác định sân bay', ENT_QUOTES, 'UTF-8') ?></span>
+                                    <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                                    <span>MTOW: <?= number_format((float) $tb['tai_trong_cat_canh_mtow'], 1) ?> tấn · <?= (int) $tb['suc_chua_hanh_khach'] ?> ghế</span>
                                 </div>
                             </div>
                             <div class="maint-aircraft-card__actions">
@@ -316,7 +281,7 @@ ob_start();
                     </article>
                 <?php endforeach; ?>
             </div>
-        <?php elseif ($tuKhoa !== '' || $locSanBay > 0): ?>
+        <?php elseif ($tuKhoa !== ''): ?>
             <div class="text-center py-4 text-secondary">
                 Không tìm thấy loại tàu bay phù hợp với bộ lọc hiện tại.
             </div>
@@ -413,11 +378,11 @@ require __DIR__ . '/_lightbox.php';
                     </div>
                 </section>
                 <section class="maint-aircraft-detail__location">
-                    <span class="maint-aircraft-detail__location-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+                    <span class="maint-aircraft-detail__location-icon"><i class="bi bi-globe2 text-primary" aria-hidden="true"></i></span>
                     <div>
-                        <div class="maint-aircraft-detail__label">Sân bay khai thác</div>
+                        <div class="maint-aircraft-detail__label">Phạm vi khai thác</div>
                         <div class="maint-aircraft-detail__location-name">
-                            <?= htmlspecialchars(trim((string) ($tauBayChiTiet['ten_san_bay'] ?? '')) ?: 'Chưa xác định', ENT_QUOTES, 'UTF-8') ?>
+                            Toàn mạng lưới chuỗi cảng hàng không
                         </div>
                     </div>
                 </section>
@@ -451,7 +416,7 @@ require __DIR__ . '/_lightbox.php';
             <form action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
                 <input type="hidden" name="action" value="them_hang_hang_khong">
                 <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+">
                 <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
                 <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
@@ -533,7 +498,7 @@ require __DIR__ . '/_lightbox.php';
             <form action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="them_tau_bay">
                 <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+">
                 <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
                 <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
@@ -558,29 +523,7 @@ require __DIR__ . '/_lightbox.php';
 
                     <div class="maint-form-section"><i class="bi bi-airplane"></i> Thông số khai thác</div>
 
-                    <div class="mb-2">
-                        <label for="id_san_bay" class="form-label fw-semibold">
-                            Sân bay khai thác <span class="text-danger">*</span>
-                        </label>
-                        <?php if ($isQuanLySanBay): ?>
-                            <input type="hidden" name="id_san_bay" value="<?= (int) $userSanBay ?>">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                                <input type="text" class="form-control bg-light fw-medium text-dark" value="<?= htmlspecialchars($tenSanBayQuanLy ?: 'Sân bay đang quản lý', ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
-                            </div>
-                            <div class="form-text small text-secondary">Tàu bay được tự động phân bổ vào sân bay bạn đang quản lý.</div>
-                        <?php else: ?>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
-                                <select name="id_san_bay" id="id_san_bay" class="form-select" required>
-                                    <option value="">Chọn sân bay</option>
-                                    <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                                        <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+
 
                     <div class="mb-2">
                         <label for="ma_loai" class="form-label fw-semibold">
@@ -667,7 +610,7 @@ require __DIR__ . '/_lightbox.php';
                 <input type="hidden" name="action" value="cap_nhat_tau_bay">
                 <input type="hidden" name="id" value="<?= (int) $tauBayCanSua['id'] ?>">
                 <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>">
+">
                 <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>">
                 <div class="modal-header ps-3 pe-5 py-2">
                     <div class="d-flex align-items-center gap-2">
@@ -690,28 +633,7 @@ require __DIR__ . '/_lightbox.php';
 
                     <div class="maint-form-section"><i class="bi bi-airplane"></i> Thông số khai thác</div>
 
-                    <div class="mb-2">
-                        <label for="sua_id_san_bay" class="form-label fw-semibold">
-                            Sân bay khai thác <span class="text-danger">*</span>
-                        </label>
-                        <?php if ($isQuanLySanBay): ?>
-                            <input type="hidden" name="id_san_bay" value="<?= (int) $userSanBay ?>">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt-fill text-primary"></i></span>
-                                <input type="text" class="form-control bg-light fw-medium text-dark" value="<?= htmlspecialchars($tenSanBayQuanLy ?: 'Sân bay đang quản lý', ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
-                            </div>
-                        <?php else: ?>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
-                                <select name="id_san_bay" id="sua_id_san_bay" class="form-select" required>
-                                    <option value="">Chọn sân bay</option>
-                                    <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                                        <option value="<?= (int) $idSb ?>"<?= (int) $tauBayCanSua['id_san_bay'] === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+
 
                     <div class="mb-2">
                         <label for="sua_ma_loai" class="form-label fw-semibold">
@@ -813,7 +735,7 @@ require __DIR__ . '/_lightbox.php';
                     <input type="hidden" name="action" value="xoa_tau_bay" />
                     <input type="hidden" name="id" value="<?= (int) $idCanXoa ?>" />
                     <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
-                    <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>" />
+" />
                     <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />
                     <button type="submit" class="btn btn-danger px-3">
                         <i class="bi bi-trash3 me-1"></i>Xóa loại tàu bay

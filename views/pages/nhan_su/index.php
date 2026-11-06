@@ -1,10 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: QUẢN LÝ NHÂN SỰ  —  views/pages/nhan_su/index.php
- * Phân hệ: Quản lý nhân sự & Phân quyền (Thành viên 1)
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
@@ -24,6 +19,24 @@ $breadcrumb = [
 
 $escape = static function ($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
+
+$pagination = $data['pagination'] ?? null;
+$pageUrl = static function (int $p) use ($data): string {
+    $params = ['page' => 'nhan_su'];
+    if (!empty($data['filters']['tu_khoa'])) {
+        $params['q'] = $data['filters']['tu_khoa'];
+    }
+    if (!empty($data['filters']['vai_tro'])) {
+        $params['role'] = $data['filters']['vai_tro'];
+    }
+    if (isset($data['filters']['id_san_bay']) && $data['filters']['id_san_bay'] !== null) {
+        $params['airport'] = $data['filters']['id_san_bay'];
+    }
+    if ($p > 1) {
+        $params['p'] = $p;
+    }
+    return BASE_URL . '/index.php?' . http_build_query($params);
 };
 
 $roleBadgeClass = [
@@ -377,7 +390,7 @@ ob_start();
               $anhUrl = $coAnh ? (BASE_URL . '/' . htmlspecialchars($avatarRelPath, ENT_QUOTES, 'UTF-8')) : '';
             ?>
             <tr>
-              <td class="text-center text-muted small"><?= $idx + 1 ?></td>
+              <td class="text-center text-muted small"><?= (!empty($pagination) ? $pagination['startIndex'] : 1) + $idx ?></td>
               
               <!-- CỘT ẢNH ĐẠI DIỆN (CHỈ HIỂN THỊ TĨNH) -->
               <td class="text-center">
@@ -471,6 +484,40 @@ ob_start();
       </tbody>
     </table>
   </div>
+
+  <!-- PHÂN TRANG NHÂN SỰ -->
+  <?php if (!empty($pagination) && $pagination['totalItems'] > 0): ?>
+    <div class="card-footer bg-white border-top d-flex flex-wrap justify-content-between align-items-center gap-2 py-3 px-3">
+      <div class="small text-secondary">
+        Hiển thị <strong><?= $pagination['startIndex'] ?></strong> – <strong><?= $pagination['endIndex'] ?></strong> trong tổng số <strong><?= $pagination['totalItems'] ?></strong> nhân viên
+      </div>
+      <?php if ($pagination['totalPages'] > 1): ?>
+        <nav aria-label="Phân trang nhân sự">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item <?= $pagination['page'] <= 1 ? 'disabled' : '' ?>">
+              <a class="page-link" href="<?= $pageUrl($pagination['page'] - 1) ?>" aria-label="Trang trước">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            <?php for ($p = 1; $p <= $pagination['totalPages']; $p++): ?>
+              <?php if ($p === 1 || $p === $pagination['totalPages'] || abs($p - $pagination['page']) <= 2): ?>
+                <li class="page-item <?= $p === $pagination['page'] ? 'active' : '' ?>">
+                  <a class="page-link" href="<?= $pageUrl($p) ?>"><?= $p ?></a>
+                </li>
+              <?php elseif (abs($p - $pagination['page']) === 3): ?>
+                <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              <?php endif; ?>
+            <?php endfor; ?>
+            <li class="page-item <?= $pagination['page'] >= $pagination['totalPages'] ? 'disabled' : '' ?>">
+              <a class="page-link" href="<?= $pageUrl($pagination['page'] + 1) ?>" aria-label="Trang sau">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
 </div>
 
 <!-- ============================================================ -->

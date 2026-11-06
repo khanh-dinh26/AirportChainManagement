@@ -1,24 +1,5 @@
 <?php
-/**
- * ============================================================
- * LAYOUT: HEADER (AdminLTE 4)
- * ------------------------------------------------------------
- * File này mở đầu trang: <head>, thanh navbar trên cùng và
- * sidebar. Nó KHÔNG đóng thẻ, phần thân trang nằm ở main.php
- * và phần kết thúc nằm ở footer.php
- *
- * Giao diện giữ nguyên phong cách AdminLTE 4 mặc định.
- * TOÀN BỘ GIAO DIỆN KHÔNG DÙNG JAVASCRIPT:
- *   - Thu gọn sidebar : checkbox ẩn + label (CSS)
- *   - Menu con        : <details>/<summary> (sidebar.php)
- *   - Dropdown user   : :hover / :focus-within (style.css)
- *
- * Biến có thể truyền vào (đều có giá trị mặc định):
- *   $pageTitle   : Tiêu đề tab trình duyệt
- *   $navActive   : Key menu đang mở (auth|ha_tang|chuyen_bay|bao_tri|ke_toan)
- *   $adminLteUrl : Đường dẫn tới thư mục dist của AdminLTE
- * ============================================================
- */
+
 
 $pageTitle   = $pageTitle ?? 'Hệ thống quản lý chuỗi cảng hàng không';
 $navActive   = $navActive ?? '';
@@ -151,17 +132,23 @@ if ($daDangNhap && !empty($_SESSION['anh_dai_dien'])) {
                     <small><?= htmlspecialchars($vaiTroHienThi, ENT_QUOTES, 'UTF-8') ?></small>
                   </p>
                 </li>
-                <li class="user-footer d-flex justify-content-between align-items-center">
+                <li class="user-footer p-2 bg-light-subtle">
                   <?php if ($daDangNhap): ?>
-                    <a href="<?= $baseUrl ?>/index.php?page=ho_so" class="btn btn-outline-primary btn-sm">
-                      <i class="bi bi-person-circle me-1"></i>Hồ sơ & Đổi MK
-                    </a>
-                    <a href="<?= $baseUrl ?>/controllers/AuthController.php?action=logout" class="btn btn-outline-danger btn-sm">
-                      <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-                    </a>
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <a href="<?= $baseUrl ?>/index.php?page=ho_so" class="btn btn-outline-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center text-nowrap">
+                          <i class="bi bi-person-circle me-1"></i>Hồ sơ
+                        </a>
+                      </div>
+                      <div class="col-6">
+                        <a href="<?= $baseUrl ?>/controllers/AuthController.php?action=logout" class="btn btn-outline-danger btn-sm w-100 d-inline-flex align-items-center justify-content-center text-nowrap">
+                          <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+                        </a>
+                      </div>
+                    </div>
                   <?php else: ?>
-                    <a href="<?= $baseUrl ?>/index.php?page=login" class="btn btn-outline-primary btn-sm ms-auto">
-                      Đăng nhập
+                    <a href="<?= $baseUrl ?>/index.php?page=login" class="btn btn-outline-primary btn-sm w-100 text-center">
+                      <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
                     </a>
                   <?php endif; ?>
                 </li>

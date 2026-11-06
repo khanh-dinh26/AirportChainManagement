@@ -1,29 +1,4 @@
 <?php
-/**
- * ============================================================
- * LAYOUT XÁC THỰC (dùng cho các trang trong views/pages/auth/)
- * ------------------------------------------------------------
- * Khung trang riêng cho màn hình đăng nhập / đăng ký / quên
- * mật khẩu: không có navbar và sidebar, chỉ có form ở giữa.
- *
- * Giữ nguyên diện mạo AdminLTE 4 mặc định: thẻ trắng bo góc
- * có bóng đổ, đặt giữa nền xám (login-page + login-box).
- *
- * KHÔNG nạp bất kỳ JavaScript nào (Bootstrap JS, AdminLTE JS
- * đều đã được gỡ bỏ khỏi dự án).
- *
- * CÁCH SỬ DỤNG:
- *   $pageTitle = 'Đăng nhập';
- *   $authTitle = 'Đăng nhập hệ thống';
- *   $authMsg   = 'Nhập tài khoản để bắt đầu phiên làm việc';
- *   ob_start();
- *   ?>
- *   ... HTML của form ...
- *   <?php
- *   $content = ob_get_clean();
- *   require __DIR__ . '/../../layouts/auth.php';
- * ============================================================
- */
 
 $pageTitle = $pageTitle ?? 'Xác thực';
 $authTitle = $authTitle ?? 'AeroChain';

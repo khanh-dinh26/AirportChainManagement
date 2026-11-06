@@ -1,5 +1,9 @@
 <?php
+
+require_once __DIR__ . '/../config/config.php';
+
 class BaoTriController {
+    /** @var mysqli */
     private $db;
 
     /** Các giá trị hợp lệ theo enum trong CSDL */
@@ -250,24 +254,24 @@ class BaoTriController {
      */
     private function luuAnhTaiLen(array $file, string $thuMuc) {
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Tải ảnh lên thất bại. Vui lòng thử lại.');
+            throw new \RuntimeException('Tải ảnh lên thất bại. Vui lòng thử lại.');
         }
         if ($file['size'] > self::KICH_THUOC_ANH_TOI_DA) {
-            throw new RuntimeException('Ảnh không được vượt quá 5 MB.');
+            throw new \RuntimeException('Ảnh không được vượt quá 5 MB.');
         }
 
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, self::DINH_DANG_ANH_HOP_LE, true)) {
-            throw new RuntimeException('Chỉ chấp nhận ảnh JPG, JPEG, PNG, GIF hoặc WEBP.');
+            throw new \RuntimeException('Chỉ chấp nhận ảnh JPG, JPEG, PNG, GIF hoặc WEBP.');
         }
         if (@getimagesize($file['tmp_name']) === false) {
-            throw new RuntimeException('Tệp tải lên không phải là ảnh hợp lệ.');
+            throw new \RuntimeException('Tệp tải lên không phải là ảnh hợp lệ.');
         }
 
         $thuMuc = trim($thuMuc, '/');
         $dir    = __DIR__ . '/../assets/img/' . $thuMuc . '/';
         if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
-            throw new RuntimeException('Không thể tạo thư mục lưu ảnh.');
+            throw new \RuntimeException('Không thể tạo thư mục lưu ảnh.');
         }
 
         $tenGoc  = $this->taoTenFileAnToan(pathinfo($file['name'], PATHINFO_FILENAME));
@@ -281,7 +285,7 @@ class BaoTriController {
         }
 
         if (!move_uploaded_file($file['tmp_name'], $dir . $tenFile)) {
-            throw new RuntimeException('Không thể lưu ảnh lên máy chủ.');
+            throw new \RuntimeException('Không thể lưu ảnh lên máy chủ.');
         }
 
         return 'assets/img/' . $thuMuc . '/' . $tenFile;
@@ -313,37 +317,18 @@ class BaoTriController {
     }
 
     public function getDanhSachTauBay($sanBayId = null) {
-        $phamVi = pham_vi_san_bay();
-        $where = '';
-        if ($phamVi > 0) {
-            $where = " WHERE l.id_san_bay = " . (int) $phamVi . " ";
-        } elseif ($phamVi < 0) {
-            $where = " WHERE 1=0 ";
-        } elseif ($sanBayId !== null && (int) $sanBayId > 0) {
-            $where = " WHERE l.id_san_bay = " . (int) $sanBayId . " ";
-        }
-
         $sql = "SELECT l.id, l.id_san_bay, l.ma_loai, l.id_hang_hang_khong,
                        hh.ten_hang AS hang, hh.ma_iata AS ma_hang,
-                       l.tai_trong_cat_canh_mtow, l.suc_chua_hanh_khach, l.hinh_anh,
-                       sb.ma_iata, sb.ten_san_bay, sb.ten_ngan
+                       l.tai_trong_cat_canh_mtow, l.suc_chua_hanh_khach, l.hinh_anh
                 FROM loai_tau_bay l
-                LEFT JOIN san_bay sb ON sb.id = l.id_san_bay
                 LEFT JOIN hang_hang_khong hh ON hh.id = l.id_hang_hang_khong
-                {$where}
                 ORDER BY l.id DESC";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getHangHangKhongList() {
-        $phamVi = pham_vi_san_bay();
         $joinOn = "tb.id_hang_hang_khong = h.id";
-        if ($phamVi > 0) {
-            $joinOn .= " AND tb.id_san_bay = " . (int) $phamVi;
-        } elseif ($phamVi < 0) {
-            $joinOn .= " AND 1=0";
-        }
 
         $sql = "SELECT h.id, h.ma_iata, h.ten_hang, h.quoc_gia, COUNT(tb.id) AS so_tau_bay
                 FROM hang_hang_khong h
@@ -499,7 +484,7 @@ class BaoTriController {
             $this->capNhatTrangThaiThietBiTheoPhieu($id_thiet_bi);
 
             $this->db->commit();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             try {
                 $this->db->rollback();
             } catch (Throwable $ignored) {
@@ -543,7 +528,7 @@ class BaoTriController {
             $stmt->bind_param('ssi', $ten_thiet_bi, $loai_thiet_bi, $id_san_bay);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi thêm thiết bị: ' . $e->getMessage());
             $this->redirect($this->viewUrl('thiet_bi.php', ['open' => 'create']));
         }
@@ -609,7 +594,7 @@ class BaoTriController {
             $stmt->bind_param('ssii', $ten_thiet_bi, $loai_thiet_bi, $id_san_bay, $id);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi cập nhật thiết bị: ' . $e->getMessage());
             $this->redirect($this->viewUrl('thiet_bi.php', $errorQuery));
         }
@@ -633,32 +618,35 @@ class BaoTriController {
         $id_hang    = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
         $mtow       = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
         $suc_chua   = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
-        // Tài khoản quản lý sân bay được tự động gán sân bay phân công
-        $id_san_bay = $phamVi > 0 ? (int) $phamVi : (isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0);
+        // Sân bay căn cứ (Base) là tùy chọn; nếu để trống thì máy bay khai thác toàn mạng lưới (id_san_bay = NULL)
+        $id_san_bay_raw = $_POST['id_san_bay'] ?? '';
+        $id_san_bay = ($id_san_bay_raw !== '' && (int) $id_san_bay_raw > 0) ? (int) $id_san_bay_raw : null;
 
         // Giữ bộ lọc hiện tại khi quay lại trang danh sách.
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
-            'san_bay' => $phamVi > 0 ? (int) $phamVi : (int) ($_POST['giu_san_bay'] ?? 0),
+            'san_bay' => (string) ($_POST['giu_san_bay'] ?? ''),
             'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
 
-        if ($ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0 || $id_san_bay <= 0) {
-            $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ.');
+        if ($ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0) {
+            $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ (mã loại, hãng hàng không, MTOW và sức chứa là bắt buộc).');
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
         }
 
-        // Sân bay phải tồn tại trong CSDL.
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
-        $stmt->bind_param('i', $id_san_bay);
-        $stmt->execute();
-        $stmt->bind_result($soSanBay);
-        $stmt->fetch();
-        $stmt->close();
+        // Nếu có chọn sân bay căn cứ thì kiểm tra sân bay phải tồn tại trong CSDL.
+        if ($id_san_bay !== null) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
+            $stmt->bind_param('i', $id_san_bay);
+            $stmt->execute();
+            $stmt->bind_result($soSanBay);
+            $stmt->fetch();
+            $stmt->close();
 
-        if ((int) $soSanBay === 0) {
-            $this->setFlash('error', 'Sân bay đã chọn không tồn tại.');
-            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+            if ((int) $soSanBay === 0) {
+                $this->setFlash('error', 'Sân bay căn cứ đã chọn không tồn tại.');
+                $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
+            }
         }
 
         // Hãng hàng không phải tồn tại trong CSDL.
@@ -700,7 +688,7 @@ class BaoTriController {
                 $this->setFlash('error', 'Lỗi thêm loại tàu bay: ' . $e->getMessage());
             }
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi thêm loại tàu bay: ' . $e->getMessage());
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc + ['open' => 'create']));
         }
@@ -769,7 +757,7 @@ class BaoTriController {
                 $this->setFlash('error', 'Lỗi thêm hãng hàng không: ' . $e->getMessage());
             }
             $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi thêm hãng hàng không: ' . $e->getMessage());
             $this->redirect($this->viewUrl($returnPage, $giuLoc + ['open' => 'create_hang']));
         }
@@ -821,7 +809,7 @@ class BaoTriController {
             $stmt->bind_param('sssi', $ma_iata, $ten_hang, $quoc_gia, $id);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi cập nhật hãng hàng không: ' . $e->getMessage());
             $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc + ['sua' => $id]));
         }
@@ -864,7 +852,7 @@ class BaoTriController {
             $stmt->bind_param('i', $id);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi xóa hãng hàng không: ' . $e->getMessage());
             $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
         }
@@ -889,18 +877,19 @@ class BaoTriController {
         $id_hang     = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
         $mtow        = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
         $suc_chua    = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
-        // Quản lý sân bay cố định sân bay của mình
-        $id_san_bay  = $phamVi > 0 ? (int) $phamVi : (isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0);
+        // Sân bay căn cứ (Base) là tùy chọn; nếu để trống thì máy bay khai thác toàn mạng lưới (id_san_bay = NULL)
+        $id_san_bay_raw = $_POST['id_san_bay'] ?? '';
+        $id_san_bay  = ($id_san_bay_raw !== '' && (int) $id_san_bay_raw > 0) ? (int) $id_san_bay_raw : null;
 
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
-            'san_bay' => $phamVi > 0 ? (int) $phamVi : (int) ($_POST['giu_san_bay'] ?? 0),
+            'san_bay' => (string) ($_POST['giu_san_bay'] ?? ''),
             'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
         $queryLoi = $giuLoc + ['sua' => $id];
 
-        if ($id <= 0 || $ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0 || $id_san_bay <= 0) {
-            $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ.');
+        if ($id <= 0 || $ma_loai === '' || $id_hang <= 0 || $mtow <= 0 || $suc_chua <= 0) {
+            $this->setFlash('error', 'Thông tin loại tàu bay không hợp lệ (mã loại, hãng hàng không, MTOW và sức chứa là bắt buộc).');
             $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
         }
 
@@ -916,21 +905,23 @@ class BaoTriController {
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
-        if ($phamVi > 0 && (int) $dbSanBayId !== $phamVi) {
-            $this->setFlash('error', 'Bạn không có quyền cập nhật loại tàu bay thuộc sân bay khác.');
+        if ($phamVi > 0 && $dbSanBayId !== null && (int) $dbSanBayId !== $phamVi) {
+            $this->setFlash('error', 'Bạn không có quyền cập nhật loại tàu bay có căn cứ cố định tại sân bay khác.');
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
-        $stmt->bind_param('i', $id_san_bay);
-        $stmt->execute();
-        $stmt->bind_result($soSanBay);
-        $stmt->fetch();
-        $stmt->close();
+        if ($id_san_bay !== null) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM san_bay WHERE id = ?");
+            $stmt->bind_param('i', $id_san_bay);
+            $stmt->execute();
+            $stmt->bind_result($soSanBay);
+            $stmt->fetch();
+            $stmt->close();
 
-        if ((int) $soSanBay === 0) {
-            $this->setFlash('error', 'Sân bay đã chọn không tồn tại.');
-            $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+            if ((int) $soSanBay === 0) {
+                $this->setFlash('error', 'Sân bay căn cứ đã chọn không tồn tại.');
+                $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
+            }
         }
 
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM hang_hang_khong WHERE id = ?");
@@ -972,7 +963,7 @@ class BaoTriController {
                 $this->setFlash('error', 'Lỗi cập nhật loại tàu bay: ' . $e->getMessage());
             }
             $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi cập nhật loại tàu bay: ' . $e->getMessage());
             $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
         }
@@ -1045,7 +1036,7 @@ class BaoTriController {
             $this->capNhatTrangThaiThietBiTheoPhieu($id_thiet_bi);
 
             $this->db->commit();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             try {
                 $this->db->rollback();
             } catch (Throwable $ignored) {
@@ -1113,7 +1104,7 @@ class BaoTriController {
 
             $this->capNhatTrangThaiThietBiTheoPhieu((int) $id_thiet_bi);
             $this->db->commit();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             try {
                 $this->db->rollback();
             } catch (Throwable $ignored) {
@@ -1152,7 +1143,7 @@ class BaoTriController {
             $stmt->bind_param('i', $id);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi xóa thiết bị: ' . $e->getMessage());
             $this->redirect($this->viewUrl('thiet_bi.php'));
         }
@@ -1195,8 +1186,8 @@ class BaoTriController {
                 $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
             }
 
-            if ((int) $dbIdSanBay !== $phamVi) {
-                $this->setFlash('error', 'Bạn không có quyền xóa loại tàu bay thuộc sân bay khác.');
+            if ($dbIdSanBay !== null && (int) $dbIdSanBay !== $phamVi) {
+                $this->setFlash('error', 'Bạn không có quyền xóa loại tàu bay có căn cứ cố định tại sân bay khác.');
                 $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
             }
         }
@@ -1219,7 +1210,7 @@ class BaoTriController {
             $stmt->bind_param('i', $id);
             $stmt->execute();
             $stmt->close();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->setFlash('error', 'Lỗi xóa loại tàu bay: ' . $e->getMessage());
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }

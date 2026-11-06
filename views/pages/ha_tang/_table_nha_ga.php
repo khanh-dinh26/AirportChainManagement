@@ -1,4 +1,12 @@
 <?php
+/**
+ * @var array|null $selectedAirport
+ * @var array $data
+ * @var callable $e
+ * @var string $addUrl
+ * @var callable $url
+ */
+
 $airport = $selectedAirport;
 $items = $data['terminals'];
 ?>

@@ -1,33 +1,5 @@
 <?php
-/**
- * ============================================================
- * LAYOUT CHÍNH (AdminLTE 4)
- * ------------------------------------------------------------
- * Khung trang dùng chung cho tất cả các trang nội dung có
- * sidebar (mọi trang trong views/pages, trừ auth/).
- *
- * LƯU Ý: giao diện KHÔNG dùng JavaScript. Không còn biến
- * $pageScripts — mọi tương tác dùng CSS (:target, <details>,
- * :hover/:focus-within) hoặc xử lý phía PHP.
- *
- * CÁCH SỬ DỤNG trong 1 file trang:
- *
- *   $pageTitle    = 'Danh sách chuyến bay';
- *   $pageHeader   = 'Danh sách chuyến bay';
- *   $navActive    = 'chuyen_bay';
- *   $breadcrumb   = [
- *       ['label' => 'Tổng quan', 'url' => '/AirportChainManagement/index.php'],
- *       ['label' => 'Chuyến bay', 'url' => null],
- *   ];
- *
- *   ob_start();
- *   ?>
- *   ... HTML nội dung ...
- *   <?php
- *   $content = ob_get_clean();
- *   require __DIR__ . '/../../layouts/main.php';
- * ============================================================
- */
+
 
 $pageTitle  = $pageTitle ?? 'Hệ thống quản lý chuỗi cảng hàng không';
 $pageHeader = $pageHeader ?? $pageTitle;

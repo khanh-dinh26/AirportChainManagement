@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: SỬA CHUYẾN BAY  —  views/pages/chuyen_bay/sua.php
- * Nhận id qua query string: sua.php?id=123
- * (vẫn chấp nhận sua.php?edit=123 để tương thích)
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

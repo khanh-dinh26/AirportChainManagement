@@ -1,11 +1,5 @@
 <?php
-/**
- * ============================================================
- * TRANG: HỦY / XÓA CHUYẾN BAY  —  views/pages/chuyen_bay/huy.php
- * Nhận id qua query string: huy.php?id=123
- * (vẫn chấp nhận huy.php?edit=123 để tương thích)
- * ============================================================
- */
+
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';

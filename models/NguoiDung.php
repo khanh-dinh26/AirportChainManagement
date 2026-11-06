@@ -68,7 +68,58 @@ class NguoiDung
      * @param array $filters
      * @return array
      */
-    public function layDanhSach(array $filters = []): array
+    /**
+     * Đếm tổng số người dùng theo bộ lọc.
+     *
+     * @param array $filters
+     * @return int
+     */
+    public function demTongSo(array $filters = []): int
+    {
+        $where = ["1=1"];
+
+        if (!empty($filters['tu_khoa'])) {
+            $tuKhoa = mysqli_real_escape_string($this->conn, trim($filters['tu_khoa']));
+            $where[] = "(nd.ho_ten LIKE '%$tuKhoa%' OR nd.ten_dang_nhap LIKE '%$tuKhoa%')";
+        }
+
+        if (!empty($filters['vai_tro'])) {
+            $vaiTro = mysqli_real_escape_string($this->conn, trim($filters['vai_tro']));
+            $where[] = "nd.vai_tro = '$vaiTro'";
+        }
+
+        if (isset($filters['id_san_bay']) && $filters['id_san_bay'] !== '' && $filters['id_san_bay'] !== null) {
+            $idSb = (int) $filters['id_san_bay'];
+            if ($idSb === 0) {
+                $where[] = "nd.id_san_bay IS NULL";
+            } else {
+                $where[] = "nd.id_san_bay = $idSb";
+            }
+        }
+
+        $whereSql = implode(' AND ', $where);
+        $sql = "SELECT COUNT(*) AS total
+                FROM nguoi_dung nd
+                LEFT JOIN san_bay sb ON sb.id = nd.id_san_bay
+                WHERE $whereSql";
+
+        $result = mysqli_query($this->conn, $sql);
+        if ($result && ($row = mysqli_fetch_assoc($result))) {
+            return (int) $row['total'];
+        }
+
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách người dùng kèm tên sân bay phụ trách theo bộ lọc và phân trang.
+     *
+     * @param array $filters
+     * @param int   $limit
+     * @param int   $offset
+     * @return array
+     */
+    public function layDanhSach(array $filters = [], int $limit = 0, int $offset = 0): array
     {
         $where = ["1=1"];
 
@@ -98,6 +149,12 @@ class NguoiDung
                 LEFT JOIN san_bay sb ON sb.id = nd.id_san_bay
                 WHERE $whereSql
                 ORDER BY nd.id ASC";
+
+        if ($limit > 0) {
+            $limit = max(1, $limit);
+            $offset = max(0, $offset);
+            $sql .= " LIMIT $limit OFFSET $offset";
+        }
 
         $result = mysqli_query($this->conn, $sql);
         $ds = [];
