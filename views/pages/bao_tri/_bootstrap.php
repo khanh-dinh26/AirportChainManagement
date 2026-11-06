@@ -7,6 +7,8 @@ require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/BaoTriController.php';
 
+yeu_cau_dang_nhap();
+
 if (!function_exists('baoTriUrl')) {
     /**
      * Tạo URL tuyệt đối tới một file trong views/pages/bao_tri/.

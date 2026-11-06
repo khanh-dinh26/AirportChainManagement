@@ -25,7 +25,8 @@ require_once __DIR__ . '/config/config.php';
 
 /* ---------- Bảng điều hướng: ?page=key  ->  file view ---------- */
 $routes = [
-    // Thành viên 1 - Xác thực & tài khoản
+    // Thành viên 1 - Quản lý nhân sự & Xác thực
+    'nhan_su'  => 'views/pages/nhan_su/index.php',
     'login'    => 'views/pages/auth/login.php',
     'register' => 'views/pages/auth/register.php',
     'forgot'   => 'views/pages/auth/forgot-password.php',
@@ -40,6 +41,12 @@ $routes = [
 ];
 
 $page = isset($_GET['page']) ? strtolower(trim((string) $_GET['page'])) : '';
+
+/* ---------- Chặn đăng nhập (Middleware auth) ---------- */
+$publicPages = ['login', 'register', 'forgot'];
+if (!in_array($page, $publicPages, true)) {
+    yeu_cau_dang_nhap();
+}
 
 /* Nếu có ?page=... và tồn tại trong bảng điều hướng thì nạp trang đó.
    Bản thân các file trong views/pages/ đã tự gọi layout nên chỉ cần require. */
@@ -94,10 +101,10 @@ $modules = [
         'owner' => 'Thành viên 5',
     ],
     [
-        'key'   => 'login',
-        'name'  => 'Tài khoản & phân quyền',
-        'desc'  => 'Đăng nhập, đăng ký, quên mật khẩu và phân quyền người dùng.',
-        'icon'  => 'bi-person-badge',
+        'key'   => 'nhan_su',
+        'name'  => 'Quản lý nhân sự',
+        'desc'  => 'Quản lý danh sách nhân sự, phân quyền vai trò, thay đổi mật khẩu và thông tin nhân viên.',
+        'icon'  => 'bi-people-fill',
         'color' => 'text-bg-danger',
         'owner' => 'Thành viên 1',
     ],

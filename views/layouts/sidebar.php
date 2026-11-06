@@ -60,37 +60,12 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 
         <li class="nav-header">PHÂN HỆ CHỨC NĂNG</li>
 
-        <!--Thành viên 1 - Xác thực & tài khoản-->
+        <!--Thành viên 1 - Quản lý nhân sự-->
         <li class="nav-item">
-          <details class="nav-group<?= $navActive === 'auth' ? ' is-active' : '' ?>"<?= $navActive === 'auth' ? ' open' : '' ?>>
-            <summary class="nav-link<?= $isActive('auth') ?>">
-              <i class="nav-icon bi bi-person-badge"></i>
-              <p>
-                Tài khoản &amp; phân quyền
-                <i class="nav-arrow bi bi-chevron-right"></i>
-              </p>
-            </summary>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=login" class="nav-link<?= $isSubActive('login') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Đăng nhập</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=register" class="nav-link<?= $isSubActive('register') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Đăng ký</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="<?= $baseUrl ?>/index.php?page=forgot" class="nav-link<?= $isSubActive('forgot') ?>">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Quên mật khẩu</p>
-                </a>
-              </li>
-            </ul>
-          </details>
+          <a href="<?= $baseUrl ?>/index.php?page=nhan_su" class="nav-link<?= $isActive('nhan_su') ?>">
+            <i class="nav-icon bi bi-people-fill"></i>
+            <p>Quản lý nhân sự</p>
+          </a>
         </li>
 
         <!--Thành viên 2 - Hạ tầng-->

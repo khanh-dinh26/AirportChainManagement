@@ -37,9 +37,15 @@ $nhanVaiTro   = [
     'Nhan_Vien_Dieu_Hanh'  => 'Nhân viên điều hành',
     'Ke_Toan'              => 'Kế toán',
 ];
+$vaiTroRaw = $_SESSION['vai_tro'] ?? '';
 $vaiTroHienThi = $daDangNhap
-    ? ($nhanVaiTro[$_SESSION['vai_tro'] ?? ''] ?? (string) ($_SESSION['vai_tro'] ?? ''))
+    ? ($nhanVaiTro[$vaiTroRaw] ?? (string) $vaiTroRaw)
     : 'Khách';
+if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
+    $vaiTroHienThi .= ' (' . $_SESSION['san_bay_iata'] . ')';
+} elseif ($daDangNhap && la_admin()) {
+    $vaiTroHienThi .= ' (Toàn quốc)';
+}
 ?>
 <!doctype html>
 <html lang="vi" data-bs-theme="light">

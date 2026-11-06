@@ -58,23 +58,27 @@ $airports = $data['airports'];
           <td><?= $statusBadge($airport['trang_thai']) ?></td>
           <td>
             <div class="ht-actions">
-              <a
-                href="<?= $e($adminUrl(['tab' => 'san_bay', 'san_bay' => $airport['ma_iata'], 'sua' => (int) $airport['id']])) ?>"
-                class="btn btn-sm btn-outline-secondary"
-              >
-                <i class="bi bi-pencil"></i> Sửa
-              </a>
-              <form method="post" action="<?= $e(BASE_URL . '/index.php?page=ha_tang') ?>" class="d-inline">
-                <input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>" />
-                <input type="hidden" name="action" value="xoa_san_bay" />
-                <input type="hidden" name="id" value="<?= (int) $airport['id'] ?>" />
-                <input type="hidden" name="return_tab" value="san_bay" />
-                <input type="hidden" name="return_san_bay" value="<?= $e($returnSanBay) ?>" />
-                <input type="hidden" name="return_nha_ga" value="<?= (int) $returnNhaGa ?>" />
-                <button type="submit" class="btn btn-sm btn-outline-danger">
-                  <i class="bi bi-trash"></i> Xóa
-                </button>
-              </form>
+              <?php if (la_admin()): ?>
+                <a
+                  href="<?= $e($adminUrl(['tab' => 'san_bay', 'san_bay' => $airport['ma_iata'], 'sua' => (int) $airport['id']])) ?>"
+                  class="btn btn-sm btn-outline-secondary"
+                >
+                  <i class="bi bi-pencil"></i> Sửa
+                </a>
+                <form method="post" action="<?= $e(BASE_URL . '/index.php?page=ha_tang') ?>" class="d-inline">
+                  <input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>" />
+                  <input type="hidden" name="action" value="xoa_san_bay" />
+                  <input type="hidden" name="id" value="<?= (int) $airport['id'] ?>" />
+                  <input type="hidden" name="return_tab" value="san_bay" />
+                  <input type="hidden" name="return_san_bay" value="<?= $e($returnSanBay) ?>" />
+                  <input type="hidden" name="return_nha_ga" value="<?= (int) $returnNhaGa ?>" />
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Xóa
+                  </button>
+                </form>
+              <?php else: ?>
+                <span class="badge text-bg-light border text-secondary"><i class="bi bi-lock me-1"></i>Chỉ xem</span>
+              <?php endif; ?>
             </div>
           </td>
         </tr>

@@ -90,6 +90,14 @@ class HaTangController
 
     private function getAirports()
     {
+        $phamVi = pham_vi_san_bay();
+        $where = '';
+        if ($phamVi > 0) {
+            $where = " WHERE sb.id = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $where = " WHERE 1=0 ";
+        }
+
         $sql = "SELECT sb.*,
                     (SELECT COUNT(*) FROM nha_ga ng WHERE ng.id_san_bay = sb.id) AS so_nha_ga,
                     (SELECT COUNT(*) FROM cua_ra_may_bay c
@@ -102,6 +110,7 @@ class HaTangController
                         JOIN nha_ga ng4 ON ng4.id = b.id_nha_ga
                         WHERE ng4.id_san_bay = sb.id) AS so_bang_chuyen
                 FROM san_bay sb
+                {$where}
                 ORDER BY sb.phan_cap, sb.ten_san_bay ASC";
 
         return $this->fetchAll($this->query($sql));
@@ -399,6 +408,74 @@ class HaTangController
             $this->redirectAfterPost();
         }
 
+                // Guard 1: Sân bay - Chỉ Admin Tổng công ty mới được thêm/sửa/xóa sân bay
+        $airportActions = ['them_san_bay', 'sua_san_bay', 'xoa_san_bay'];
+        if (in_array($action, $airportActions, true) && !la_admin()) {
+            $this->setFlash('danger', 'Chỉ Quản trị viên Tổng công ty mới có quyền thêm, sửa hoặc xóa sân bay.');
+            $this->redirectAfterPost();
+        }
+
+        // Guard 2: Nhà ga - Kiểm tra quyền theo phạm vi sân bay
+        if ($action === 'them_nha_ga') {
+            if (!la_admin()) {
+                $_POST['id_san_bay'] = pham_vi_san_bay();
+            }
+            if (!trong_pham_vi_san_bay($_POST['id_san_bay'] ?? 0)) {
+                $this->setFlash('danger', 'Bạn không có quyền thêm nhà ga cho sân bay khác.');
+                $this->redirectAfterPost();
+            }
+        } elseif (in_array($action, ['sua_nha_ga', 'xoa_nha_ga'], true)) {
+            $nhaGaId = (int) ($_POST['id'] ?? 0);
+            $nhaGaAirportId = $this->getAirportIdOfTerminal($nhaGaId);
+            if (!trong_pham_vi_san_bay($nhaGaAirportId)) {
+                $this->setFlash('danger', 'Bạn không có quyền thao tác trên nhà ga của sân bay khác.');
+                $this->redirectAfterPost();
+            }
+            if ($action === 'sua_nha_ga' && !la_admin()) {
+                $_POST['id_san_bay'] = $nhaGaAirportId; // Ép không cho chuyển sang sân bay khác
+            }
+        }
+
+        // Guard 3: Cửa ra, Quầy, Băng chuyền
+        $resourceAddActions = [
+            'them_cua_ra' => 'cua_ra_may_bay',
+            'them_quay' => 'quay_checkin',
+            'them_bang_chuyen' => 'bang_chuyen_hanh_ly',
+        ];
+        if (isset($resourceAddActions[$action])) {
+            $terminalId = (int) ($_POST['id_nha_ga'] ?? 0);
+            $termAirportId = $this->getAirportIdOfTerminal($terminalId);
+            if (!trong_pham_vi_san_bay($termAirportId)) {
+                $this->setFlash('danger', 'Nhà ga đã chọn không thuộc phạm vi sân bay bạn quản lý.');
+                $this->redirectAfterPost();
+            }
+        }
+
+        $resourceEditDeleteActions = [
+            'sua_cua_ra' => 'cua_ra_may_bay',
+            'xoa_cua_ra' => 'cua_ra_may_bay',
+            'sua_quay' => 'quay_checkin',
+            'xoa_quay' => 'quay_checkin',
+            'sua_bang_chuyen' => 'bang_chuyen_hanh_ly',
+            'xoa_bang_chuyen' => 'bang_chuyen_hanh_ly',
+        ];
+        if (isset($resourceEditDeleteActions[$action])) {
+            $table = $resourceEditDeleteActions[$action];
+            $resId = (int) ($_POST['id'] ?? 0);
+            $resAirportId = $this->getAirportIdOfResource($table, $resId);
+            if (!trong_pham_vi_san_bay($resAirportId)) {
+                $this->setFlash('danger', 'Bạn không có quyền thao tác trên tài nguyên của sân bay khác.');
+                $this->redirectAfterPost();
+            }
+            if (strpos($action, 'sua_') === 0 && isset($_POST['id_nha_ga'])) {
+                $newTermAirportId = $this->getAirportIdOfTerminal((int) $_POST['id_nha_ga']);
+                if (!trong_pham_vi_san_bay($newTermAirportId)) {
+                    $this->setFlash('danger', 'Không thể chuyển tài nguyên sang nhà ga của sân bay khác.');
+                    $this->redirectAfterPost();
+                }
+            }
+        }
+
         switch ($action) {
             case 'them_san_bay':
                 $this->saveSanBay(false);
@@ -497,9 +574,70 @@ class HaTangController
             $errors[] = 'Không xác định được sân bay cần sửa.';
         }
 
+        // Xử lý tệp ảnh tải lên từ máy tính (nếu có chọn tệp)
+        $uploadHinhAnh = null;
+        if (isset($_FILES['hinh_anh_file']) && is_array($_FILES['hinh_anh_file'])) {
+            $file = $_FILES['hinh_anh_file'];
+            $uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+
+            if ($uploadError !== UPLOAD_ERR_NO_FILE) {
+                $tmpName = (string) ($file['tmp_name'] ?? '');
+                $fileSize = (int) ($file['size'] ?? 0);
+
+                if ($uploadError !== UPLOAD_ERR_OK) {
+                    $errors[] = 'Không thể tải ảnh sân bay lên (mã lỗi ' . $uploadError . ').';
+                } elseif (!is_uploaded_file($tmpName)) {
+                    $errors[] = 'Tệp ảnh sân bay tải lên không hợp lệ.';
+                } elseif ($fileSize <= 0 || $fileSize > 5 * 1024 * 1024) {
+                    $errors[] = 'Ảnh sân bay phải có dung lượng từ 1 byte đến 5 MB.';
+                } else {
+                    $mime = '';
+                    if (class_exists('finfo')) {
+                        $finfo = new finfo(FILEINFO_MIME_TYPE);
+                        $mime = (string) $finfo->file($tmpName);
+                    } elseif (function_exists('mime_content_type')) {
+                        $mime = (string) mime_content_type($tmpName);
+                    }
+
+                    $allowedMimes = [
+                        'image/jpeg' => 'jpg',
+                        'image/png'  => 'png',
+                        'image/webp' => 'webp',
+                    ];
+
+                    if (!isset($allowedMimes[$mime]) || @getimagesize($tmpName) === false) {
+                        $errors[] = 'Ảnh sân bay phải là tệp ảnh JPG, PNG hoặc WebP hợp lệ.';
+                    } else {
+                        $uploadHinhAnh = [
+                            'tmp_name' => $tmpName,
+                            'extension' => $allowedMimes[$mime],
+                        ];
+                    }
+                }
+            }
+        }
+
         if ($errors) {
             $this->setFlash('danger', implode(' ', $errors));
             return;
+        }
+
+        // Lưu ảnh vừa tải lên vào thư mục assets/img/san_bay
+        if ($uploadHinhAnh !== null) {
+            $relativeDir = 'assets/img/san_bay';
+            $absoluteDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'san_bay';
+            if (!is_dir($absoluteDir)) {
+                @mkdir($absoluteDir, 0777, true);
+            }
+            $fileName = $iata . '_' . time() . '.' . $uploadHinhAnh['extension'];
+            $targetPath = $absoluteDir . DIRECTORY_SEPARATOR . $fileName;
+
+            if (@move_uploaded_file($uploadHinhAnh['tmp_name'], $targetPath)) {
+                $hinhAnh = $relativeDir . '/' . $fileName;
+            } else {
+                $this->setFlash('danger', 'Không thể lưu tệp ảnh sân bay vào thư mục lưu trữ.');
+                return;
+            }
         }
 
         if ($hinhAnh === '') {
@@ -1033,5 +1171,31 @@ class HaTangController
     {
         header('Location: ' . BASE_URL . '/index.php?' . http_build_query($params));
         exit();
+    }
+
+    private function getAirportIdOfTerminal($terminalId)
+    {
+        $stmt = $this->conn->prepare("SELECT id_san_bay FROM nha_ga WHERE id = ?");
+        if (!$stmt) return 0;
+        $stmt->bind_param('i', $terminalId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $stmt->close();
+        return $row ? (int) $row['id_san_bay'] : 0;
+    }
+
+    private function getAirportIdOfResource($table, $resourceId)
+    {
+        $allowed = ['cua_ra_may_bay', 'quay_checkin', 'bang_chuyen_hanh_ly'];
+        if (!in_array($table, $allowed, true)) return 0;
+        $stmt = $this->conn->prepare("SELECT ng.id_san_bay FROM {$table} r JOIN nha_ga ng ON ng.id = r.id_nha_ga WHERE r.id = ?");
+        if (!$stmt) return 0;
+        $stmt->bind_param('i', $resourceId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $stmt->close();
+        return $row ? (int) $row['id_san_bay'] : 0;
     }
 }

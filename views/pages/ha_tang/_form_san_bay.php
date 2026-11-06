@@ -30,13 +30,14 @@ $actionName = $isEdit ? 'sua_san_bay' : 'them_san_bay';
     <span class="badge text-bg-light border"><?= $isEdit ? 'Mã: ' . $e($formData['ma_iata']) : 'Danh mục sân bay' ?></span>
   </div>
 
-  <form method="post" action="<?= $e(BASE_URL . '/index.php?page=ha_tang') ?>">
+  <form method="post" action="<?= $e(BASE_URL . '/index.php?page=ha_tang') ?>" enctype="multipart/form-data">
     <input type="hidden" name="csrf" value="<?= $e($data['csrf']) ?>" />
     <input type="hidden" name="action" value="<?= $e($actionName) ?>" />
     <input type="hidden" name="id" value="<?= (int) $formData['id'] ?>" />
     <input type="hidden" name="return_tab" value="<?= $e($returnTab) ?>" />
     <input type="hidden" name="return_san_bay" value="<?= $e($returnSanBay) ?>" />
     <input type="hidden" name="return_nha_ga" value="<?= (int) $returnNhaGa ?>" />
+    <input type="hidden" id="sb-hinh" name="hinh_anh" value="<?= $e($formData['hinh_anh']) ?>" />
 
     <div class="row g-3">
       <div class="col-md-3">
@@ -70,11 +71,31 @@ $actionName = $isEdit ? 'sua_san_bay' : 'them_san_bay';
         <input type="text" class="form-control form-control-sm" id="sb-vi-tri" name="vi_tri" value="<?= $e($formData['vi_tri']) ?>" maxlength="255" placeholder="Huyện Sóc Sơn, Hà Nội" required />
       </div>
 
+      <!-- KHU VỰC CHỌN TỆP ẢNH SÂN BAY (CHỈ DÙNG CHOOSE FILE) -->
       <div class="col-md-9">
-        <label class="form-label" for="sb-hinh">Ảnh sân bay</label>
-        <input type="text" class="form-control form-control-sm" id="sb-hinh" name="hinh_anh" value="<?= $e($formData['hinh_anh']) ?>" maxlength="255" placeholder="assets/img/san_bay/HAN.jpg" />
-        <div class="form-text">Để trống sẽ dùng ảnh mặc định theo mã IATA.</div>
+        <label class="form-label fw-semibold" for="sb-hinh-file">
+          <i class="bi bi-image me-1 text-primary"></i>Ảnh sân bay
+        </label>
+        <input type="file" class="form-control form-control-sm" id="sb-hinh-file" name="hinh_anh_file" accept="image/jpeg,image/png,image/webp" onchange="previewAirportImage(this)" />
+        <div class="form-text">
+          Chọn tệp ảnh từ thiết bị của bạn (hỗ trợ JPG, PNG, WebP tối đa 5MB). Nếu không chọn ảnh, hệ thống sẽ tự động sử dụng ảnh mặc định theo mã IATA.
+        </div>
+
+        <!-- Khung xem trước ảnh -->
+        <div id="sb-image-preview-wrapper" class="mt-2 <?= empty($formData['hinh_anh']) ? 'd-none' : '' ?>">
+          <div class="d-flex align-items-center gap-2 p-2 border rounded bg-white shadow-sm" style="max-width: 440px;">
+            <img id="sb-image-preview" src="<?= !empty($formData['hinh_anh']) ? $e(BASE_URL . '/' . ltrim($formData['hinh_anh'], '/')) : '' ?>" alt="Xem trước ảnh sân bay" class="rounded object-fit-cover border" style="width: 80px; height: 50px; background: #f8fafc;" onerror="this.style.display='none'" onload="this.style.display='block'" />
+            <div class="small flex-grow-1">
+              <strong id="sb-preview-label" class="d-block text-dark"><?= $isEdit ? 'Ảnh hiện tại' : 'Ảnh đã chọn' ?></strong>
+              <span id="sb-preview-sub" class="text-muted d-block" style="font-size: 0.78rem; word-break: break-all;"><?= $e($formData['hinh_anh'] ?: '') ?></span>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" title="Hủy chọn ảnh" onclick="clearAirportImagePreview()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
       </div>
+
       <div class="col-md-3">
         <label class="form-label" for="sb-trang-thai">Trạng thái</label>
         <select class="form-select form-select-sm" id="sb-trang-thai" name="trang_thai">
@@ -98,3 +119,34 @@ $actionName = $isEdit ? 'sua_san_bay' : 'them_san_bay';
     </div>
   </form>
 </div>
+
+<script>
+  function previewAirportImage(input) {
+    const previewWrapper = document.getElementById('sb-image-preview-wrapper');
+    const previewImg = document.getElementById('sb-image-preview');
+    const previewLabel = document.getElementById('sb-preview-label');
+    const previewSub = document.getElementById('sb-preview-sub');
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+        previewLabel.textContent = 'Ảnh vừa chọn:';
+        previewSub.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        previewWrapper.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function clearAirportImagePreview() {
+    const fileInput = document.getElementById('sb-hinh-file');
+    const hiddenInput = document.getElementById('sb-hinh');
+    const previewWrapper = document.getElementById('sb-image-preview-wrapper');
+    if (fileInput) fileInput.value = '';
+    if (hiddenInput) hiddenInput.value = '';
+    if (previewWrapper) previewWrapper.classList.add('d-none');
+  }
+</script>

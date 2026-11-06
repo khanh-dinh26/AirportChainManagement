@@ -37,8 +37,10 @@ if (isset($_POST['btn_login'])) {
             // Lưu thông tin vào Session
             $_SESSION['user_id']    = $user['id'];
             $_SESSION['ho_ten']     = $user['ho_ten'];
-            $_SESSION['vai_tro']    = $user['vai_tro'];
-            $_SESSION['id_san_bay'] = $user['id_san_bay'];
+            $_SESSION['vai_tro']          = $user['vai_tro'];
+            $_SESSION['id_san_bay']       = $user['id_san_bay'];
+            $_SESSION['san_bay_iata']     = $user['san_bay_iata'] ?? null;
+            $_SESSION['san_bay_ten_ngan'] = $user['san_bay_ten_ngan'] ?? null;
 
             // Chống tấn công cố định session (session fixation)
             session_regenerate_id(true);

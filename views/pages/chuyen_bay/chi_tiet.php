@@ -7,6 +7,8 @@
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
+
+yeu_cau_dang_nhap();
 require_once __DIR__ . '/../../../controllers/KeToanController.php';
 
 $popup = isset($_GET['popup']) && (string) $_GET['popup'] !== '0';

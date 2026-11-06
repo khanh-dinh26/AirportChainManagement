@@ -21,6 +21,20 @@ class BaoTriController {
      * ========================================================= */
 
     public function getIndexData() {
+        $phamVi = pham_vi_san_bay();
+        $whereTicket = '';
+        $whereStat = '';
+        $whereTb = '';
+        if ($phamVi > 0) {
+            $whereTicket = " WHERE t.id_san_bay = " . (int) $phamVi . " ";
+            $whereStat = " WHERE t.id_san_bay = " . (int) $phamVi . " ";
+            $whereTb = " AND id_san_bay = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $whereTicket = " WHERE 1=0 ";
+            $whereStat = " WHERE 1=0 ";
+            $whereTb = " AND 1=0 ";
+        }
+
         $sql = "SELECT y.id, y.id_thiet_bi, y.mo_ta_su_co, y.hinh_anh_minh_hoa, y.muc_do,
                    y.trang_thai_xu_ly, y.ngay_tao, y.ngay_hoan_thanh,
                    t.ten_thiet_bi, t.id_san_bay,
@@ -28,11 +42,12 @@ class BaoTriController {
                 FROM yeu_cau_bao_tri y
                 JOIN thiet_bi_san_bay t ON y.id_thiet_bi = t.id
                 LEFT JOIN san_bay sb ON t.id_san_bay = sb.id
+                {$whereTicket}
                 ORDER BY y.ngay_tao DESC";
         $result = $this->db->query($sql);
         $tickets = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 
-        // Thống kê lấy trực tiếp từ CSDL (không hardcode)
+        // Thống kê lấy trực tiếp từ CSDL theo phạm vi sân bay
         $thong_ke = [
             'dang_mo'          => 0,
             'khan_cap'         => 0,
@@ -42,12 +57,14 @@ class BaoTriController {
 
         $result = $this->db->query(
             "SELECT
-                SUM(trang_thai_xu_ly IN ('Moi', 'Dang_Xu_Ly')) AS dang_mo,
-                SUM(muc_do = 'Khan_Cap' AND trang_thai_xu_ly <> 'Hoan_Thanh') AS khan_cap,
-                SUM(trang_thai_xu_ly = 'Hoan_Thanh'
-                    AND ngay_hoan_thanh >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                    AND ngay_hoan_thanh < DATE_ADD(LAST_DAY(CURRENT_DATE()), INTERVAL 1 DAY)) AS hoan_thanh_thang
-             FROM yeu_cau_bao_tri"
+                SUM(y.trang_thai_xu_ly IN ('Moi', 'Dang_Xu_Ly')) AS dang_mo,
+                SUM(y.muc_do = 'Khan_Cap' AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS khan_cap,
+                SUM(y.trang_thai_xu_ly = 'Hoan_Thanh'
+                    AND y.ngay_hoan_thanh >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
+                    AND y.ngay_hoan_thanh < DATE_ADD(LAST_DAY(CURRENT_DATE()), INTERVAL 1 DAY)) AS hoan_thanh_thang
+             FROM yeu_cau_bao_tri y
+             JOIN thiet_bi_san_bay t ON y.id_thiet_bi = t.id
+             {$whereStat}"
         );
         if ($result && ($row = $result->fetch_assoc())) {
             $thong_ke['dang_mo']          = (int) $row['dang_mo'];
@@ -55,7 +72,7 @@ class BaoTriController {
             $thong_ke['hoan_thanh_thang'] = (int) $row['hoan_thanh_thang'];
         }
 
-        $result = $this->db->query("SELECT COUNT(*) AS so_luong FROM thiet_bi_san_bay WHERE trang_thai = 'Bao_Tri'");
+        $result = $this->db->query("SELECT COUNT(*) AS so_luong FROM thiet_bi_san_bay WHERE trang_thai = 'Bao_Tri' {$whereTb}");
         if ($result && ($row = $result->fetch_assoc())) {
             $thong_ke['thiet_bi_bao_tri'] = (int) $row['so_luong'];
         }
@@ -67,28 +84,54 @@ class BaoTriController {
     }
 
     public function getThietBiList() {
+        $phamVi = pham_vi_san_bay();
+        $where = '';
+        if ($phamVi > 0) {
+            $where = " WHERE tb.id_san_bay = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $where = " WHERE 1=0 ";
+        }
+
         $result = $this->db->query(
             "SELECT tb.id, tb.id_san_bay, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai,
                     sb.ten_san_bay, sb.ten_ngan, sb.ma_iata
              FROM thiet_bi_san_bay tb
              LEFT JOIN san_bay sb ON tb.id_san_bay = sb.id
+             {$where}
              ORDER BY sb.ten_san_bay, tb.ten_thiet_bi"
         );
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getSanBayList() {
-        $result = $this->db->query("SELECT id, ma_iata, ten_san_bay, ten_ngan FROM san_bay ORDER BY ten_san_bay");
+        $phamVi = pham_vi_san_bay();
+        $where = '';
+        if ($phamVi > 0) {
+            $where = " WHERE id = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $where = " WHERE 1=0 ";
+        }
+
+        $result = $this->db->query("SELECT id, ma_iata, ten_san_bay, ten_ngan FROM san_bay {$where} ORDER BY ten_san_bay");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getDanhSachThietBi() {
+        $phamVi = pham_vi_san_bay();
+        $where = '';
+        if ($phamVi > 0) {
+            $where = " WHERE tb.id_san_bay = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $where = " WHERE 1=0 ";
+        }
+
         $sql = "SELECT tb.id, tb.ten_thiet_bi, tb.loai_thiet_bi, tb.trang_thai, sb.ten_san_bay, sb.ma_iata,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y WHERE y.id_thiet_bi = tb.id) AS so_phieu,
                        (SELECT COUNT(*) FROM yeu_cau_bao_tri y
                         WHERE y.id_thiet_bi = tb.id AND y.trang_thai_xu_ly <> 'Hoan_Thanh') AS so_phieu_mo
                 FROM thiet_bi_san_bay tb
                 JOIN san_bay sb ON tb.id_san_bay = sb.id
+                {$where}
                 ORDER BY tb.id DESC";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];

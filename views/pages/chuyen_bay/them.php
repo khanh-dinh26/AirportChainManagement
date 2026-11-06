@@ -10,6 +10,8 @@
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
 
+yeu_cau_dang_nhap();
+
 // Trang này có thể được mở trực tiếp (trang riêng) hoặc nhúng trong popup ở trang danh sách.
 $popup = isset($_GET['popup']) && (string) $_GET['popup'] !== '0';
 

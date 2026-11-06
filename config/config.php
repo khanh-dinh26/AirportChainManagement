@@ -17,3 +17,5 @@ if (!defined('ADMINLTE_URL')) {
     define('ADMINLTE_URL', is_dir($adminLteLocalDir) ? BASE_URL . '/admin-lte-v4.10.1/dist' : ADMINLTE_CDN);
     unset($adminLteLocalDir);
 }
+
+require_once __DIR__ . '/auth.php';

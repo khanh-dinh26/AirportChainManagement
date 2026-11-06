@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * ============================================================
  * TRANG: SỬA CHUYẾN BAY  —  views/pages/chuyen_bay/sua.php
@@ -9,6 +9,8 @@
 
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../controllers/ChuyenBayController.php';
+
+yeu_cau_dang_nhap();
 
 if (isset($_GET['id']) && !isset($_GET['edit'])) {
     $_GET['edit'] = $_GET['id'];
@@ -79,8 +81,8 @@ if ($popup && isset($_GET['log'])) {
     <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
   </head>
   <body class="flight-popup-page flight-log-page">
-    <div class="card">
-      <div class="card-body">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-3 p-md-4">
         <?php if ($logFlight === null): ?>
           <div class="alert alert-warning mb-3" role="status">
             <i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i>Không tìm thấy chuyến bay cần xem nhật ký.
@@ -213,11 +215,11 @@ if ($popup && isset($_GET['log'])) {
             <?php endif; ?>
           </section>
         <?php endif; ?>
-          <?php if (!$popup): ?>
-            <div class="mt-3 d-flex flex-wrap justify-content-end gap-2">
-              <a class="btn btn-outline-secondary" href="<?= $escape($url('chuyen_bay')) ?>"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Quay lại danh sách</a>
-            </div>
-          <?php endif; ?>
+        <?php if (!$popup): ?>
+          <div class="mt-3 d-flex flex-wrap justify-content-end gap-2">
+            <a class="btn btn-outline-secondary" href="<?= $escape($url('chuyen_bay')) ?>"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Quay lại danh sách</a>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
   </body>
@@ -234,7 +236,7 @@ $formatFlightTime = static function ($value) {
     return $timestamp !== false ? date('d/m/Y H:i', $timestamp) : 'Chưa cập nhật';
 };
 $closeControl = $popup
-    ? ''
+    ? '<button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="if(window.parent && window.parent !== window){ window.parent.postMessage({ type: \'flight-popup-close\' }, window.location.origin); }">Đóng</button>'
     : '<a class="btn btn-outline-secondary" href="' . $escape($url('chuyen_bay')) . '"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Quay lại danh sách</a>';
 $pageTitle = 'Sửa chuyến bay';
 $pageHeader = $flight ? 'Sửa chuyến ' . $flight['so_hieu'] : 'Sửa chuyến bay';
@@ -247,27 +249,166 @@ $breadcrumb = [
 
 ob_start();
 ?>
-            <?php if (!$popup): ?>
-            <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
-            <?php endif; ?>
-            <?php if ($data['flash']): ?>
-              <div class="alert alert-<?= $escape($data['flash']['type']) ?>" role="alert">
-                <?= $escape($data['flash']['message']) ?>
-              </div>
-            <?php endif; ?>
+            <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=<?= time() ?>" />
+            <style>
+              /* Tinh chỉnh form to ra và các item cách đều, thoáng đãng tương tự trang Thêm */
+              body.flight-popup-page {
+                padding: 1.25rem 1.5rem !important;
+                background-color: #f4f6f9;
+              }
+              .flight-create-form-container {
+                max-width: 1240px;
+                margin: 0 auto;
+              }
+              .flight-form-section {
+                padding: 1.35rem 1.5rem !important;
+                margin-bottom: 1.5rem !important;
+                border: 1px solid #dce8f4 !important;
+                border-radius: 0.95rem !important;
+                background: #ffffff !important;
+                box-shadow: 0 0.125rem 0.5rem rgba(30, 60, 100, 0.04) !important;
+              }
+              .flight-form-section-heading {
+                margin-bottom: 1.15rem !important;
+              }
+              .flight-form-section-heading h3 {
+                font-size: 1.08rem !important;
+                font-weight: 700 !important;
+                color: #1e293b !important;
+              }
+              .flight-form-section-heading p {
+                font-size: 0.88rem !important;
+                color: #64748b !important;
+              }
+              .flight-form-grid {
+                --bs-gutter-x: 1.25rem !important;
+                --bs-gutter-y: 1.25rem !important;
+              }
+              .flight-form-grid > [class*="col-"] {
+                padding-right: calc(var(--bs-gutter-x) * 0.5) !important;
+                padding-left: calc(var(--bs-gutter-x) * 0.5) !important;
+                border: none !important;
+                background: transparent !important;
+              }
+              .flight-form-card-item {
+                height: 100%;
+                padding: 1.1rem 1.25rem !important;
+                border: 1px solid #d8e6f5 !important;
+                border-radius: 0.8rem !important;
+                background: #f8fbff !important;
+                box-shadow: 0 1px 4px rgba(30, 60, 100, 0.03) !important;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out;
+              }
+              .flight-form-card-item:focus-within {
+                background: #ffffff !important;
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+              }
+              .flight-form-card-item .form-label {
+                display: block;
+                font-size: 0.95rem !important;
+                font-weight: 650 !important;
+                color: #1e293b !important;
+                margin-bottom: 0.5rem !important;
+                min-height: 1.5rem;
+              }
+              .flight-form-card-item .form-select,
+              .flight-form-card-item .form-control {
+                min-height: 2.85rem !important;
+                padding: 0.5rem 0.85rem !important;
+                font-size: 0.95rem !important;
+                border-radius: 0.55rem !important;
+                border-color: #cbd5e1;
+              }
+              .flight-form-card-item .form-select:focus,
+              .flight-form-card-item .form-control:focus {
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+              }
+              .flight-form-card-item small,
+              .flight-form-card-item .form-text {
+                font-size: 0.84rem !important;
+                margin-top: 0.45rem !important;
+                line-height: 1.45;
+              }
+              .flight-create-submit {
+                min-height: 2.85rem;
+                padding: 0.65rem 1.85rem !important;
+                font-size: 1rem !important;
+                font-weight: 600 !important;
+                border-radius: 0.6rem !important;
+              }
 
-            <div class="card">
+              /* Khắc phục lỗi thanh tiến trình đè lên chữ ở View tóm tắt (View 2) */
+              .flight-progress {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+              }
+              .flight-progress-step {
+                position: relative !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.45rem !important;
+                flex: 1 1 0 !important;
+                min-width: 0 !important;
+                color: #718096;
+                font-size: 0.85rem;
+                font-weight: 600;
+              }
+              .flight-progress-step:last-child {
+                flex: 0 0 auto !important;
+              }
+              .flight-progress-step > span:not(.flight-progress-dot) {
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+                position: relative !important;
+                z-index: 2 !important;
+              }
+              .flight-progress-step::after {
+                display: block !important;
+                content: "" !important;
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                flex: 1 1 auto !important;
+                height: 2px !important;
+                background: #dce5ef !important;
+                margin: 0 0.5rem 0 0.5rem !important;
+                min-width: 0.75rem !important;
+              }
+              .flight-progress-step:last-child::after {
+                display: none !important;
+              }
+              .flight-progress-step.is-complete::after {
+                background: #22c55e !important;
+              }
+            </style>
+
+            <div class="card flight-create-form-container border-0 shadow-sm">
               <?php if (!$popup): ?>
-              <div class="card-header">
-                <h2 class="card-title h5">
-                  <?= $flight ? 'Thông tin chuyến ' . $escape($flight['so_hieu']) : 'Thông tin chuyến bay' ?>
+              <div class="card-header bg-white py-3">
+                <h2 class="card-title h5 mb-0 text-primary fw-bold">
+                  <i class="bi bi-pencil-square me-2" aria-hidden="true"></i><?= $flight ? 'Sửa chuyến ' . $escape($flight['so_hieu']) : 'Thông tin chuyến bay' ?>
                 </h2>
               </div>
               <?php endif; ?>
-              <div class="card-body">
+              <div class="card-body p-3 p-md-4">
+                <?php if ($data['flash']): ?>
+                  <div class="alert alert-<?= $escape($data['flash']['type']) ?>" role="alert">
+                    <?= $escape($data['flash']['message']) ?>
+                  </div>
+                <?php endif; ?>
+
                 <?php if (!$flight): ?>
                   <p class="mb-3">Không tìm thấy chuyến bay cần sửa.</p>
-                  <?php if (!$popup): ?><div class="d-flex justify-content-end"><?= $closeControl ?></div><?php endif; ?>
+                  <div class="d-flex justify-content-end"><?= $closeControl ?></div>
                 <?php else: ?>
                   <?php if (in_array($flight['trang_thai_tong'], ['Cat_Canh', 'Ha_Canh'], true)): ?>
                     <?php $isLanded = $flight['trang_thai_tong'] === 'Ha_Canh'; ?>
@@ -361,7 +502,7 @@ ob_start();
                         </div>
                       </div>
                     </section>
-                    <?php if (!$popup): ?><div class="d-flex flex-wrap justify-content-end"><?= $closeControl ?></div><?php endif; ?>
+                    <div class="d-flex flex-wrap justify-content-end"><?= $closeControl ?></div>
                   <?php else: ?>
                     <form method="post" action="<?= $url('chuyen_bay_sua', ['id' => (int) $flight['id']] + ($popup ? ['popup' => 1] : [])) ?>" class="flight-create-form">
                       <input type="hidden" name="csrf" value="<?= $escape($data['csrf']) ?>">
@@ -372,7 +513,9 @@ ob_start();
                       <input type="hidden" name="return_page" value="chuyen_bay_edit_modal">
                       <input type="hidden" name="return_id" value="<?= (int) $flight['id'] ?>">
                       <input type="hidden" name="id" value="<?= (int) $flight['id'] ?>">
-                      <section class="flight-form-section mb-3" aria-labelledby="flight-edit-route-title">
+
+                      <!-- PHẦN 1: HÀNH TRÌNH VÀ TÀU BAY (DROPDOWN CHỌN DANH SÁCH & LƯỚI 2x2) -->
+                      <section class="flight-form-section mb-4" aria-labelledby="flight-edit-route-title">
                         <div class="flight-form-section-heading">
                           <span class="flight-form-section-icon"><i class="bi bi-signpost-split" aria-hidden="true"></i></span>
                           <div>
@@ -381,66 +524,109 @@ ob_start();
                           </div>
                         </div>
                         <div class="row g-3 flight-form-grid">
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_so_hieu">Mã chuyến bay <span class="text-danger" aria-hidden="true">*</span></label>
-                        <input class="form-control" id="edit_so_hieu" name="so_hieu" maxlength="20" required value="<?= $escape($flight['so_hieu']) ?>">
-                      </div>
-                      <?php foreach ([
-                          'id_hang_hang_khong' => ['Hãng hàng không', $data['airlines']],
-                          'id_loai_tau_bay' => ['Loại tàu bay', $data['aircraftTypes']],
-                          'id_san_bay_di' => ['Sân bay đi', $data['airports']],
-                          'id_san_bay_den' => ['Sân bay đến', $data['airports']],
-                      ] as $field => $select): ?>
-                        <div class="col-md-4">
-                          <?php $isAirportField = in_array($field, ['id_san_bay_di', 'id_san_bay_den'], true); ?>
-                          <?php $isAirlineField = $field === 'id_hang_hang_khong'; ?>
-                          <?php $isAircraftField = $field === 'id_loai_tau_bay'; ?>
-                          <?php if ($isAirportField || $isAirlineField || $isAircraftField): ?>
-                            <?php
-                              $optionListId = 'edit_' . $field . '_options';
-                              $optionQueryId = 'edit_' . $field . '_search';
-                              $selectedOptionText = '';
-                              foreach ($select[1] as $listOption) {
-                                  if ((int) $flight[$field] === (int) $listOption['id']) {
-                                      $selectedOptionText = $isAircraftField
-                                          ? $listOption['label']
-                                          : (($listOption['ma_iata'] ?? '')
-                                              . ($isAirportField ? ' – ' : ' ')
-                                              . $listOption['label']);
-                                      break;
-                                  }
-                              }
-                            ?>
-                            <label class="form-label" for="<?= $escape($optionQueryId) ?>"><?= $escape($select[0]) ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                            <input type="text" class="form-control" id="<?= $escape($optionQueryId) ?>"
-                                   list="<?= $escape($optionListId) ?>" data-option-query
-                                   data-option-select-id="edit_<?= $escape($field) ?>"
-                                   <?= $isAircraftField ? 'data-aircraft-query' : '' ?>
-                                   placeholder="Nhập mã hoặc tên <?= $isAirlineField ? 'hãng hàng không' : ($isAircraftField ? 'loại tàu bay' : ($field === 'id_san_bay_di' ? 'sân bay đi' : 'sân bay đến')) ?>"
-                                   autocomplete="off" required value="<?= $escape($selectedOptionText) ?>">
-                            <datalist id="<?= $escape($optionListId) ?>">
-                              <?php foreach ($select[1] as $listOption): ?>
-                                <option value="<?= $escape($isAircraftField ? $listOption['label'] : (($listOption['ma_iata'] ?? '') . ($isAirportField ? ' – ' : ' ') . $listOption['label'])) ?>" data-option-id="<?= (int) $listOption['id'] ?>"></option>
-                              <?php endforeach; ?>
-                            </datalist>
-                          <?php else: ?>
-                            <label class="form-label" for="edit_<?= $escape($field) ?>"><?= $escape($select[0]) ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                          <?php endif; ?>
-                          <select class="form-select" id="edit_<?= $escape($field) ?>" name="<?= $escape($field) ?>" <?= $isAirportField || $isAirlineField || $isAircraftField ? 'hidden aria-hidden="true" tabindex="-1"' : 'required' ?> <?= $field === 'id_san_bay_di' ? 'data-origin-selector' : '' ?> <?= $field === 'id_hang_hang_khong' ? 'data-airline-selector' : '' ?> <?= $isAircraftField ? 'data-capacity-selector data-aircraft-selector data-aircraft-placeholder="-- Chọn Loại tàu bay --" data-aircraft-locked-placeholder="-- Chọn hãng hàng không trước --"' : '' ?>>
-                            <?php if ($field === 'id_loai_tau_bay'): ?>
-                              <option value="">-- Chọn Loại tàu bay --</option>
-                            <?php endif; ?>
-                            <?php foreach ($select[1] as $option): ?>
-                              <option value="<?= (int) $option['id'] ?>" <?= $field === 'id_loai_tau_bay' ? 'data-airline-ids="' . $escape($option['airline_ids'] ?? '') . '" data-passenger-capacity="' . (int) $option['suc_chua_hanh_khach'] . '" data-baggage-capacity-ton="' . $escape((float) $option['tai_trong_cat_canh_mtow']) . '"' : '' ?> <?= (int) $flight[$field] === (int) $option['id'] ? 'selected' : '' ?>>
-                                <?= $escape(($option['ma_iata'] ?? '') . ($isAirportField ? ' – ' : ' ') . $option['label']) ?>
-                              </option>
-                            <?php endforeach; ?>
-                          </select>
-                        </div>
-                      <?php endforeach; ?>
+                          <!-- MÃ CHUYẾN BAY (CỐ ĐỊNH, KHÔNG CHO PHÉP SỬA) -->
+                          <div class="col-12">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold d-flex align-items-center gap-2" for="edit_so_hieu">
+                                <span>Mã chuyến bay</span>
+                                <span class="badge text-bg-secondary"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>Cố định</span>
+                              </label>
+                              <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-lock" aria-hidden="true"></i></span>
+                                <input class="form-control bg-light text-secondary fw-bold border-start-0" id="edit_so_hieu" name="so_hieu" maxlength="20" required value="<?= $escape($flight['so_hieu']) ?>" readonly style="cursor: not-allowed;" title="Mã chuyến bay được giữ cố định">
+                              </div>
+                              <small class="form-text text-muted">Mã chuyến bay được giữ cố định theo lịch khai thác, không được phép chỉnh sửa.</small>
+                            </div>
+                          </div>
+
+                          <!-- 1. HÃNG HÀNG KHÔNG -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_hang_hang_khong">
+                                Hãng hàng không <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_hang_hang_khong" name="id_hang_hang_khong" required data-airline-selector>
+                                <option value="">-- Chọn Hãng hàng không --</option>
+                                <?php foreach ($data['airlines'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" <?= (int) $flight['id_hang_hang_khong'] === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape(($option['ma_iata'] ? $option['ma_iata'] . ' – ' : '') . $option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Hãng hàng không khai thác chuyến bay.</small>
+                            </div>
+                          </div>
+
+                          <!-- 2. LOẠI TÀU BAY -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_loai_tau_bay">
+                                Loại tàu bay <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_loai_tau_bay" name="id_loai_tau_bay" required 
+                                      data-capacity-selector 
+                                      data-aircraft-selector 
+                                      data-aircraft-placeholder="-- Chọn Loại tàu bay --" 
+                                      data-aircraft-locked-placeholder="-- Chọn hãng trước --">
+                                <option value="">-- Chọn Loại tàu bay --</option>
+                                <?php foreach ($data['aircraftTypes'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airline-ids="<?= $escape($option['airline_ids'] ?? '') ?>" 
+                                          data-passenger-capacity="<?= (int) $option['suc_chua_hanh_khach'] ?>" 
+                                          data-baggage-capacity-ton="<?= $escape((float) $option['tai_trong_cat_canh_mtow']) ?>"
+                                          <?= (int) $flight['id_loai_tau_bay'] === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape($option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Dòng tàu bay trong đội bay của hãng.</small>
+                            </div>
+                          </div>
+
+                          <!-- 3. SÂN BAY ĐI -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_san_bay_di">
+                                Sân bay đi <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_san_bay_di" name="id_san_bay_di" required data-origin-selector>
+                                <option value="">-- Chọn Sân bay đi --</option>
+                                <?php foreach ($data['airports'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airport-cap="<?= $escape($option['phan_cap'] ?? '') ?>" 
+                                          <?= (int) $flight['id_san_bay_di'] === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape(($option['ma_iata'] ?? '') . ' – ' . $option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Điểm xuất phát của chuyến bay.</small>
+                            </div>
+                          </div>
+
+                          <!-- 4. SÂN BAY ĐẾN -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_san_bay_den">
+                                Sân bay đến <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_san_bay_den" name="id_san_bay_den" required>
+                                <option value="">-- Chọn Sân bay đến --</option>
+                                <?php foreach ($data['airports'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airport-cap="<?= $escape($option['phan_cap'] ?? '') ?>" 
+                                          <?= (int) $flight['id_san_bay_den'] === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape(($option['ma_iata'] ?? '') . ' – ' . $option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Điểm đến theo lộ trình bay.</small>
+                            </div>
+                          </div>
                         </div>
                       </section>
-                      <section class="flight-form-section mb-3" aria-labelledby="flight-edit-schedule-title">
+
+                      <!-- PHẦN 2: LỊCH TRÌNH (CHIA ĐỀU 2 CỘT RỘNG RÃI) -->
+                      <section class="flight-form-section mb-4" aria-labelledby="flight-edit-schedule-title">
                         <div class="flight-form-section-heading">
                           <span class="flight-form-section-icon"><i class="bi bi-calendar2-week" aria-hidden="true"></i></span>
                           <div>
@@ -449,23 +635,35 @@ ob_start();
                           </div>
                         </div>
                         <div class="row g-3 flight-form-grid">
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_gio_du_kien">Giờ cất cánh <span class="text-danger" aria-hidden="true">*</span></label>
-                        <input type="datetime-local" class="form-control" id="edit_gio_du_kien" name="gio_du_kien" lang="vi" step="60" required value="<?= $escape($formatDateTimeInput($flight['gio_du_kien'])) ?>">
-                        <small class="form-text text-secondary">Chọn ngày trên lịch và giờ theo định dạng 24 giờ (giờ, phút).</small>
-                      </div>
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_gio_thuc_te">
-                          Giờ dự kiến hạ cánh <span class="text-danger" aria-hidden="true">*</span>
-                          <span class="badge text-bg-warning ms-1" data-arrival-next-day title="Chuyến hạ cánh vào ngày hôm sau (qua nửa đêm)" hidden>+1 ngày</span>
-                        </label>
-                        <input type="datetime-local" class="form-control" id="edit_gio_thuc_te" name="gio_thuc_te" lang="vi" step="60" required value="<?= $escape($formatDateTimeInput($flight['gio_thuc_te'])) ?>">
-                        <small class="form-text text-secondary">Chọn ngày trên lịch và giờ theo định dạng 24 giờ (giờ, phút).</small>
-                        <small class="text-secondary d-block" data-arrival-next-day-note hidden></small>
-                      </div>
+                          <!-- GIỜ CẤT CÁNH -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_gio_du_kien">
+                                Giờ cất cánh <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <input type="datetime-local" class="form-control" id="edit_gio_du_kien" name="gio_du_kien" lang="vi" step="60" required value="<?= $escape($formatDateTimeInput($flight['gio_du_kien'])) ?>">
+                              <small class="form-text text-secondary">Chọn ngày trên lịch và giờ theo định dạng 24 giờ (giờ, phút).</small>
+                            </div>
+                          </div>
+
+                          <!-- GIỜ HẠ CÁNH -->
+                          <div class="col-12 col-md-6">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_gio_thuc_te">
+                                Giờ dự kiến hạ cánh <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="badge text-bg-warning ms-1" data-arrival-next-day title="Chuyến hạ cánh vào ngày hôm sau (qua nửa đêm)" hidden>+1 ngày</span>
+                              </label>
+                              <input type="datetime-local" class="form-control" id="edit_gio_thuc_te" name="gio_thuc_te" lang="vi" step="60" required value="<?= $escape($formatDateTimeInput($flight['gio_thuc_te'])) ?>">
+                              <small class="form-text text-secondary">Chọn ngày trên lịch và giờ theo định dạng 24 giờ (giờ, phút).</small>
+                              <small class="text-danger d-block fw-semibold" data-flight-time-feedback></small>
+                              <small class="text-secondary d-block" data-arrival-next-day-note hidden></small>
+                            </div>
+                          </div>
                         </div>
                       </section>
-                      <section class="flight-form-section mb-3" aria-labelledby="flight-edit-services-title">
+
+                      <!-- PHẦN 3: DỊCH VỤ TẠI SÂN BAY ĐI (DROPDOWN CHỌN DANH SÁCH) -->
+                      <section class="flight-form-section mb-4" aria-labelledby="flight-edit-services-title">
                         <div class="flight-form-section-heading">
                           <span class="flight-form-section-icon"><i class="bi bi-building-check" aria-hidden="true"></i></span>
                           <div>
@@ -474,54 +672,73 @@ ob_start();
                           </div>
                         </div>
                         <div class="row g-3 flight-form-grid">
-                      <?php foreach ([
-                          'id_cua_ra_may_bay' => ['Cửa ra máy bay', $data['gates']],
-                          'id_quay_checkin' => ['Quầy check-in', $data['checkins']],
-                          'id_bang_chuyen' => ['Băng chuyền hành lý', $data['belts']],
-                      ] as $field => $select): ?>
-                        <div class="col-md-4">
-                          <?php $isAutocompleteResource = in_array($field, ['id_cua_ra_may_bay', 'id_quay_checkin', 'id_bang_chuyen'], true); ?>
-                          <?php if ($isAutocompleteResource): ?>
-                            <?php
-                              $optionListId = 'edit_' . $field . '_options';
-                              $optionQueryId = 'edit_' . $field . '_search';
-                              $selectedOptionText = '';
-                              foreach ($select[1] as $listOption) {
-                                  if ((int) ($flight[$field] ?? 0) === (int) $listOption['id']) {
-                                      $selectedOptionText = $listOption['label'];
-                                      break;
-                                  }
-                              }
-                            ?>
-                            <label class="form-label" for="<?= $escape($optionQueryId) ?>"><?= $escape($select[0]) ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                            <input type="text" class="form-control" id="<?= $escape($optionQueryId) ?>" list="<?= $escape($optionListId) ?>"
-                                   data-option-query data-option-select-id="edit_<?= $escape($field) ?>"
-                                   placeholder="Nhập tên <?= $field === 'id_cua_ra_may_bay' ? 'cửa ra máy bay' : ($field === 'id_quay_checkin' ? 'quầy check-in' : 'băng chuyền hành lý') ?>"
-                                   autocomplete="off" required value="<?= $escape($selectedOptionText) ?>">
-                            <datalist id="<?= $escape($optionListId) ?>">
-                              <?php foreach ($select[1] as $option): ?>
-                                <option value="<?= $escape($option['label']) ?>" data-option-id="<?= (int) $option['id'] ?>"></option>
-                              <?php endforeach; ?>
-                            </datalist>
-                          <?php else: ?>
-                            <label class="form-label" for="edit_<?= $escape($field) ?>"><?= $escape($select[0]) ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                          <?php endif; ?>
-                          <select class="form-select" id="edit_<?= $escape($field) ?>" name="<?= $escape($field) ?>" <?= $isAutocompleteResource ? 'hidden aria-hidden="true" tabindex="-1"' : 'required' ?> data-origin-filter>
-                            <option value="">-- Chưa phân công --</option>
-                            <?php foreach ($select[1] as $option): ?>
-                              <option value="<?= (int) $option['id'] ?>" data-airport-id="<?= (int) $option['id_san_bay'] ?>" <?= (int) ($flight[$field] ?? 0) === (int) $option['id'] ? 'selected' : '' ?>>
-                                <?= $escape($option['label']) ?>
-                              </option>
-                            <?php endforeach; ?>
-                          </select>
-                          <?php if ($field === 'id_quay_checkin'): ?>
-                            <small class="text-secondary d-block">Mở trước giờ cất cánh 2–3 tiếng, đóng trước 40 phút.</small>
-                          <?php endif; ?>
-                        </div>
-                      <?php endforeach; ?>
+                          <!-- CỬA RA MÁY BAY -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_cua_ra_may_bay">
+                                Cửa ra máy bay <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_cua_ra_may_bay" name="id_cua_ra_may_bay" required data-origin-filter>
+                                <option value="">-- Chưa phân công --</option>
+                                <?php foreach ($data['gates'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airport-id="<?= (int) $option['id_san_bay'] ?>" 
+                                          data-terminal-type="<?= $escape($option['terminal_type'] ?? '') ?>" 
+                                          <?= (int) ($flight['id_cua_ra_may_bay'] ?? 0) === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape($option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Cửa khởi hành tương thích nhà ga.</small>
+                            </div>
+                          </div>
+
+                          <!-- QUẦY CHECK-IN -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_quay_checkin">
+                                Quầy check-in <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_quay_checkin" name="id_quay_checkin" required data-origin-filter>
+                                <option value="">-- Chưa phân công --</option>
+                                <?php foreach ($data['checkins'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airport-id="<?= (int) $option['id_san_bay'] ?>" 
+                                          data-terminal-type="<?= $escape($option['terminal_type'] ?? '') ?>" 
+                                          <?= (int) ($flight['id_quay_checkin'] ?? 0) === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape($option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Mở trước giờ bay 2–3 tiếng, đóng trước 40 phút.</small>
+                            </div>
+                          </div>
+
+                          <!-- BĂNG CHUYỀN HÀNH LÝ -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_id_bang_chuyen">
+                                Băng chuyền hành lý <span class="text-danger" aria-hidden="true">*</span>
+                              </label>
+                              <select class="form-select" id="edit_id_bang_chuyen" name="id_bang_chuyen" required data-origin-filter>
+                                <option value="">-- Chưa phân công --</option>
+                                <?php foreach ($data['belts'] as $option): ?>
+                                  <option value="<?= (int) $option['id'] ?>" 
+                                          data-airport-id="<?= (int) $option['id_san_bay'] ?>" 
+                                          data-terminal-type="<?= $escape($option['terminal_type'] ?? '') ?>" 
+                                          <?= (int) ($flight['id_bang_chuyen'] ?? 0) === (int) $option['id'] ? 'selected' : '' ?>>
+                                    <?= $escape($option['label']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <small class="form-text text-secondary">Băng chuyền tiếp nhận và xử lý hành lý.</small>
+                            </div>
+                          </div>
                         </div>
                       </section>
-                      <section class="flight-form-section mb-3" aria-labelledby="flight-edit-operations-title">
+
+                      <!-- PHẦN 4: TRẠNG THÁI VÀ TẢI KHAI THÁC -->
+                      <section class="flight-form-section mb-4" aria-labelledby="flight-edit-operations-title">
                         <div class="flight-form-section-heading">
                           <span class="flight-form-section-icon"><i class="bi bi-gear-wide-connected" aria-hidden="true"></i></span>
                           <div>
@@ -530,51 +747,80 @@ ob_start();
                           </div>
                         </div>
                         <div class="row g-3 flight-form-grid">
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_trang_thai">Trạng thái <span class="text-danger" aria-hidden="true">*</span></label>
-                        <?php if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay', 'Huy'], true)): ?>
-                          <input type="hidden" name="trang_thai_tong" value="<?= $escape($flight['trang_thai_tong']) ?>">
-                          <input class="form-control" id="edit_trang_thai" value="<?= $escape($statusLabels[$flight['trang_thai_tong']] ?? $flight['trang_thai_tong']) ?>" readonly>
-                        <?php else: ?>
-                          <select class="form-select" id="edit_trang_thai" name="trang_thai_tong" required data-flight-status data-initial-status="<?= $escape($flight['trang_thai_tong']) ?>">
-                            <?php foreach ($data['editableStatusTransitions'][$flight['trang_thai_tong']] ?? [] as $value): ?>
-                              <option value="<?= $escape($value) ?>" <?= $flight['trang_thai_tong'] === $value ? 'selected' : '' ?>><?= $escape($data['statuses'][$value]) ?></option>
-                            <?php endforeach; ?>
-                          </select>
-                        <?php endif; ?>
-                      </div>
-                      <div class="col-12" data-status-reason-container hidden>
-                        <label class="form-label" for="edit_ghi_chu" data-status-reason-label>Lý do trễ chuyến <span class="text-danger" aria-hidden="true" data-status-reason-required hidden>*</span></label>
-                        <textarea class="form-control" id="edit_ghi_chu" name="ghi_chu" rows="2" maxlength="255" data-status-reason placeholder="Nhập lý do trễ chuyến"></textarea>
-                      </div>
-                      <div class="col-md-4" data-delay-duration-container hidden>
-                        <label class="form-label" for="edit_thoi_gian_tre">Khoảng thời gian dự kiến trễ (phút) <span class="text-danger" aria-hidden="true">*</span></label>
-                        <input type="number" min="1" max="1440" step="1" class="form-control" id="edit_thoi_gian_tre"
-                               name="thoi_gian_tre_phut" data-delay-duration placeholder="Ví dụ: 45"
-                               value="<?= $escape((string) ($flight['thoi_gian_tre_phut'] ?? '')) ?>">
-                        <small class="text-secondary d-block" data-delay-duration-note>
-                          Thời gian dự kiến trễ so với giờ cất cánh (1–1440 phút).
-                        </small>
-                      </div>
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_hanh_khach">Số hành khách <span class="text-danger" aria-hidden="true">*</span></label>
-                        <input type="number" min="0" class="form-control" id="edit_hanh_khach" name="luong_hanh_khach" required data-capacity-passengers value="<?= (int) $flight['luong_hanh_khach'] ?>">
-                        <small class="text-secondary" data-passenger-capacity-label></small>
-                      </div>
-                      <div class="col-md-4">
-                        <label class="form-label" for="edit_hang_hoa">Hành lý (tấn) <span class="text-danger" aria-hidden="true">*</span></label>
-                        <input type="number" min="0" step="0.01" class="form-control" id="edit_hang_hoa" name="luong_hanh_ly_tan" required data-capacity-baggage value="<?= $escape((float) $flight['luong_hang_hoa_tan']) ?>">
-                        <small class="text-secondary" data-baggage-capacity-label></small>
-                      </div>
+                          <!-- TRẠNG THÁI -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_trang_thai">Trạng thái <span class="text-danger" aria-hidden="true">*</span></label>
+                              <?php if (!in_array($flight['trang_thai_tong'], ['Dang_Mo', 'Delay', 'Huy'], true)): ?>
+                                <input type="hidden" name="trang_thai_tong" value="<?= $escape($flight['trang_thai_tong']) ?>">
+                                <input class="form-control" id="edit_trang_thai" value="<?= $escape($statusLabels[$flight['trang_thai_tong']] ?? $flight['trang_thai_tong']) ?>" readonly>
+                              <?php else: ?>
+                                <select class="form-select" id="edit_trang_thai" name="trang_thai_tong" required data-flight-status data-initial-status="<?= $escape($flight['trang_thai_tong']) ?>">
+                                  <?php foreach ($data['editableStatusTransitions'][$flight['trang_thai_tong']] ?? [] as $value): ?>
+                                    <option value="<?= $escape($value) ?>" <?= $flight['trang_thai_tong'] === $value ? 'selected' : '' ?>><?= $escape($data['statuses'][$value]) ?></option>
+                                  <?php endforeach; ?>
+                                </select>
+                              <?php endif; ?>
+                              <small class="form-text text-secondary">Trạng thái vận hành của chuyến bay.</small>
+                            </div>
+                          </div>
+
+                          <!-- SỐ HÀNH KHÁCH -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_hanh_khach">Số hành khách <span class="text-danger" aria-hidden="true">*</span></label>
+                              <input type="number" min="0" class="form-control" id="edit_hanh_khach" name="luong_hanh_khach" required data-capacity-passengers value="<?= (int) $flight['luong_hanh_khach'] ?>">
+                              <small class="form-text text-secondary" data-passenger-capacity-label></small>
+                            </div>
+                          </div>
+
+                          <!-- HÀNH LÝ (TẤN) -->
+                          <div class="col-12 col-md-4">
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_hang_hoa">Hành lý (tấn) <span class="text-danger" aria-hidden="true">*</span></label>
+                              <input type="number" min="0" step="0.01" class="form-control" id="edit_hang_hoa" name="luong_hanh_ly_tan" required data-capacity-baggage value="<?= $escape((float) $flight['luong_hang_hoa_tan']) ?>">
+                              <small class="form-text text-secondary" data-baggage-capacity-label></small>
+                            </div>
+                          </div>
+
+                          <!-- LÝ DO TRỄ/HỦY -->
+                          <div class="col-12" data-status-reason-container hidden>
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_ghi_chu" data-status-reason-label>Lý do trễ chuyến <span class="text-danger" aria-hidden="true" data-status-reason-required hidden>*</span></label>
+                              <textarea class="form-control" id="edit_ghi_chu" name="ghi_chu" rows="2" maxlength="255" data-status-reason placeholder="Nhập lý do trễ chuyến"></textarea>
+                            </div>
+                          </div>
+
+                          <!-- THỜI GIAN TRỄ -->
+                          <div class="col-12 col-md-4" data-delay-duration-container hidden>
+                            <div class="flight-form-card-item">
+                              <label class="form-label fw-bold" for="edit_thoi_gian_tre">Khoảng thời gian dự kiến trễ (phút) <span class="text-danger" aria-hidden="true">*</span></label>
+                              <input type="number" min="1" max="1440" step="1" class="form-control" id="edit_thoi_gian_tre"
+                                     name="thoi_gian_tre_phut" data-delay-duration placeholder="Ví dụ: 45"
+                                     value="<?= $escape((string) ($flight['thoi_gian_tre_phut'] ?? '')) ?>">
+                              <small class="form-text text-secondary" data-delay-duration-note>
+                                Thời gian dự kiến trễ so với giờ cất cánh (1–1440 phút).
+                              </small>
+                            </div>
+                          </div>
                         </div>
                       </section>
+
+                      <!-- NÚT HÀNH ĐỘNG -->
+                      <div class="flight-form-actions d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
+                        <span class="small text-secondary"><span class="text-danger">*</span> Thông tin bắt buộc</span>
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                          <button class="btn btn-primary flight-create-submit" type="submit">
+                            <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Lưu thay đổi
+                          </button>
+                          <?php if (!$popup): ?>
+                            <a class="btn btn-outline-secondary px-3 py-2" href="<?= $url('chuyen_bay') ?>">Danh sách chuyến bay</a>
+                          <?php else: ?>
+                            <button type="button" class="btn btn-outline-secondary px-3 py-2" onclick="if(window.parent && window.parent !== window){ window.parent.postMessage({ type: 'flight-popup-close' }, window.location.origin); }">
+                              Đóng
+                            </button>
+                          <?php endif; ?>
                         </div>
-                      </section>
-                      <div class="flight-form-actions d-flex flex-wrap justify-content-end gap-2">
-                        <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Lưu thay đổi</button>
-                        <?php if (!$popup): ?>
-                          <a class="btn btn-outline-danger" href="<?= $url('chuyen_bay') ?>">Đóng</a>
-                        <?php endif; ?>
                       </div>
                     </form>
                   <?php endif; ?>
@@ -583,58 +829,27 @@ ob_start();
             </div>
 
             <script>
-              const autocompleteInputFor = (select) => {
-                return select.closest('form').querySelector('[data-option-select-id="' + select.id + '"]');
-              };
-              const clearAutocomplete = (select) => {
-                const input = autocompleteInputFor(select);
-                select.value = '';
-                if (input) {
-                  input.value = '';
-                  input.setCustomValidity('');
-                }
-              };
-              const refreshAutocompleteOptions = (select) => {
-                const input = autocompleteInputFor(select);
-                const optionList = input ? document.getElementById(input.getAttribute('list')) : null;
-                if (!optionList) {
-                  return;
-                }
-                optionList.replaceChildren();
-                if (select.disabled) {
-                  return;
-                }
-                Array.from(select.options).forEach((option) => {
-                  if (!option.value || option.disabled || option.hidden) {
-                    return;
-                  }
-                  const listOption = document.createElement('option');
-                  listOption.value = option.textContent.trim();
-                  listOption.dataset.optionId = option.value;
-                  optionList.appendChild(listOption);
-                });
-              };
-
+              // 1. Phụ thuộc Hãng hàng không -> Loại tàu bay
               document.querySelectorAll('[data-airline-selector]').forEach((airlineSelect) => {
                 const form = airlineSelect.closest('form');
                 const aircraftSelect = form.querySelector('[data-aircraft-selector]');
-                const aircraftQuery = form.querySelector('[data-aircraft-query]');
                 if (!aircraftSelect) {
                   return;
                 }
                 const placeholderOption = aircraftSelect.querySelector('option[value=""]');
                 const unlockedPlaceholder = aircraftSelect.dataset.aircraftPlaceholder || '-- Chọn Loại tàu bay --';
-                const lockedPlaceholder = aircraftSelect.dataset.aircraftLockedPlaceholder || '-- Chọn hãng hàng không trước --';
+                const lockedPlaceholder = aircraftSelect.dataset.aircraftLockedPlaceholder || '-- Chọn hãng trước --';
+
                 const filterAircraft = () => {
                   const airlineId = airlineSelect.value;
                   const locked = airlineId === '';
+
                   aircraftSelect.disabled = locked;
-                  if (aircraftQuery) {
-                    aircraftQuery.disabled = locked;
-                  }
                   if (placeholderOption) {
                     placeholderOption.textContent = locked ? lockedPlaceholder : unlockedPlaceholder;
                   }
+
+                  let currentSelectedStillValid = false;
                   Array.from(aircraftSelect.options).forEach((option) => {
                     if (!option.value) {
                       option.hidden = false;
@@ -645,43 +860,60 @@ ob_start();
                     const matches = !locked && (airlineIds.length === 0 || airlineIds.includes(airlineId));
                     option.hidden = !matches;
                     option.disabled = !matches;
-                  });
-                  const selected = aircraftSelect.selectedOptions[0];
-                  if (selected && selected.value) {
-                    const airlineIds = (selected.dataset.airlineIds || '').split(',').filter(Boolean);
-                    if (locked || (airlineIds.length > 0 && !airlineIds.includes(airlineId))) {
-                      clearAutocomplete(aircraftSelect);
-                      aircraftSelect.dispatchEvent(new Event('change'));
+                    if (matches && option.selected) {
+                      currentSelectedStillValid = true;
                     }
+                  });
+
+                  if (!locked && aircraftSelect.value && !currentSelectedStillValid) {
+                    aircraftSelect.value = '';
                   }
-                  refreshAutocompleteOptions(aircraftSelect);
+                  aircraftSelect.dispatchEvent(new Event('change'));
                 };
+
                 airlineSelect.addEventListener('change', filterAircraft);
                 filterAircraft();
               });
 
-              document.querySelectorAll('[data-option-query]').forEach((queryInput) => {
-                const form = queryInput.closest('form');
-                const optionSelect = form.querySelector('#' + queryInput.dataset.optionSelectId);
-                const optionList = document.getElementById(queryInput.getAttribute('list'));
-                if (!optionSelect || !optionList) {
-                  return;
-                }
-                const syncOption = () => {
-                  const match = Array.from(optionList.options).find((option) => option.value === queryInput.value.trim());
-                  const selectedOption = match && Array.from(optionSelect.options).find((option) => (
-                    option.value === match.dataset.optionId && !option.disabled && !option.hidden
-                  ));
-                  const validMatch = Boolean(selectedOption && !optionSelect.disabled);
-                  optionSelect.value = validMatch ? match.dataset.optionId : '';
-                  queryInput.setCustomValidity(validMatch || queryInput.value.trim() === '' ? '' : 'Vui lòng chọn mục trong danh sách gợi ý.');
-                  optionSelect.dispatchEvent(new Event('change'));
-                };
-                queryInput.addEventListener('input', syncOption);
-                queryInput.addEventListener('change', syncOption);
-                syncOption();
-              });
+              // 2. Validate giờ cất cánh và hạ cánh
+              const departureInput = document.getElementById('edit_gio_du_kien');
+              const arrivalInput = document.getElementById('edit_gio_thuc_te');
+              const timeFeedback = document.querySelector('[data-flight-time-feedback]');
+              if (departureInput && arrivalInput) {
+                const form = departureInput.closest('form');
+                const nextDayBadge = form ? form.querySelector('[data-arrival-next-day]') : null;
+                const nextDayNote = form ? form.querySelector('[data-arrival-next-day-note]') : null;
+                const validateFlightTimes = () => {
+                  const isInvalid = departureInput.value !== ''
+                    && arrivalInput.value !== ''
+                    && arrivalInput.value <= departureInput.value;
+                  const message = 'Giờ dự kiến hạ cánh phải sau giờ cất cánh.';
+                  arrivalInput.classList.toggle('is-invalid', isInvalid);
+                  arrivalInput.setCustomValidity(isInvalid ? message : '');
+                  if (timeFeedback) {
+                    timeFeedback.textContent = isInvalid ? message : '';
+                  }
 
+                  // Hạ cánh qua nửa đêm: ngày hạ cánh lớn hơn ngày cất cánh -> hiện nhãn "+1 ngày".
+                  const departureDate = departureInput.value.slice(0, 10);
+                  const arrivalDate = arrivalInput.value.slice(0, 10);
+                  const nextDay = !isInvalid && departureDate !== '' && arrivalDate !== '' && arrivalDate > departureDate;
+                  if (nextDayBadge) {
+                    nextDayBadge.hidden = !nextDay;
+                  }
+                  if (nextDayNote) {
+                    nextDayNote.hidden = !nextDay;
+                    nextDayNote.textContent = nextDay
+                      ? 'Hạ cánh ngày ' + arrivalDate.split('-').reverse().join('/') + ' — sang ngày hôm sau.'
+                      : '';
+                  }
+                };
+                departureInput.addEventListener('input', validateFlightTimes);
+                arrivalInput.addEventListener('input', validateFlightTimes);
+                validateFlightTimes();
+              }
+
+              // 3. Cập nhật sức chứa và tải trọng theo loại tàu bay
               document.querySelectorAll('[data-capacity-selector]').forEach((aircraftSelect) => {
                 const form = aircraftSelect.closest('form');
                 const passengerInput = form.querySelector('[data-capacity-passengers]');
@@ -692,31 +924,83 @@ ob_start();
                   const aircraft = aircraftSelect.selectedOptions[0];
                   const passengerCapacity = aircraft?.dataset.passengerCapacity || '';
                   const baggageCapacity = aircraft?.dataset.baggageCapacityTon || '';
-                  passengerInput.max = passengerCapacity;
-                  baggageInput.max = baggageCapacity;
-                  passengerLabel.textContent = passengerCapacity
-                    ? `Sức chứa tối đa: ${passengerCapacity} khách.`
-                    : 'Chọn loại tàu bay để xem sức chứa tối đa.';
-                  baggageLabel.textContent = baggageCapacity
-                    ? `Tải trọng cất cánh tối đa: ${Number(baggageCapacity).toLocaleString('vi-VN')} tấn.`
-                    : 'Chọn loại tàu bay để xem tải trọng tối đa.';
+                  if (passengerInput && passengerCapacity) {
+                    passengerInput.max = passengerCapacity;
+                  }
+                  if (baggageInput && baggageCapacity) {
+                    baggageInput.max = baggageCapacity;
+                  }
+                  if (passengerLabel) {
+                    passengerLabel.textContent = passengerCapacity
+                      ? `Sức chứa tối đa: ${passengerCapacity} khách.`
+                      : 'Chọn loại tàu bay để xem sức chứa tối đa.';
+                  }
+                  if (baggageLabel) {
+                    baggageLabel.textContent = baggageCapacity
+                      ? `Tải trọng cất cánh tối đa: ${Number(baggageCapacity).toLocaleString('vi-VN')} tấn.`
+                      : 'Chọn loại tàu bay để xem tải trọng tối đa.';
+                  }
                 };
                 aircraftSelect.addEventListener('change', updateCapacities);
                 updateCapacities();
               });
 
+              // 4. Lọc Cửa, Quầy, Băng chuyền theo Sân bay đi đã chọn
+              document.querySelectorAll('[data-origin-selector]').forEach((originSelect) => {
+                const form = originSelect.closest('form');
+                const resourceSelects = form.querySelectorAll('[data-origin-filter]');
+
+                const terminalAllowed = (terminalType, airportCap) => {
+                  if (!terminalType) return true;
+                  if (terminalType === 'Hon_Hop') return true;
+                  if (airportCap === 'Quoc_Te') return terminalType !== 'Quoc_Noi';
+                  if (airportCap === 'Quoc_Noi') return terminalType !== 'Quoc_Te';
+                  return true;
+                };
+
+                const filterResources = () => {
+                  const originOption = originSelect.selectedOptions[0];
+                  const originCap = originSelect.value !== '' && originOption ? (originOption.dataset.airportCap || '') : '';
+                  const hasOrigin = originSelect.value !== '';
+
+                  resourceSelects.forEach((select) => {
+                    select.disabled = !hasOrigin;
+                    Array.from(select.options).forEach((option) => {
+                      if (!option.value) {
+                        option.hidden = false;
+                        option.disabled = false;
+                        return;
+                      }
+                      const matchesAirport = hasOrigin && String(option.dataset.airportId) === String(originSelect.value);
+                      const matchesZone = terminalAllowed(option.dataset.terminalType || '', originCap);
+                      const matches = matchesAirport && matchesZone;
+                      option.hidden = !matches;
+                      option.disabled = !matches;
+                      if (!matches && option.selected) {
+                        select.value = '';
+                      }
+                    });
+                  });
+                };
+
+                originSelect.addEventListener('change', filterResources);
+                filterResources();
+              });
+
+              // 5. Cập nhật trạng thái chuyến bay (Delay / Hủy cần lý do & thời gian delay)
               document.querySelectorAll('select[data-flight-status]').forEach((statusSelect) => {
                 const form = statusSelect.closest('form');
                 const reasonContainer = form.querySelector('[data-status-reason-container]');
-                const reasonLabel = reasonContainer.querySelector('[data-status-reason-label]');
-                const reasonInput = reasonContainer.querySelector('[data-status-reason]');
-                const reasonRequiredMark = reasonLabel.querySelector('[data-status-reason-required]');
+                const reasonLabel = reasonContainer ? reasonContainer.querySelector('[data-status-reason-label]') : null;
+                const reasonInput = reasonContainer ? reasonContainer.querySelector('[data-status-reason]') : null;
+                const reasonRequiredMark = reasonLabel ? reasonLabel.querySelector('[data-status-reason-required]') : null;
                 const durationContainer = form.querySelector('[data-delay-duration-container]');
                 const durationInput = form.querySelector('[data-delay-duration]');
                 const initialStatus = statusSelect.dataset.initialStatus;
+
                 const updateReasonField = () => {
-                  const departureInput = form.querySelector('input[name="gio_du_kien"]');
-                  const flightDate = departureInput ? departureInput.value.slice(0, 10) : '';
+                  const depInput = form.querySelector('input[name="gio_du_kien"]');
+                  const flightDate = depInput ? depInput.value.slice(0, 10) : '';
                   const today = <?= json_encode(substr($data['serverNow'], 0, 10)) ?>;
                   if (statusSelect.value !== initialStatus
                     && statusSelect.value === 'Delay'
@@ -729,16 +1013,14 @@ ob_start();
                     && (statusSelect.value === 'Delay' || statusSelect.value === 'Huy');
                   const isDelay = statusSelect.value === 'Delay';
                   const needsDuration = statusSelect.value !== initialStatus && isDelay;
-                  reasonContainer.hidden = !needsReason;
-                  reasonInput.required = needsReason;
-                  if (reasonRequiredMark) {
-                    reasonRequiredMark.hidden = !needsReason;
-                  }
-                  reasonLabel.textContent = isDelay ? 'Lý do trễ chuyến' : 'Lý do hủy chuyến';
-                  reasonInput.placeholder = isDelay ? 'Nhập lý do trễ chuyến' : 'Nhập lý do hủy chuyến';
-                  if (durationContainer) {
-                    durationContainer.hidden = !needsDuration;
-                  }
+
+                  if (reasonContainer) reasonContainer.hidden = !needsReason;
+                  if (reasonInput) reasonInput.required = needsReason;
+                  if (reasonRequiredMark) reasonRequiredMark.hidden = !needsReason;
+                  if (reasonLabel) reasonLabel.textContent = isDelay ? 'Lý do trễ chuyến' : 'Lý do hủy chuyến';
+                  if (reasonInput) reasonInput.placeholder = isDelay ? 'Nhập lý do trễ chuyến' : 'Nhập lý do hủy chuyến';
+
+                  if (durationContainer) durationContainer.hidden = !needsDuration;
                   if (durationInput) {
                     durationInput.required = needsDuration;
                     if (!needsDuration) {
@@ -746,65 +1028,9 @@ ob_start();
                     }
                   }
                 };
+
                 statusSelect.addEventListener('change', updateReasonField);
                 updateReasonField();
-              });
-
-              // Nhãn "+1 ngày" khi giờ hạ cánh rơi sang ngày hôm sau.
-              document.querySelectorAll('[data-arrival-next-day]').forEach((badge) => {
-                const form = badge.closest('form');
-                const departure = form.querySelector('input[name="gio_du_kien"]');
-                const arrival = form.querySelector('input[name="gio_thuc_te"]');
-                const note = form.querySelector('[data-arrival-next-day-note]');
-                if (!departure || !arrival) {
-                  return;
-                }
-                const syncNextDay = () => {
-                  const departureDate = departure.value.slice(0, 10);
-                  const arrivalDate = arrival.value.slice(0, 10);
-                  const nextDay = departureDate !== '' && arrivalDate !== '' && arrivalDate > departureDate;
-                  badge.hidden = !nextDay;
-                  if (note) {
-                    note.hidden = !nextDay;
-                    note.textContent = nextDay
-                      ? 'Hạ cánh ngày ' + arrivalDate.split('-').reverse().join('/') + ' — sang ngày hôm sau.'
-                      : '';
-                  }
-                };
-                departure.addEventListener('input', syncNextDay);
-                arrival.addEventListener('input', syncNextDay);
-                syncNextDay();
-              });
-
-              document.querySelectorAll('[data-origin-selector]').forEach((originSelect) => {
-                const form = originSelect.closest('form');
-                const resourceSelects = form.querySelectorAll('[data-origin-filter]');
-                const filterResources = () => {
-                  resourceSelects.forEach((select) => {
-                    Array.from(select.options).forEach((option) => {
-                      if (!option.value) {
-                        option.hidden = false;
-                        option.disabled = false;
-                        return;
-                      }
-                      const matchesAirport = originSelect.value !== ''
-                        && option.dataset.airportId === originSelect.value;
-                      option.hidden = !matchesAirport;
-                      option.disabled = !matchesAirport;
-                      if (!matchesAirport && option.selected) {
-                        clearAutocomplete(select);
-                      }
-                    });
-                    select.disabled = originSelect.value === '';
-                    const queryInput = autocompleteInputFor(select);
-                    if (queryInput) {
-                      queryInput.disabled = select.disabled;
-                    }
-                    refreshAutocompleteOptions(select);
-                  });
-                };
-                originSelect.addEventListener('change', filterResources);
-                filterResources();
               });
             </script>
 <?php
@@ -822,7 +1048,7 @@ if ($popup) {
     <link rel="stylesheet" href="<?= $escape(ADMINLTE_URL) ?>/css/adminlte.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/assets/css/style.css" />
-    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css" />
+    <link rel="stylesheet" href="<?= $escape(BASE_URL) ?>/views/pages/chuyen_bay/chuyen_bay-ui.css?v=<?= time() ?>" />
   </head>
   <body class="flight-popup-page">
 <?= $content ?>
