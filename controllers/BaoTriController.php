@@ -312,7 +312,17 @@ class BaoTriController {
         return $this->luuAnhTaiLen($file, $thuMuc);
     }
 
-    public function getDanhSachTauBay() {
+    public function getDanhSachTauBay($sanBayId = null) {
+        $phamVi = pham_vi_san_bay();
+        $where = '';
+        if ($phamVi > 0) {
+            $where = " WHERE l.id_san_bay = " . (int) $phamVi . " ";
+        } elseif ($phamVi < 0) {
+            $where = " WHERE 1=0 ";
+        } elseif ($sanBayId !== null && (int) $sanBayId > 0) {
+            $where = " WHERE l.id_san_bay = " . (int) $sanBayId . " ";
+        }
+
         $sql = "SELECT l.id, l.id_san_bay, l.ma_loai, l.id_hang_hang_khong,
                        hh.ten_hang AS hang, hh.ma_iata AS ma_hang,
                        l.tai_trong_cat_canh_mtow, l.suc_chua_hanh_khach, l.hinh_anh,
@@ -320,15 +330,24 @@ class BaoTriController {
                 FROM loai_tau_bay l
                 LEFT JOIN san_bay sb ON sb.id = l.id_san_bay
                 LEFT JOIN hang_hang_khong hh ON hh.id = l.id_hang_hang_khong
+                {$where}
                 ORDER BY l.id DESC";
         $result = $this->db->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getHangHangKhongList() {
+        $phamVi = pham_vi_san_bay();
+        $joinOn = "tb.id_hang_hang_khong = h.id";
+        if ($phamVi > 0) {
+            $joinOn .= " AND tb.id_san_bay = " . (int) $phamVi;
+        } elseif ($phamVi < 0) {
+            $joinOn .= " AND 1=0";
+        }
+
         $sql = "SELECT h.id, h.ma_iata, h.ten_hang, h.quoc_gia, COUNT(tb.id) AS so_tau_bay
                 FROM hang_hang_khong h
-                LEFT JOIN loai_tau_bay tb ON tb.id_hang_hang_khong = h.id
+                LEFT JOIN loai_tau_bay tb ON {$joinOn}
                 GROUP BY h.id, h.ma_iata, h.ten_hang, h.quoc_gia
                 ORDER BY h.ten_hang";
         $result = $this->db->query($sql);
@@ -604,16 +623,23 @@ class BaoTriController {
             $this->redirect($this->viewUrl('tau_bay.php'));
         }
 
+        $phamVi = pham_vi_san_bay();
+        if ($phamVi < 0) {
+            $this->setFlash('error', 'Bạn không có quyền thêm loại tàu bay.');
+            $this->redirect($this->viewUrl('tau_bay.php'));
+        }
+
         $ma_loai    = isset($_POST['ma_loai']) ? trim((string) $_POST['ma_loai']) : '';
         $id_hang    = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
         $mtow       = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
         $suc_chua   = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
-        $id_san_bay = isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0;
+        // Tài khoản quản lý sân bay được tự động gán sân bay phân công
+        $id_san_bay = $phamVi > 0 ? (int) $phamVi : (isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0);
 
         // Giữ bộ lọc hiện tại khi quay lại trang danh sách.
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
-            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'san_bay' => $phamVi > 0 ? (int) $phamVi : (int) ($_POST['giu_san_bay'] ?? 0),
             'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
 
@@ -852,16 +878,23 @@ class BaoTriController {
             $this->redirect($this->viewUrl('tau_bay.php'));
         }
 
+        $phamVi = pham_vi_san_bay();
+        if ($phamVi < 0) {
+            $this->setFlash('error', 'Bạn không có quyền cập nhật loại tàu bay.');
+            $this->redirect($this->viewUrl('tau_bay.php'));
+        }
+
         $id          = isset($_POST['id']) ? (int) $_POST['id'] : 0;
         $ma_loai     = isset($_POST['ma_loai']) ? trim((string) $_POST['ma_loai']) : '';
         $id_hang     = isset($_POST['id_hang_hang_khong']) ? (int) $_POST['id_hang_hang_khong'] : 0;
         $mtow        = isset($_POST['tai_trong_cat_canh_mtow']) ? (float) $_POST['tai_trong_cat_canh_mtow'] : 0;
         $suc_chua    = isset($_POST['suc_chua_hanh_khach']) ? (int) $_POST['suc_chua_hanh_khach'] : 0;
-        $id_san_bay  = isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0;
+        // Quản lý sân bay cố định sân bay của mình
+        $id_san_bay  = $phamVi > 0 ? (int) $phamVi : (isset($_POST['id_san_bay']) ? (int) $_POST['id_san_bay'] : 0);
 
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
-            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'san_bay' => $phamVi > 0 ? (int) $phamVi : (int) ($_POST['giu_san_bay'] ?? 0),
             'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
         $queryLoi = $giuLoc + ['sua' => $id];
@@ -871,15 +904,20 @@ class BaoTriController {
             $this->redirect($this->viewUrl('tau_bay.php', $queryLoi));
         }
 
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM loai_tau_bay WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT id_san_bay FROM loai_tau_bay WHERE id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
-        $stmt->bind_result($soLoaiTauBay);
-        $stmt->fetch();
+        $stmt->bind_result($dbSanBayId);
+        $tonTai = $stmt->fetch();
         $stmt->close();
 
-        if ((int) $soLoaiTauBay === 0) {
+        if (!$tonTai) {
             $this->setFlash('error', 'Không tìm thấy loại tàu bay cần cập nhật.');
+            $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+        }
+
+        if ($phamVi > 0 && (int) $dbSanBayId !== $phamVi) {
+            $this->setFlash('error', 'Bạn không có quyền cập nhật loại tàu bay thuộc sân bay khác.');
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
         }
 
@@ -1124,17 +1162,43 @@ class BaoTriController {
     }
 
     public function xoaTauBay() {
-        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+        $phamVi = pham_vi_san_bay();
+        if ($phamVi < 0) {
+            $this->setFlash('error', 'Bạn không có quyền xóa loại tàu bay.');
+            $this->redirect($this->viewUrl('tau_bay.php'));
+        }
+
+        $id = isset($_POST['id']) ? (int) $_POST['id'] : (isset($_GET['id']) ? (int) $_GET['id'] : 0);
 
         $giuLoc = array_filter([
             'q'       => trim((string) ($_POST['giu_q'] ?? '')),
-            'san_bay' => (int) ($_POST['giu_san_bay'] ?? 0),
+            'san_bay' => $phamVi > 0 ? (int) $phamVi : (int) ($_POST['giu_san_bay'] ?? 0),
             'trang'   => (int) ($_POST['giu_trang'] ?? 0),
         ], static fn($v) => $v !== '' && $v !== 0);
 
         if ($id <= 0) {
             $this->setFlash('error', 'Loại tàu bay cần xóa không hợp lệ.');
             $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+        }
+
+        // Kiểm tra phạm vi quản lý trước khi xóa
+        if ($phamVi > 0) {
+            $stmt = $this->db->prepare("SELECT id_san_bay FROM loai_tau_bay WHERE id = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->bind_result($dbIdSanBay);
+            $tonTai = $stmt->fetch();
+            $stmt->close();
+
+            if (!$tonTai) {
+                $this->setFlash('error', 'Không tìm thấy loại tàu bay cần xóa.');
+                $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+            }
+
+            if ((int) $dbIdSanBay !== $phamVi) {
+                $this->setFlash('error', 'Bạn không có quyền xóa loại tàu bay thuộc sân bay khác.');
+                $this->redirect($this->viewUrl('tau_bay.php', $giuLoc));
+            }
         }
 
         // Kiểm tra ràng buộc khóa ngoại với chuyen_bay_ngay trước khi xóa (chỉ đọc)

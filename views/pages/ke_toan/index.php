@@ -31,6 +31,12 @@ if (isset($_GET['view']) && $_GET['view'] === 'chi_tiet_thang') {
     exit();
 }
 
+// Chuyen sang chuc nang xuat file Excel neu co tham so view=xuat_excel
+if (isset($_GET['view']) && $_GET['view'] === 'xuat_excel') {
+    require __DIR__ . '/xuat_excel.php';
+    exit();
+}
+
 //2. Xử lý các hành động
 $keToanUrl = 'index.php?page=ke_toan';
 

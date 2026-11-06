@@ -42,6 +42,14 @@ foreach ($san_bay_list as $sb) {
     $sanBayLabels[(int) $sb['id']] = $tenDayDu;
 }
 
+// Kiểm tra phạm vi phân quyền sân bay theo tài khoản
+$userSanBay = pham_vi_san_bay();
+$isQuanLySanBay = ($userSanBay > 0);
+$tenSanBayQuanLy = '';
+if ($isQuanLySanBay && isset($sanBayLabels[$userSanBay])) {
+    $tenSanBayQuanLy = $sanBayLabels[$userSanBay];
+}
+
 // Tự mở lại modal khi vừa có lỗi nhập liệu
 $modalError = null;
 if (isset($_GET['open']) && $_GET['open'] === 'create' && !empty($_SESSION['flash_error'])) {
@@ -75,10 +83,10 @@ $tongLoaiTauBay = count($tau_bay);
  * Lọc danh sách phía máy chủ: ?q=...&san_bay=<id>.
  * ------------------------------------------------------------ */
 $tuKhoa            = trim((string) ($_GET['q'] ?? ''));
-$locSanBay         = (int) ($_GET['san_bay'] ?? 0);
+$locSanBay         = $isQuanLySanBay ? (int) $userSanBay : (int) ($_GET['san_bay'] ?? 0);
 $tongLoaiTauBayGoc = $tongLoaiTauBay;
 
-if ($locSanBay > 0 && !isset($sanBayLabels[$locSanBay])) {
+if (!$isQuanLySanBay && $locSanBay > 0 && !isset($sanBayLabels[$locSanBay])) {
     $locSanBay = 0;
 }
 
@@ -132,7 +140,7 @@ $tauBayPageUrl = static function (int $page) use ($tuKhoa, $locSanBay): string {
 $idCanXoa     = (int) ($_GET['xac_nhan_xoa'] ?? 0);
 $tauBayCanXoa = null;
 if ($idCanXoa > 0) {
-    foreach ($baoTriController->getDanhSachTauBay() as $tbItem) {
+    foreach ($tau_bay as $tbItem) {
         if ((int) $tbItem['id'] === $idCanXoa) {
             $tauBayCanXoa = $tbItem;
             break;
@@ -143,7 +151,7 @@ if ($idCanXoa > 0) {
 $idCanSua     = (int) ($_GET['sua'] ?? 0);
 $tauBayCanSua = null;
 if ($idCanSua > 0) {
-    foreach ($baoTriController->getDanhSachTauBay() as $tbItem) {
+    foreach ($tau_bay as $tbItem) {
         if ((int) $tbItem['id'] === $idCanSua) {
             $tauBayCanSua = $tbItem;
             break;
@@ -154,7 +162,7 @@ if ($idCanSua > 0) {
 $idCanXemChiTiet = (int) ($_GET['chi_tiet'] ?? 0);
 $tauBayChiTiet = null;
 if ($idCanXemChiTiet > 0) {
-    foreach ($baoTriController->getDanhSachTauBay() as $tbItem) {
+    foreach ($tau_bay as $tbItem) {
         if ((int) $tbItem['id'] === $idCanXemChiTiet) {
             $tauBayChiTiet = $tbItem;
             break;
@@ -168,9 +176,14 @@ ob_start();
 <div class="maint-page maint-page--aircraft">
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">
-            Danh sách loại tàu bay
-            <span class="badge text-bg-secondary ms-1" title="Tổng số loại tàu bay"><?= $tongLoaiTauBayGoc ?></span>
+        <h3 class="card-title d-flex align-items-center flex-wrap gap-2">
+            <span>Danh sách loại tàu bay</span>
+            <span class="badge text-bg-secondary" title="Tổng số loại tàu bay"><?= $tongLoaiTauBayGoc ?></span>
+            <?php if ($isQuanLySanBay && $tenSanBayQuanLy !== ''): ?>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-7 fw-semibold">
+                    <i class="bi bi-geo-alt-fill me-1"></i><?= htmlspecialchars($tenSanBayQuanLy, ENT_QUOTES, 'UTF-8') ?>
+                </span>
+            <?php endif; ?>
         </h3>
         <div class="card-tools d-flex flex-wrap align-items-center gap-2">
             <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary" title="Quản lý danh sách hãng hàng không">
@@ -185,19 +198,23 @@ ob_start();
     <?php if ($tongLoaiTauBayGoc > 0): ?>
         <div class="card-body pb-0">
             <form method="get" action="<?= htmlspecialchars(baoTriUrl('tau_bay.php'), ENT_QUOTES, 'UTF-8') ?>" class="row g-2 mb-3">
-                <div class="col-12 col-lg-4">
+                <div class="<?= $isQuanLySanBay ? 'col-12 col-lg-8' : 'col-12 col-lg-4' ?>">
                     <label for="aircraftSearch" class="visually-hidden">Tìm kiếm loại tàu bay</label>
                     <input type="search" id="aircraftSearch" name="q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" class="form-control" placeholder="Tên dòng máy bay, hãng hoặc mã LTB...">
                 </div>
-                <div class="col-12 col-lg-4">
-                    <label for="aircraftAirportFilter" class="visually-hidden">Sân bay</label>
-                    <select id="aircraftAirportFilter" name="san_bay" class="form-select">
-                        <option value=""<?= $locSanBay === 0 ? ' selected' : '' ?>>Tất cả sân bay</option>
-                        <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                            <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <?php if ($isQuanLySanBay): ?>
+                    <input type="hidden" name="san_bay" value="<?= (int) $userSanBay ?>">
+                <?php else: ?>
+                    <div class="col-12 col-lg-4">
+                        <label for="aircraftAirportFilter" class="visually-hidden">Sân bay</label>
+                        <select id="aircraftAirportFilter" name="san_bay" class="form-select">
+                            <option value=""<?= $locSanBay === 0 ? ' selected' : '' ?>>Tất cả sân bay</option>
+                            <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
+                                <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
                 <div class="col-6 col-lg-2 d-grid">
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-search me-1"></i>Tìm kiếm
@@ -214,7 +231,9 @@ ob_start();
                     <?php else: ?>
                         Hiển thị <strong>0</strong> loại tàu bay
                     <?php endif; ?>
-                    <?php if ($locSanBay > 0 && isset($sanBayLabels[$locSanBay])): ?>
+                    <?php if ($isQuanLySanBay && $tenSanBayQuanLy !== ''): ?>
+                        · <span class="badge text-bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-geo-alt-fill me-1"></i><?= htmlspecialchars($tenSanBayQuanLy, ENT_QUOTES, 'UTF-8') ?></span>
+                    <?php elseif ($locSanBay > 0 && isset($sanBayLabels[$locSanBay])): ?>
                         · <span class="badge text-bg-light border"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($sanBayLabels[$locSanBay], ENT_QUOTES, 'UTF-8') ?></span>
                     <?php endif; ?>
                 </span>
@@ -543,15 +562,24 @@ require __DIR__ . '/_lightbox.php';
                         <label for="id_san_bay" class="form-label fw-semibold">
                             Sân bay khai thác <span class="text-danger">*</span>
                         </label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
-                            <select name="id_san_bay" id="id_san_bay" class="form-select" required>
-                                <option value="">Chọn sân bay</option>
-                                <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                                    <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                        <?php if ($isQuanLySanBay): ?>
+                            <input type="hidden" name="id_san_bay" value="<?= (int) $userSanBay ?>">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt-fill text-primary"></i></span>
+                                <input type="text" class="form-control bg-light fw-medium text-dark" value="<?= htmlspecialchars($tenSanBayQuanLy ?: 'Sân bay đang quản lý', ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+                            </div>
+                            <div class="form-text small text-secondary">Tàu bay được tự động phân bổ vào sân bay bạn đang quản lý.</div>
+                        <?php else: ?>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
+                                <select name="id_san_bay" id="id_san_bay" class="form-select" required>
+                                    <option value="">Chọn sân bay</option>
+                                    <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
+                                        <option value="<?= (int) $idSb ?>"<?= $locSanBay === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mb-2">
@@ -666,15 +694,23 @@ require __DIR__ . '/_lightbox.php';
                         <label for="sua_id_san_bay" class="form-label fw-semibold">
                             Sân bay khai thác <span class="text-danger">*</span>
                         </label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
-                            <select name="id_san_bay" id="sua_id_san_bay" class="form-select" required>
-                                <option value="">Chọn sân bay</option>
-                                <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
-                                    <option value="<?= (int) $idSb ?>"<?= (int) $tauBayCanSua['id_san_bay'] === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                        <?php if ($isQuanLySanBay): ?>
+                            <input type="hidden" name="id_san_bay" value="<?= (int) $userSanBay ?>">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt-fill text-primary"></i></span>
+                                <input type="text" class="form-control bg-light fw-medium text-dark" value="<?= htmlspecialchars($tenSanBayQuanLy ?: 'Sân bay đang quản lý', ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+                            </div>
+                        <?php else: ?>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-body-tertiary"><i class="bi bi-geo-alt"></i></span>
+                                <select name="id_san_bay" id="sua_id_san_bay" class="form-select" required>
+                                    <option value="">Chọn sân bay</option>
+                                    <?php foreach ($sanBayLabels as $idSb => $nhanSb): ?>
+                                        <option value="<?= (int) $idSb ?>"<?= (int) $tauBayCanSua['id_san_bay'] === (int) $idSb ? ' selected' : '' ?>><?= htmlspecialchars($nhanSb, ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mb-2">
@@ -775,6 +811,7 @@ require __DIR__ . '/_lightbox.php';
                 <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-light border px-3">Hủy</a>
                 <form method="post" action="<?= htmlspecialchars(baoTriUrl('tau_bay.php', ['id' => $idCanXoa]), ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
                     <input type="hidden" name="action" value="xoa_tau_bay" />
+                    <input type="hidden" name="id" value="<?= (int) $idCanXoa ?>" />
                     <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
                     <input type="hidden" name="giu_san_bay" value="<?= (int) $locSanBay ?>" />
                     <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />

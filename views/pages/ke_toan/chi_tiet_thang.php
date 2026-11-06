@@ -124,6 +124,22 @@ ob_start();
             <i class="bi bi-funnel me-1 text-primary"></i>
             Trạng thái: <strong><?= $trangThaiChon === 'Da_Thanh_Toan' ? 'Đã thanh toán (Thực thu)' : ($trangThaiChon === 'Chua_Thanh_Toan' ? 'Chờ thanh toán (Công nợ)' : 'Tất cả trạng thái') ?></strong>
         </span>
+        <?php
+            $urlXuatExcelThang = BASE_URL . '/index.php?' . http_build_query([
+                'page'       => 'ke_toan',
+                'view'       => 'xuat_excel',
+                'kieu'       => 'thang',
+                'nam'        => $namChon,
+                'thang'      => $thangChon,
+                'hang'       => $hangChon,
+                'san_bay'    => $sanBayChon,
+                'trang_thai' => $trangThaiChon,
+            ]);
+        ?>
+        <a href="<?= $urlXuatExcelThang ?>" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm">
+            <i class="bi bi-file-earmark-excel"></i>
+            <span>Xuất file Excel</span>
+        </a>
     </div>
 </div>
 

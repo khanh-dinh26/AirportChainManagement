@@ -465,6 +465,21 @@ ob_start();
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
                 Tổng doanh thu: <strong><?= number_format($tongDoanhThuNam) ?> VNĐ</strong>
             </span>
+            <?php
+                $urlXuatExcelNam = BASE_URL . '/index.php?' . http_build_query([
+                    'page'       => 'ke_toan',
+                    'view'       => 'xuat_excel',
+                    'kieu'       => 'nam',
+                    'nam'        => $namChon,
+                    'hang'       => $hangChon,
+                    'san_bay'    => $sanBayChon,
+                    'trang_thai' => $trangThaiChon,
+                ]);
+            ?>
+            <a href="<?= $urlXuatExcelNam ?>" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm">
+                <i class="bi bi-file-earmark-excel"></i>
+                <span>Xuất file Excel</span>
+            </a>
         </div>
     </div>
     <div class="card-body p-4">
