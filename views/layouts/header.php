@@ -29,16 +29,19 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
     $vaiTroHienThi .= ' (Toàn quốc)';
 }
 
-$avatarUrl = $adminLteUrl . '/assets/img/user2-160x160.jpg';
-$avatarPos = 'center center';
+$coAnhDaiDien = false;
+$avatarUrl    = '';
+$avatarPos    = 'center center';
 if ($daDangNhap && !empty($_SESSION['anh_dai_dien'])) {
     $avatarParts = explode('|', $_SESSION['anh_dai_dien'], 2);
     $relFile = $avatarParts[0];
     if (file_exists(__DIR__ . '/../../' . $relFile)) {
-        $avatarUrl = $baseUrl . '/' . $relFile;
-        $avatarPos = $avatarParts[1] ?? 'center center';
+        $avatarUrl    = $baseUrl . '/' . $relFile;
+        $avatarPos    = $avatarParts[1] ?? 'center center';
+        $coAnhDaiDien = true;
     }
 }
+$chuCaiDau = $daDangNhap ? mb_strtoupper(mb_substr(trim($tenHienThi), 0, 1, 'UTF-8'), 'UTF-8') : 'U';
 ?>
 <!doctype html>
 <html lang="vi" data-bs-theme="light">
@@ -111,22 +114,41 @@ if ($daDangNhap && !empty($_SESSION['anh_dai_dien'])) {
             <!--begin::User Menu Dropdown (CSS :hover / :focus-within, không JS)-->
             <li class="nav-item dropdown user-menu">
               <a href="<?= $daDangNhap ? $baseUrl . '/index.php?page=ho_so' : '#user-menu' ?>" class="nav-link dropdown-toggle" title="Xem thông tin cá nhân & đổi mật khẩu" aria-haspopup="true">
-                <img
-                  src="<?= $avatarUrl ?>"
-                  class="user-image rounded-circle shadow"
-                  style="object-fit: cover; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
-                  alt="Ảnh người dùng"
-                />
+                <?php if ($coAnhDaiDien): ?>
+                  <img
+                    src="<?= $avatarUrl ?>"
+                    class="user-image rounded-circle shadow"
+                    style="object-fit: cover; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
+                    alt="Ảnh người dùng"
+                  />
+                <?php else: ?>
+                  <div
+                    class="user-image rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center shadow-sm fw-bold"
+                    style="font-size: 1.05rem;"
+                    title="<?= htmlspecialchars($tenHienThi, ENT_QUOTES, 'UTF-8') ?>"
+                  >
+                    <?= htmlspecialchars($chuCaiDau, ENT_QUOTES, 'UTF-8') ?>
+                  </div>
+                <?php endif; ?>
                 <span class="d-none d-xl-inline"><?= htmlspecialchars($tenHienThi, ENT_QUOTES, 'UTF-8') ?></span>
               </a>
               <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end" id="user-menu">
                 <li class="user-header text-bg-primary">
-                  <img
-                    src="<?= $avatarUrl ?>"
-                    class="rounded-circle shadow"
-                    style="object-fit: cover; width: 90px; height: 90px; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
-                    alt="Ảnh người dùng"
-                  />
+                  <?php if ($coAnhDaiDien): ?>
+                    <img
+                      src="<?= $avatarUrl ?>"
+                      class="rounded-circle shadow"
+                      style="object-fit: cover; width: 90px; height: 90px; object-position: <?= htmlspecialchars($avatarPos, ENT_QUOTES, 'UTF-8') ?>;"
+                      alt="Ảnh người dùng"
+                    />
+                  <?php else: ?>
+                    <div
+                      class="rounded-circle bg-white text-primary d-inline-flex align-items-center justify-content-center shadow mx-auto mb-2 fw-bold"
+                      style="width: 86px; height: 86px; font-size: 2.2rem;"
+                    >
+                      <?= htmlspecialchars($chuCaiDau, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
                   <p>
                     <?= htmlspecialchars($tenHienThi, ENT_QUOTES, 'UTF-8') ?>
                     <small><?= htmlspecialchars($vaiTroHienThi, ENT_QUOTES, 'UTF-8') ?></small>
