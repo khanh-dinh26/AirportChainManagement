@@ -34,7 +34,7 @@ if ($popup && isset($_GET['saved'])) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'flight-popup-saved' }, window.location.origin);
         } else {
-          window.location.replace(<?= json_encode(BASE_URL . '/index.php?page=chuyen_bay') ?>);
+          window.location.replace('<?= BASE_URL ?>/index.php?page=chuyen_bay');
         }
       })();
     </script>
@@ -1001,7 +1001,7 @@ ob_start();
                 const updateReasonField = () => {
                   const depInput = form.querySelector('input[name="gio_du_kien"]');
                   const flightDate = depInput ? depInput.value.slice(0, 10) : '';
-                  const today = <?= json_encode(substr($data['serverNow'], 0, 10)) ?>;
+                  const today = '<?= substr($data['serverNow'], 0, 10) ?>';
                   if (statusSelect.value !== initialStatus
                     && statusSelect.value === 'Delay'
                     && flightDate !== ''

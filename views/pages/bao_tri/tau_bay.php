@@ -609,9 +609,10 @@ require __DIR__ . '/_lightbox.php';
                     </div>
 
                     <div class="mb-2 mt-2">
-                        <label for="anh_tai_len" class="form-label fw-semibold">Hình ảnh loại tàu bay</label>
+                        <label for="anh_tai_len" class="form-label fw-semibold">Hình ảnh loại tàu bay <span class="text-danger">*</span></label>
                         <input type="file" name="anh_tai_len" id="anh_tai_len" class="form-control form-control-sm"
-                               accept="image/png, image/jpeg, image/jpg, image/gif, image/webp">
+                               accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" required>
+                        <div class="form-text small text-danger"><i class="bi bi-exclamation-circle me-1"></i>Bắt buộc tải lên hình ảnh tàu bay.</div>
                     </div>
                 </div>
 

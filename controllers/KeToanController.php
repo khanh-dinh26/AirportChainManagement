@@ -305,6 +305,242 @@ class KeToanController {
         return $data;
     }
 
+    /**
+     * Lay danh sach cac nam xuat hien trong bang hoa don de lam bo loc
+     */
+    public function LayDanhSachNamHoaDon(): array {
+        $sql = "SELECT DISTINCT YEAR(ngay_xuat) as nam FROM hoa_don ORDER BY nam DESC";
+        $result = mysqli_query($this->conn, $sql);
+        $years = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                if (!empty($row['nam'])) {
+                    $years[] = (int) $row['nam'];
+                }
+            }
+        }
+        $currentYear = (int) date('Y');
+        if (!in_array($currentYear, $years, true)) {
+            array_unshift($years, $currentYear);
+        }
+        return $years;
+    }
+
+    /**
+     * Lay danh sach hang hang khong
+     */
+    public function LayDanhSachHangHangKhong(): array {
+        $sql = "SELECT id, ma_iata, ma_iata as ma_hang, ten_hang FROM hang_hang_khong ORDER BY ten_hang ASC";
+        $result = mysqli_query($this->conn, $sql);
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Thong ke chi tiet doanh thu 12 thang theo nam va cac bo loc
+     */
+    public function ThongKeDoanhThu12Thang(int $nam, int $id_hang = 0, int $id_san_bay = 0, string $trang_thai = 'Da_Thanh_Toan'): array {
+        $thangMap = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $thangMap[$m] = [
+                'thang'              => $m,
+                'nhan_thang'         => 'Tháng ' . $m,
+                'so_hoa_don'         => 0,
+                'tong_doanh_thu'     => 0.0,
+                'phi_cat_ha_canh'    => 0.0,
+                'phi_do_tau_bay'     => 0.0,
+                'phi_phuc_vu_hk'     => 0.0,
+            ];
+        }
+
+        $where = ["YEAR(hd.ngay_xuat) = " . (int) $nam];
+        if ($trang_thai !== 'Tat_Ca') {
+            $where[] = "hd.trang_thai_thanh_toan = '" . mysqli_real_escape_string($this->conn, $trang_thai) . "'";
+        }
+        if ($id_hang > 0) {
+            $where[] = "hd.id_hang_hang_khong = " . (int) $id_hang;
+        }
+        if ($id_san_bay > 0) {
+            $where[] = "(cb.id_san_bay_di = " . (int) $id_san_bay . " OR cb.id_san_bay_den = " . (int) $id_san_bay . ")";
+        }
+
+        $whereSql = implode(' AND ', $where);
+        $sql = "SELECT 
+                    MONTH(hd.ngay_xuat) as thang,
+                    COUNT(hd.id) as so_hoa_don,
+                    SUM(hd.tong_tien) as tong_doanh_thu,
+                    SUM(hd.phi_cat_ha_canh) as phi_cat_ha_canh,
+                    SUM(hd.phi_do_tau_bay) as phi_do_tau_bay,
+                    SUM(hd.phi_phuc_vu_hk) as phi_phuc_vu_hk
+                FROM hoa_don hd
+                JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
+                WHERE $whereSql
+                GROUP BY MONTH(hd.ngay_xuat)
+                ORDER BY thang ASC";
+
+        $result = mysqli_query($this->conn, $sql);
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $m = (int) $row['thang'];
+                if (isset($thangMap[$m])) {
+                    $thangMap[$m]['so_hoa_don']      = (int) $row['so_hoa_don'];
+                    $thangMap[$m]['tong_doanh_thu']  = (float) $row['tong_doanh_thu'];
+                    $thangMap[$m]['phi_cat_ha_canh'] = (float) $row['phi_cat_ha_canh'];
+                    $thangMap[$m]['phi_do_tau_bay']  = (float) $row['phi_do_tau_bay'];
+                    $thangMap[$m]['phi_phuc_vu_hk']  = (float) $row['phi_phuc_vu_hk'];
+                }
+            }
+        }
+
+        return array_values($thangMap);
+    }
+
+    /**
+     * Lay danh sach hoa don chi tiet theo thang va nam phuc vu xem chi tiet
+     */
+    public function LayHoaDonChiTietTheoThang(int $nam, int $thang, int $id_hang = 0, int $id_san_bay = 0, string $trang_thai = 'Da_Thanh_Toan'): array {
+        $nam = (int) $nam;
+        $thang = (int) $thang;
+        $where = [
+            "YEAR(hd.ngay_xuat) = " . $nam,
+            "MONTH(hd.ngay_xuat) = " . $thang
+        ];
+
+        if ($trang_thai !== 'Tat_Ca') {
+            $where[] = "hd.trang_thai_thanh_toan = '" . mysqli_real_escape_string($this->conn, $trang_thai) . "'";
+        }
+        if ($id_hang > 0) {
+            $where[] = "hd.id_hang_hang_khong = " . (int) $id_hang;
+        }
+        if ($id_san_bay > 0) {
+            $where[] = "(cb.id_san_bay_di = " . (int) $id_san_bay . " OR cb.id_san_bay_den = " . (int) $id_san_bay . ")";
+        }
+
+        $whereSql = implode(' AND ', $where);
+        $sql = "SELECT hd.*, 
+                       cb.so_hieu, cb.gio_du_kien, cb.gio_thuc_te,
+                       hk.ten_hang, hk.ma_iata AS ma_hang,
+                       sb_di.ten_san_bay AS ten_san_bay_di, sb_di.ma_iata AS ma_san_bay_di,
+                       sb_den.ten_san_bay AS ten_san_bay_den, sb_den.ma_iata AS ma_san_bay_den
+                FROM hoa_don hd
+                JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
+                JOIN hang_hang_khong hk ON hd.id_hang_hang_khong = hk.id
+                JOIN san_bay sb_di ON cb.id_san_bay_di = sb_di.id
+                JOIN san_bay sb_den ON cb.id_san_bay_den = sb_den.id
+                WHERE $whereSql
+                ORDER BY hd.ngay_xuat DESC, hd.id DESC";
+
+        $result = mysqli_query($this->conn, $sql);
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Thong ke chi tiet doanh thu theo tung hang hang khong
+     */
+    public function ThongKeDoanhThuTheoHangChiTiet(int $nam, int $id_san_bay = 0, string $trang_thai = 'Da_Thanh_Toan'): array {
+        $where = ["YEAR(hd.ngay_xuat) = " . (int) $nam];
+        if ($trang_thai !== 'Tat_Ca') {
+            $where[] = "hd.trang_thai_thanh_toan = '" . mysqli_real_escape_string($this->conn, $trang_thai) . "'";
+        }
+        if ($id_san_bay > 0) {
+            $where[] = "(cb.id_san_bay_di = " . (int) $id_san_bay . " OR cb.id_san_bay_den = " . (int) $id_san_bay . ")";
+        }
+
+        $whereSql = implode(' AND ', $where);
+        $sql = "SELECT 
+                    hk.id,
+                    hk.ten_hang,
+                    hk.ma_iata, hk.ma_iata as ma_hang,
+                    COUNT(hd.id) as so_hoa_don,
+                    SUM(hd.tong_tien) as doanh_thu,
+                    SUM(hd.phi_cat_ha_canh) as phi_cat_ha_canh,
+                    SUM(hd.phi_do_tau_bay) as phi_do_tau_bay,
+                    SUM(hd.phi_phuc_vu_hk) as phi_phuc_vu_hk
+                FROM hoa_don hd
+                JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
+                JOIN hang_hang_khong hk ON hd.id_hang_hang_khong = hk.id
+                WHERE $whereSql
+                GROUP BY hk.id, hk.ten_hang, hk.ma_iata
+                ORDER BY doanh_thu DESC";
+
+        $result = mysqli_query($this->conn, $sql);
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $data[] = [
+                    'id'              => (int) $row['id'],
+                    'ten_hang'        => $row['ten_hang'],
+                    'ma_hang'         => $row['ma_hang'],
+                    'so_hoa_don'      => (int) $row['so_hoa_don'],
+                    'doanh_thu'       => (float) $row['doanh_thu'],
+                    'phi_cat_ha_canh' => (float) $row['phi_cat_ha_canh'],
+                    'phi_do_tau_bay'  => (float) $row['phi_do_tau_bay'],
+                    'phi_phuc_vu_hk'  => (float) $row['phi_phuc_vu_hk'],
+                ];
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Thong ke tong quan KPI cho nam va bo loc dang chon
+     */
+    public function ThongKeTongQuanDoanhThu(int $nam, int $id_hang = 0, int $id_san_bay = 0): array {
+        $where = ["YEAR(hd.ngay_xuat) = " . (int) $nam];
+        if ($id_hang > 0) {
+            $where[] = "hd.id_hang_hang_khong = " . (int) $id_hang;
+        }
+        if ($id_san_bay > 0) {
+            $where[] = "(cb.id_san_bay_di = " . (int) $id_san_bay . " OR cb.id_san_bay_den = " . (int) $id_san_bay . ")";
+        }
+        $whereSql = implode(' AND ', $where);
+
+        $sql = "SELECT 
+                    SUM(CASE WHEN hd.trang_thai_thanh_toan = 'Da_Thanh_Toan' THEN hd.tong_tien ELSE 0 END) as thuc_thu,
+                    SUM(CASE WHEN hd.trang_thai_thanh_toan = 'Chua_Thanh_Toan' THEN hd.tong_tien ELSE 0 END) as cho_thu,
+                    SUM(hd.tong_tien) as tong_gia_tri,
+                    COUNT(hd.id) as tong_so_hd,
+                    SUM(CASE WHEN hd.trang_thai_thanh_toan = 'Da_Thanh_Toan' THEN 1 ELSE 0 END) as so_hd_da_thu,
+                    SUM(CASE WHEN hd.trang_thai_thanh_toan = 'Chua_Thanh_Toan' THEN 1 ELSE 0 END) as so_hd_cho_thu,
+                    SUM(hd.phi_cat_ha_canh) as tong_phi_cat_ha_canh,
+                    SUM(hd.phi_do_tau_bay) as tong_phi_do_tau_bay,
+                    SUM(hd.phi_phuc_vu_hk) as tong_phi_phuc_vu_hk
+                FROM hoa_don hd
+                JOIN chuyen_bay_ngay cb ON hd.id_chuyen_bay = cb.id
+                WHERE $whereSql";
+
+        $result = mysqli_query($this->conn, $sql);
+        $row = $result ? mysqli_fetch_assoc($result) : null;
+
+        $thucThu = (float) ($row['thuc_thu'] ?? 0);
+        $choThu  = (float) ($row['cho_thu'] ?? 0);
+        $tongSoHd = (int) ($row['tong_so_hd'] ?? 0);
+
+        return [
+            'thuc_thu'          => $thucThu,
+            'cho_thu'           => $choThu,
+            'tong_gia_tri'      => (float) ($row['tong_gia_tri'] ?? 0),
+            'tong_so_hd'        => $tongSoHd,
+            'so_hd_da_thu'      => (int) ($row['so_hd_da_thu'] ?? 0),
+            'so_hd_cho_thu'     => (int) ($row['so_hd_cho_thu'] ?? 0),
+            'phi_cat_ha_canh'   => (float) ($row['tong_phi_cat_ha_canh'] ?? 0),
+            'phi_do_tau_bay'    => (float) ($row['tong_phi_do_tau_bay'] ?? 0),
+            'phi_phuc_vu_hk'    => (float) ($row['tong_phi_phuc_vu_hk'] ?? 0),
+            'tb_chuyen_bay'     => $tongSoHd > 0 ? round($thucThu / $tongSoHd) : 0,
+        ];
+    }
+
     public function ThongKeNhanh() {
         $stats = []; 
         $sql1 = "SELECT SUM(tong_tien) as doanh_thu FROM hoa_don WHERE trang_thai_thanh_toan = 'Da_Thanh_Toan' AND MONTH(ngay_xuat) = MONTH(CURRENT_DATE())";

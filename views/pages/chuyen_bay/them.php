@@ -31,7 +31,7 @@ if ($popup && isset($_GET['saved'])) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'flight-popup-saved' }, window.location.origin);
         } else {
-          window.location.replace(<?= json_encode(BASE_URL . '/index.php?page=chuyen_bay') ?>);
+          window.location.replace('<?= BASE_URL ?>/index.php?page=chuyen_bay');
         }
       })();
     </script>

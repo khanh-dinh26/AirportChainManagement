@@ -74,11 +74,11 @@ $actionName = $isEdit ? 'sua_san_bay' : 'them_san_bay';
       <!-- KHU VỰC CHỌN TỆP ẢNH SÂN BAY (CHỈ DÙNG CHOOSE FILE) -->
       <div class="col-md-9">
         <label class="form-label fw-semibold" for="sb-hinh-file">
-          <i class="bi bi-image me-1 text-primary"></i>Ảnh sân bay
+          <i class="bi bi-image me-1 text-primary"></i>Ảnh sân bay <?= empty($formData['hinh_anh']) ? '<span class="text-danger">*</span>' : '' ?>
         </label>
-        <input type="file" class="form-control form-control-sm" id="sb-hinh-file" name="hinh_anh_file" accept="image/jpeg,image/png,image/webp" onchange="previewAirportImage(this)" />
+        <input type="file" class="form-control form-control-sm" id="sb-hinh-file" name="hinh_anh_file" accept="image/jpeg,image/png,image/webp" onchange="previewAirportImage(this)" <?= empty($formData['hinh_anh']) ? 'required' : '' ?> />
         <div class="form-text">
-          Chọn tệp ảnh từ thiết bị của bạn (hỗ trợ JPG, PNG, WebP tối đa 5MB). Nếu không chọn ảnh, hệ thống sẽ tự động sử dụng ảnh mặc định theo mã IATA.
+          Chọn tệp ảnh từ thiết bị của bạn (hỗ trợ JPG, PNG, WebP tối đa 5MB). <?= empty($formData['hinh_anh']) ? '<span class="text-danger fw-semibold">Bắt buộc chọn ảnh khi thêm sân bay mới.</span>' : 'Để trống nếu muốn giữ ảnh hiện tại.' ?>
         </div>
 
         <!-- Khung xem trước ảnh -->

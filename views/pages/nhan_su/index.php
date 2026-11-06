@@ -419,8 +419,13 @@ ob_start();
               <td class="text-center">
                 <div class="d-flex align-items-center justify-content-center gap-1">
                   <!-- XEM CHI TIẾT -->
+                  <?php
+                    $tenSbHienThi = !empty($nv['san_bay_iata']) ? $nv['san_bay_iata'] . ' – ' . ($nv['ten_san_bay'] ?: $nv['san_bay_ten_ngan']) : 'Toàn quốc / Trụ sở chính';
+                    $vaiTroHienThi = $data['vaiTroMap'][$nv['vai_tro']] ?? $nv['vai_tro'];
+                    $hasSb = !empty($nv['san_bay_iata']) ? 1 : 0;
+                  ?>
                   <button type="button" class="ns-action-btn ns-btn-view" title="Xem chi tiết nhân viên"
-                          onclick="moModalXem(<?= htmlspecialchars(json_encode($nv), ENT_QUOTES, 'UTF-8') ?>)">
+                          onclick="moModalXem(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>', '<?= $escape(addslashes($vaiTroHienThi)) ?>', '<?= $escape(addslashes($tenSbHienThi)) ?>', '<?= $escape(addslashes($nv['san_bay_dia_diem'] ?? '')) ?>', <?= $hasSb ?>)">
                     <i class="bi bi-eye"></i>
                   </button>
 
@@ -435,7 +440,7 @@ ob_start();
                   <!-- SỬA THÔNG TIN (CHỈ ADMIN TỔNG) -->
                   <?php if ($data['isAdminTong']): ?>
                     <button type="button" class="ns-action-btn ns-btn-edit" title="Sửa thông tin nhân viên"
-                            onclick="moModalSua(<?= htmlspecialchars(json_encode($nv), ENT_QUOTES, 'UTF-8') ?>)">
+                            onclick="moModalSua(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>', '<?= $escape(addslashes($nv['vai_tro'])) ?>', <?= (int) ($nv['id_san_bay'] ?? 0) ?>)">
                       <i class="bi bi-pencil-square"></i>
                     </button>
                   <?php endif; ?>
@@ -789,20 +794,19 @@ ob_start();
     }
   });
 
-  // 1. Mở modal Xem chi tiết nhân viên
-  function moModalXem(nv) {
-    document.getElementById('xemId').textContent = '#' + nv.id;
-    document.getElementById('xemHoTen').textContent = nv.ho_ten;
-    document.getElementById('xemTenDangNhap').textContent = nv.ten_dang_nhap;
-    document.getElementById('xemAvatar').textContent = (nv.ho_ten || 'A').trim().charAt(0);
+  // 1. Mở modal Xem chi tiết nhân viên (Không dùng JSON)
+  function moModalXem(id, hoTen, tenDangNhap, vaiTroHienThi, tenSbHienThi, diaDiem, hasSb) {
+    document.getElementById('xemId').textContent = '#' + id;
+    document.getElementById('xemHoTen').textContent = hoTen;
+    document.getElementById('xemTenDangNhap').textContent = tenDangNhap;
+    document.getElementById('xemAvatar').textContent = (hoTen || 'A').trim().charAt(0);
 
-    const vaiTroMap = <?= json_encode($data['vaiTroMap'], JSON_UNESCAPED_UNICODE) ?>;
-    document.getElementById('xemVaiTro').innerHTML = `<span class="badge text-bg-primary">${vaiTroMap[nv.vai_tro] || nv.vai_tro}</span>`;
+    document.getElementById('xemVaiTro').innerHTML = `<span class="badge text-bg-primary">${vaiTroHienThi}</span>`;
 
-    if (nv.san_bay_iata) {
-      document.getElementById('xemSanBay').textContent = nv.san_bay_iata + ' – ' + (nv.ten_san_bay || nv.san_bay_ten_ngan);
+    if (hasSb) {
+      document.getElementById('xemSanBay').textContent = tenSbHienThi;
       document.getElementById('xemDiaDiemRow').style.display = '';
-      document.getElementById('xemDiaDiem').textContent = nv.san_bay_dia_diem || 'Chưa cập nhật';
+      document.getElementById('xemDiaDiem').textContent = diaDiem || 'Chưa cập nhật';
     } else {
       document.getElementById('xemSanBay').innerHTML = '<span class="text-secondary"><i class="bi bi-building me-1"></i>Toàn quốc / Trụ sở chính</span>';
       document.getElementById('xemDiaDiemRow').style.display = 'none';
@@ -822,13 +826,13 @@ ob_start();
     moModal('modalDoiMatKhau');
   }
 
-  // 3. Mở modal Sửa thông tin nhân viên
-  function moModalSua(nv) {
-    document.getElementById('suaId').value = nv.id;
-    document.getElementById('suaTenDangNhap').textContent = nv.ten_dang_nhap;
-    document.getElementById('suaHoTen').value = nv.ho_ten;
-    document.getElementById('suaVaiTro').value = nv.vai_tro;
-    document.getElementById('suaIdSanBay').value = nv.id_san_bay || '';
+  // 3. Mở modal Sửa thông tin nhân viên (Không dùng JSON)
+  function moModalSua(id, hoTen, tenDangNhap, vaiTro, idSanBay) {
+    document.getElementById('suaId').value = id;
+    document.getElementById('suaTenDangNhap').textContent = tenDangNhap;
+    document.getElementById('suaHoTen').value = hoTen;
+    document.getElementById('suaVaiTro').value = vaiTro;
+    document.getElementById('suaIdSanBay').value = (idSanBay && idSanBay > 0) ? idSanBay : '';
 
     xuLyDoiVaiTro(document.getElementById('suaVaiTro'), 'suaSanBayContainer');
     moModal('modalSuaNhanVien');

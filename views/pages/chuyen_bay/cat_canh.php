@@ -35,7 +35,7 @@ if ($popup && isset($_GET['done'])) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'flight-departure-done' }, window.location.origin);
         } else {
-          window.location.replace(<?= json_encode(BASE_URL . '/index.php?page=chuyen_bay') ?>);
+          window.location.replace('<?= BASE_URL ?>/index.php?page=chuyen_bay');
         }
       })();
     </script>
@@ -404,8 +404,8 @@ $delayToggleLabel = $isDelayed
         const delayNewTime = form.querySelector('[data-delay-new-time]');
         const confirmWarning = form.querySelector('[data-confirm-warning]');
         const hasConflicts = <?= $conflicts ? 'true' : 'false' ?>;
-        const suggestedSlot = <?= json_encode($suggestedInput) ?>;
-        const suggestedText = <?= json_encode((string) $suggestedText) ?>;
+        const suggestedSlot = '<?= addslashes((string) $suggestedInput) ?>';
+        const suggestedText = '<?= addslashes((string) $suggestedText) ?>';
 
         const openDelayPanel = function () {
           delayPanel.classList.remove('d-none');

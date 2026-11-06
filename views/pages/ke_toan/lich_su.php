@@ -124,6 +124,12 @@ ob_start();
                 <i class="bi bi-people me-1"></i>Thống kê sản lượng hành khách
             </a>
         </li>
+        <li class="nav-item">
+            <a href="<?= BASE_URL ?>/index.php?page=ke_toan&view=thong_ke" 
+               class="nav-link">
+                <i class="bi bi-bar-chart-line-fill me-1"></i>Thống kê doanh thu (Biểu đồ)
+            </a>
+        </li>
     </ul>
 
     <a href="<?= BASE_URL ?>/index.php?page=ke_toan" class="btn btn-outline-secondary">

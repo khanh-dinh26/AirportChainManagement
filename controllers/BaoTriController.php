@@ -404,32 +404,65 @@ class BaoTriController {
             $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
-        // Kiểm tra thiết bị có thật trong CSDL
-        $stmt = $this->db->prepare("SELECT id FROM thiet_bi_san_bay WHERE id = ?");
+        // Kiểm tra thiết bị có thật trong CSDL và lấy id_san_bay
+        $stmt = $this->db->prepare("SELECT id, id_san_bay FROM thiet_bi_san_bay WHERE id = ?");
         $stmt->bind_param('i', $id_thiet_bi);
         $stmt->execute();
-        $stmt->store_result();
-        $thiet_bi_ton_tai = $stmt->num_rows > 0;
+        $res = $stmt->get_result();
+        $thietBiRow = $res ? $res->fetch_assoc() : null;
         $stmt->close();
 
-        if (!$thiet_bi_ton_tai) {
+        if (!$thietBiRow) {
             $this->setFlash('error', 'Thiết bị không tồn tại trong hệ thống.');
             $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
-        // Ảnh minh họa là tùy chọn: ảnh chọn từ máy được lưu vào assets/img/su_co/
-        $hinh_anh_minh_hoa = null;
-        $anhVuaUpload      = null;
-        $coAnhTaiLen       = isset($_FILES['anh_tai_len']) && $_FILES['anh_tai_len']['error'] !== UPLOAD_ERR_NO_FILE;
-
-        if ($coAnhTaiLen) {
-            try {
-                $anhVuaUpload      = $this->luuAnhTaiLenVaoSuCo($_FILES['anh_tai_len']);
-                $hinh_anh_minh_hoa = $anhVuaUpload;
-            } catch (RuntimeException $e) {
-                $this->setFlash('error', $e->getMessage());
+        // RÀNG BUỘC SÂN BAY: Bắt buộc chọn đúng sân bay (kể cả Admin Tổng)
+        $locSanBay = isset($_POST['loc_san_bay']) ? (int) $_POST['loc_san_bay'] : 0;
+        if (function_exists('pham_vi_san_bay')) {
+            $userSanBayId = pham_vi_san_bay();
+            if ($userSanBayId !== null && (int) $userSanBayId > 0) {
+                if ((int) $thietBiRow['id_san_bay'] !== (int) $userSanBayId) {
+                    $this->setFlash('error', 'Bạn chỉ có quyền tạo phiếu bảo trì cho thiết bị thuộc sân bay được phân công.');
+                    $this->redirect($this->viewUrl('index.php', $formQuery));
+                }
+            } else {
+                // Admin Tổng bắt buộc chọn sân bay cụ thể và thiết bị phải thuộc sân bay đã chọn
+                if ($locSanBay <= 0) {
+                    $this->setFlash('error', 'Vui lòng chọn sân bay phát sinh sự cố trước khi tạo phiếu bảo trì.');
+                    $this->redirect($this->viewUrl('index.php', $formQuery));
+                }
+                if ((int) $thietBiRow['id_san_bay'] !== $locSanBay) {
+                    $this->setFlash('error', 'Thiết bị gặp sự cố không thuộc sân bay đã chọn.');
+                    $this->redirect($this->viewUrl('index.php', $formQuery));
+                }
+            }
+        } else {
+            if ($locSanBay <= 0) {
+                $this->setFlash('error', 'Vui lòng chọn sân bay phát sinh sự cố trước khi tạo phiếu bảo trì.');
                 $this->redirect($this->viewUrl('index.php', $formQuery));
             }
+            if ((int) $thietBiRow['id_san_bay'] !== $locSanBay) {
+                $this->setFlash('error', 'Thiết bị gặp sự cố không thuộc sân bay đã chọn.');
+                $this->redirect($this->viewUrl('index.php', $formQuery));
+            }
+        }
+
+        // RÀNG BUỘC ẢNH: Ảnh minh họa sự cố là bắt buộc
+        $coAnhTaiLen = isset($_FILES['anh_tai_len']) && $_FILES['anh_tai_len']['error'] !== UPLOAD_ERR_NO_FILE;
+        if (!$coAnhTaiLen) {
+            $this->setFlash('error', 'Vui lòng chọn và tải lên ảnh minh chứng sự cố (bắt buộc).');
+            $this->redirect($this->viewUrl('index.php', $formQuery));
+        }
+
+        $hinh_anh_minh_hoa = null;
+        $anhVuaUpload      = null;
+        try {
+            $anhVuaUpload      = $this->luuAnhTaiLenVaoSuCo($_FILES['anh_tai_len']);
+            $hinh_anh_minh_hoa = $anhVuaUpload;
+        } catch (RuntimeException $e) {
+            $this->setFlash('error', $e->getMessage());
+            $this->redirect($this->viewUrl('index.php', $formQuery));
         }
 
         try {

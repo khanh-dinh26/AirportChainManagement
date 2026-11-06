@@ -147,10 +147,35 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
         <?php if (co_quyen_ke_toan()): ?>
         <!--Thành viên 5 - Kế toán-->
         <li class="nav-item">
-          <a href="<?= $baseUrl ?>/index.php?page=ke_toan" class="nav-link<?= $isActive('ke_toan') ?>">
-            <i class="nav-icon bi bi-cash-coin"></i>
-            <p>Kế toán &amp; doanh thu</p>
-          </a>
+          <details class="nav-group<?= $navActive === 'ke_toan' ? ' is-active' : '' ?>"<?= $navActive === 'ke_toan' ? ' open' : '' ?>>
+            <summary class="nav-link<?= $isActive('ke_toan') ?>">
+              <i class="nav-icon bi bi-cash-coin"></i>
+              <p>
+                Kế toán &amp; doanh thu
+                <i class="nav-arrow bi bi-chevron-right"></i>
+              </p>
+            </summary>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan" class="nav-link<?= $navActive === 'ke_toan' && empty($_GET['view']) ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-wallet2"></i>
+                  <p>Thu phí &amp; Hóa đơn</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan&view=lich_su" class="nav-link<?= $navActive === 'ke_toan' && (isset($_GET['view']) && $_GET['view'] === 'lich_su') ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-clock-history"></i>
+                  <p>Lịch sử &amp; Sản lượng</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="<?= $baseUrl ?>/index.php?page=ke_toan&view=thong_ke" class="nav-link<?= $navActive === 'ke_toan' && (isset($_GET['view']) && $_GET['view'] === 'thong_ke') ? ' active' : '' ?>">
+                  <i class="nav-icon bi bi-bar-chart-line"></i>
+                  <p>Thống kê doanh thu</p>
+                </a>
+              </li>
+            </ul>
+          </details>
         </li>
         <?php endif; ?>
       </ul>
