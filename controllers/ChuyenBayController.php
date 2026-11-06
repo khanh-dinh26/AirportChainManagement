@@ -317,6 +317,11 @@ class ChuyenBayController
             $this->redirect($popup ? $formPage : 'chuyen_bay', $flightId, $popup, $formParams);
         }
 
+        if (!co_quyen_dieu_phoi_bay()) {
+            $this->setFlash('danger', 'Chỉ nhân viên điều hành bay hoặc ban quản lý mới có quyền chỉnh sửa, thêm hoặc hủy chuyến bay.');
+            $this->redirect('chuyen_bay');
+        }
+
         $success = false;
         try {
             if ($action === 'create' || $action === 'update') {

@@ -60,6 +60,7 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
 
         <li class="nav-header">PHÂN HỆ CHỨC NĂNG</li>
 
+        <?php if (co_quyen_nhan_su()): ?>
         <!--Thành viên 1 - Quản lý nhân sự-->
         <li class="nav-item">
           <a href="<?= $baseUrl ?>/index.php?page=nhan_su" class="nav-link<?= $isActive('nhan_su') ?>">
@@ -67,7 +68,9 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             <p>Quản lý nhân sự</p>
           </a>
         </li>
+        <?php endif; ?>
 
+        <?php if (co_quyen_ha_tang()): ?>
         <!--Thành viên 2 - Hạ tầng-->
         <li class="nav-item">
           <details class="nav-group<?= $navActive === 'ha_tang' ? ' is-active' : '' ?>"<?= $navActive === 'ha_tang' ? ' open' : '' ?>>
@@ -100,7 +103,9 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             </ul>
           </details>
         </li>
+        <?php endif; ?>
 
+        <?php if (!la_bao_tri() && !la_ke_toan()): ?>
         <!--Thành viên 3 - Chuyến bay-->
         <li class="nav-item">
           <a href="<?= $baseUrl ?>/index.php?page=chuyen_bay" class="nav-link<?= $isActive('chuyen_bay') ?>">
@@ -108,7 +113,9 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             <p>Quản lý chuyến bay</p>
           </a>
         </li>
+        <?php endif; ?>
 
+        <?php if (co_quyen_bao_tri()): ?>
         <!--Thành viên 4 - Bảo trì-->
         <li class="nav-item">
           <details class="nav-group<?= $navActive === 'bao_tri' ? ' is-active' : '' ?>"<?= $navActive === 'bao_tri' ? ' open' : '' ?>>
@@ -135,7 +142,9 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             </ul>
           </details>
         </li>
+        <?php endif; ?>
 
+        <?php if (co_quyen_ke_toan()): ?>
         <!--Thành viên 5 - Kế toán-->
         <li class="nav-item">
           <a href="<?= $baseUrl ?>/index.php?page=ke_toan" class="nav-link<?= $isActive('ke_toan') ?>">
@@ -143,6 +152,7 @@ $isSubActive = static function (string $key) use ($navSubActive): string {
             <p>Kế toán &amp; doanh thu</p>
           </a>
         </li>
+        <?php endif; ?>
       </ul>
     </nav>
   </div>

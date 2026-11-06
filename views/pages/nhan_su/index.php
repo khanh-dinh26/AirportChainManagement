@@ -30,6 +30,7 @@ $roleBadgeClass = [
     'Admin_Tong_Cong_Ty'  => 'badge bg-danger-subtle text-danger border border-danger-subtle',
     'Quan_Ly_San_Bay'     => 'badge bg-primary-subtle text-primary border border-primary-subtle',
     'Nhan_Vien_Dieu_Hanh' => 'badge bg-info-subtle text-info-emphasis border border-info-subtle',
+    'Nhan_Vien_Bao_Tri'   => 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle',
     'Ke_Toan'             => 'badge bg-success-subtle text-success border border-success-subtle',
 ];
 
@@ -70,6 +71,88 @@ ob_start();
   .ns-avatar-circle.accountant {
     background: #dcfce7;
     color: #16a34a;
+  }
+  /* Style nút thao tác mềm mại, hiện đại */
+  .ns-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .ns-action-btn:hover {
+    transform: translateY(-1.5px);
+  }
+  .ns-action-btn:active {
+    transform: translateY(0);
+  }
+  /* Nút xem chi tiết */
+  .ns-btn-view {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #dbeafe;
+  }
+  .ns-btn-view:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+  }
+  /* Nút đổi mật khẩu */
+  .ns-btn-key {
+    background: #fefce8;
+    color: #ca8a04;
+    border-color: #fef08a;
+  }
+  .ns-btn-key:hover {
+    background: #eab308;
+    color: #ffffff;
+    border-color: #eab308;
+    box-shadow: 0 3px 8px rgba(234, 179, 8, 0.28);
+  }
+  /* Nút sửa thông tin */
+  .ns-btn-edit {
+    background: #eef2ff;
+    color: #4f46e5;
+    border-color: #e0e7ff;
+  }
+  .ns-btn-edit:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
+  }
+  /* Nút xóa nhân viên */
+  .ns-btn-delete {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fee2e2;
+  }
+  .ns-btn-delete:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+    box-shadow: 0 3px 8px rgba(220, 38, 38, 0.25);
+  }
+  /* Nút xóa bị vô hiệu hóa (tài khoản chính mình) */
+  .ns-btn-disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .ns-btn-disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background: #f8fafc;
+    color: #94a3b8;
   }
   /* Modal CSS độc lập không phụ thuộc JS bên ngoài */
   .custom-modal-backdrop {
@@ -278,7 +361,7 @@ ob_start();
           <th>Tên đăng nhập</th>
           <th>Vai trò</th>
           <th>Sân bay công tác</th>
-          <th style="width: 220px;" class="text-center">Thao tác</th>
+          <th style="width: 175px;" class="text-center">Thao tác</th>
         </tr>
       </thead>
       <tbody>
@@ -334,24 +417,24 @@ ob_start();
                 <?php endif; ?>
               </td>
               <td class="text-center">
-                <div class="btn-group btn-group-sm" role="group">
+                <div class="d-flex align-items-center justify-content-center gap-1">
                   <!-- XEM CHI TIẾT -->
-                  <button type="button" class="btn btn-outline-info" title="Xem chi tiết nhân viên"
+                  <button type="button" class="ns-action-btn ns-btn-view" title="Xem chi tiết nhân viên"
                           onclick="moModalXem(<?= htmlspecialchars(json_encode($nv), ENT_QUOTES, 'UTF-8') ?>)">
                     <i class="bi bi-eye"></i>
                   </button>
 
                   <!-- ĐỔI MẬT KHẨU (ADMIN TỔNG HOẶC CHÍNH BẢN THÂN) -->
                   <?php if ($data['isAdminTong'] || $isSelf): ?>
-                    <button type="button" class="btn btn-outline-warning text-dark" title="Đổi mật khẩu cho nhân viên"
+                    <button type="button" class="ns-action-btn ns-btn-key" title="Đổi mật khẩu cho nhân viên"
                             onclick="moModalDoiMatKhau(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>')">
-                      <i class="bi bi-key-fill text-warning"></i>
+                      <i class="bi bi-key-fill"></i>
                     </button>
                   <?php endif; ?>
 
                   <!-- SỬA THÔNG TIN (CHỈ ADMIN TỔNG) -->
                   <?php if ($data['isAdminTong']): ?>
-                    <button type="button" class="btn btn-outline-primary" title="Sửa thông tin nhân viên"
+                    <button type="button" class="ns-action-btn ns-btn-edit" title="Sửa thông tin nhân viên"
                             onclick="moModalSua(<?= htmlspecialchars(json_encode($nv), ENT_QUOTES, 'UTF-8') ?>)">
                       <i class="bi bi-pencil-square"></i>
                     </button>
@@ -360,13 +443,13 @@ ob_start();
                   <!-- XÓA NHÂN VIÊN (CHỈ ADMIN TỔNG, KHÔNG XÓA CHÍNH MÌNH) -->
                   <?php if ($data['isAdminTong']): ?>
                     <?php if (!$isSelf): ?>
-                      <button type="button" class="btn btn-outline-danger" title="Xóa tài khoản nhân viên"
+                      <button type="button" class="ns-action-btn ns-btn-delete" title="Xóa tài khoản nhân viên"
                               onclick="moModalXoa(<?= (int) $nv['id'] ?>, '<?= $escape(addslashes($nv['ho_ten'])) ?>', '<?= $escape(addslashes($nv['ten_dang_nhap'])) ?>')">
-                        <i class="bi bi-trash"></i>
+                        <i class="bi bi-trash3"></i>
                       </button>
                     <?php else: ?>
-                      <button type="button" class="btn btn-outline-secondary" disabled title="Không thể tự xóa chính mình">
-                        <i class="bi bi-trash"></i>
+                      <button type="button" class="ns-action-btn ns-btn-disabled" disabled title="Không thể tự xóa tài khoản của chính mình">
+                        <i class="bi bi-trash3"></i>
                       </button>
                     <?php endif; ?>
                   <?php endif; ?>

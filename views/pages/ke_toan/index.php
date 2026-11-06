@@ -1,8 +1,16 @@
 <?php
 
-//1. Kết nối cơ sở dữ liệu
+//1. Kết nối cơ sở dữ liệu & Kiểm tra quyền
+require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php'; 
 require_once __DIR__ . '/../../../controllers/KeToanController.php';
+
+yeu_cau_dang_nhap();
+if (!co_quyen_ke_toan()) {
+    $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Kế toán & Doanh thu.';
+    header('Location: ' . BASE_URL . '/index.php');
+    exit();
+}
 $keToan = new KeToanController($conn);
 
 // Chuyển sang trang xem lịch sử hóa đơn riêng biệt nếu có tham số view=lich_su

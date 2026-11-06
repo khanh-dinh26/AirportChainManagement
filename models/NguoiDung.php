@@ -124,6 +124,7 @@ class NguoiDung
             'Admin_Tong_Cong_Ty' => 0,
             'Quan_Ly_San_Bay' => 0,
             'Nhan_Vien_Dieu_Hanh' => 0,
+            'Nhan_Vien_Bao_Tri' => 0,
             'Ke_Toan' => 0,
         ];
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * ============================================================
- * HELPER PHÂN QUYỀN & XÁC THỰC THEO SÂN BAY
+ * HELPER PHÂN QUYỀN & XÁC THỰC (RBAC + PHẠM VI SÂN BAY)
  * File: config/auth.php
  * ============================================================
  */
@@ -24,10 +24,50 @@ if (!function_exists('la_admin')) {
     }
 }
 
+if (!function_exists('la_quan_ly')) {
+    function la_quan_ly(): bool {
+        return vai_tro_hien_tai() === 'Quan_Ly_San_Bay';
+    }
+}
+
+if (!function_exists('la_dieu_hanh')) {
+    function la_dieu_hanh(): bool {
+        return vai_tro_hien_tai() === 'Nhan_Vien_Dieu_Hanh';
+    }
+}
+
+if (!function_exists('la_bao_tri')) {
+    function la_bao_tri(): bool {
+        return vai_tro_hien_tai() === 'Nhan_Vien_Bao_Tri';
+    }
+}
+
+if (!function_exists('la_ke_toan')) {
+    function la_ke_toan(): bool {
+        return vai_tro_hien_tai() === 'Ke_Toan';
+    }
+}
+
+/**
+ * Kiểm tra xem người dùng hiện tại có vai trò nằm trong danh sách không
+ */
+if (!function_exists('co_vai_tro')) {
+    function co_vai_tro($vaiTro): bool {
+        if (!da_dang_nhap()) {
+            return false;
+        }
+        $hienTai = vai_tro_hien_tai();
+        if (is_array($vaiTro)) {
+            return in_array($hienTai, $vaiTro, true);
+        }
+        return $hienTai === (string) $vaiTro;
+    }
+}
+
 /**
  * Trả về ID sân bay mà người dùng hiện tại bị giới hạn:
- * - 0 : Toàn quyền (Admin Tổng công ty)
- * - >0: Giới hạn trong sân bay có ID này (Quản lý sân bay, Điều hành, Kế toán...)
+ * - 0 : Toàn quyền toàn quốc (Admin Tổng công ty)
+ * - >0: Giới hạn trong sân bay có ID này (Quản lý sân bay, Điều hành, Kỹ thuật bảo trì, Kế toán...)
  * - -1: Bị chặn hoàn toàn (có vai trò giới hạn nhưng id_san_bay bị NULL/0 hoặc chưa login)
  */
 if (!function_exists('pham_vi_san_bay')) {
@@ -78,5 +118,81 @@ if (!function_exists('yeu_cau_dang_nhap')) {
             header('Location: ' . $loginUrl);
             exit();
         }
+    }
+}
+
+/**
+ * Middleware: Yêu cầu vai trò cụ thể, nếu không đủ quyền thì chặn và báo lỗi
+ */
+if (!function_exists('yeu_cau_vai_tro')) {
+    function yeu_cau_vai_tro($vaiTroChoPhep, string $urlRedirect = ''): void {
+        yeu_cau_dang_nhap();
+
+        if (!co_vai_tro($vaiTroChoPhep)) {
+            $dest = $urlRedirect !== '' ? $urlRedirect : ((defined('BASE_URL') ? BASE_URL : '') . '/index.php');
+            $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào chức năng hoặc phân hệ này.';
+            header('Location: ' . $dest);
+            exit();
+        }
+    }
+}
+
+/* ============================================================
+ * CÁC HÀM TIỆN ÍCH PHÂN QUYỀN THEO PHÂN HỆ
+ * ============================================================ */
+
+/** Quyền vào Quản lý nhân sự: Chỉ Admin Tổng công ty hoặc Quản lý sân bay (xem nhân sự sân bay mình) */
+if (!function_exists('co_quyen_nhan_su')) {
+    function co_quyen_nhan_su(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay']);
+    }
+}
+
+/** Quyền vào Quản lý hạ tầng: Xem được toàn bộ, ghi thì phụ thuộc vai trò */
+if (!function_exists('co_quyen_ha_tang')) {
+    function co_quyen_ha_tang(): bool {
+        return da_dang_nhap();
+    }
+}
+
+/** Quyền thêm/sửa/xóa hạ tầng: Chỉ Admin Tổng công ty hoặc Quản lý sân bay */
+if (!function_exists('co_quyen_ghi_ha_tang')) {
+    function co_quyen_ghi_ha_tang(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay']);
+    }
+}
+
+/** Quyền vào Chuyến bay: Admin, Quản lý, Điều hành, Kỹ thuật (xem), Kế toán (xem) */
+if (!function_exists('co_quyen_chuyen_bay')) {
+    function co_quyen_chuyen_bay(): bool {
+        return da_dang_nhap();
+    }
+}
+
+/** Quyền điều phối chuyến bay (gán cửa, quầy, băng chuyền, đổi trạng thái): Admin, Quản lý, Điều hành */
+if (!function_exists('co_quyen_dieu_phoi_bay')) {
+    function co_quyen_dieu_phoi_bay(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay', 'Nhan_Vien_Dieu_Hanh']);
+    }
+}
+
+/** Quyền vào Kỹ thuật & Bảo trì: Admin, Quản lý, Nhân viên bảo trì, Nhân viên điều hành (báo sự cố) */
+if (!function_exists('co_quyen_bao_tri')) {
+    function co_quyen_bao_tri(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay', 'Nhan_Vien_Bao_Tri', 'Nhan_Vien_Dieu_Hanh']);
+    }
+}
+
+/** Quyền kỹ thuật viên chuyên trách (xử lý phiếu, cập nhật thiết bị): Admin, Quản lý, Nhân viên bảo trì */
+if (!function_exists('co_quyen_ky_thuat_vien')) {
+    function co_quyen_ky_thuat_vien(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay', 'Nhan_Vien_Bao_Tri']);
+    }
+}
+
+/** Quyền vào Kế toán & Doanh thu: Admin, Quản lý sân bay (xem), Kế toán (toàn quyền) */
+if (!function_exists('co_quyen_ke_toan')) {
+    function co_quyen_ke_toan(): bool {
+        return co_vai_tro(['Admin_Tong_Cong_Ty', 'Quan_Ly_San_Bay', 'Ke_Toan']);
     }
 }

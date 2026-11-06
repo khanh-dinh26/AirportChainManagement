@@ -88,11 +88,10 @@ ob_start();
             </div>
           </form>
 
-          <p class="mb-1 mt-3">
-            <a href="<?= BASE_URL ?>/index.php?page=forgot">Tôi quên mật khẩu</a>
-          </p>
-          <p class="mb-0">
-            <a href="<?= BASE_URL ?>/index.php?page=register">Đăng ký tài khoản mới</a>
+          <p class="mb-0 mt-3 text-center">
+            <a href="<?= BASE_URL ?>/index.php?page=forgot" class="text-decoration-none">
+              <i class="bi bi-shield-lock me-1"></i>Quên mật khẩu?
+            </a>
           </p>
 <?php
 $content = ob_get_clean();

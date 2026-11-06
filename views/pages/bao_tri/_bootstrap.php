@@ -9,6 +9,13 @@ require_once __DIR__ . '/../../../controllers/BaoTriController.php';
 
 yeu_cau_dang_nhap();
 
+$currentScript = basename($_SERVER['PHP_SELF'] ?? '');
+if (in_array($currentScript, ['index.php', 'thiet_bi.php', 'chi_tiet_thiet_bi.php'], true) && !co_quyen_bao_tri()) {
+    $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Kỹ thuật & Bảo trì.';
+    header('Location: ' . BASE_URL . '/index.php');
+    exit;
+}
+
 if (!function_exists('baoTriUrl')) {
     /**
      * Tạo URL tuyệt đối tới một file trong views/pages/bao_tri/.

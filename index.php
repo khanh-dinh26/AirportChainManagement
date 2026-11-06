@@ -28,8 +28,8 @@ $routes = [
     // Thành viên 1 - Quản lý nhân sự & Xác thực
     'nhan_su'  => 'views/pages/nhan_su/index.php',
     'login'    => 'views/pages/auth/login.php',
-    'register' => 'views/pages/auth/register.php',
     'forgot'   => 'views/pages/auth/forgot-password.php',
+    'ho_so'    => 'views/pages/auth/ho_so.php',
     // Thành viên 2 - Hạ tầng
     'ha_tang'  => 'views/pages/ha_tang/index.php',
     // Thành viên 3 - Chuyến bay
@@ -43,9 +43,28 @@ $routes = [
 $page = isset($_GET['page']) ? strtolower(trim((string) $_GET['page'])) : '';
 
 /* ---------- Chặn đăng nhập (Middleware auth) ---------- */
-$publicPages = ['login', 'register', 'forgot'];
+$publicPages = ['login', 'forgot'];
 if (!in_array($page, $publicPages, true)) {
     yeu_cau_dang_nhap();
+}
+
+/* Kiểm tra quyền truy cập theo vai trò (Role-based access control) */
+if ($page !== '' && !in_array($page, $publicPages, true)) {
+    if ($page === 'nhan_su' && !co_quyen_nhan_su()) {
+        $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Quản lý nhân sự.';
+        header('Location: ' . BASE_URL . '/index.php');
+        exit;
+    }
+    if ($page === 'ke_toan' && !co_quyen_ke_toan()) {
+        $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Kế toán & Doanh thu.';
+        header('Location: ' . BASE_URL . '/index.php');
+        exit;
+    }
+    if ($page === 'bao_tri' && !co_quyen_bao_tri()) {
+        $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Kỹ thuật & Bảo trì.';
+        header('Location: ' . BASE_URL . '/index.php');
+        exit;
+    }
 }
 
 /* Nếu có ?page=... và tồn tại trong bảng điều hướng thì nạp trang đó.
@@ -66,8 +85,8 @@ $breadcrumb = [
     ['label' => 'Trang chủ', 'url' => null],
 ];
 
-/* Danh sách phân hệ để in ra thành các thẻ điều hướng */
-$modules = [
+/* Danh sách phân hệ để in ra thành các thẻ điều hướng (lọc theo quyền) */
+$rawModules = [
     [
         'key'   => 'ha_tang',
         'name'  => 'Quản lý hạ tầng',
@@ -109,6 +128,15 @@ $modules = [
         'owner' => 'Thành viên 1',
     ],
 ];
+
+$modules = [];
+foreach ($rawModules as $m) {
+    if ($m['key'] === 'nhan_su' && !co_quyen_nhan_su()) continue;
+    if ($m['key'] === 'ke_toan' && !co_quyen_ke_toan()) continue;
+    if ($m['key'] === 'bao_tri' && !co_quyen_bao_tri()) continue;
+    if ($m['key'] === 'chuyen_bay' && (la_bao_tri() || la_ke_toan())) continue;
+    $modules[] = $m;
+}
 
 ob_start();
 ?>

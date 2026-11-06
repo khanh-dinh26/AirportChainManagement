@@ -35,6 +35,7 @@ $nhanVaiTro   = [
     'Admin_Tong_Cong_Ty'   => 'Quản trị tổng công ty',
     'Quan_Ly_San_Bay'      => 'Quản lý sân bay',
     'Nhan_Vien_Dieu_Hanh'  => 'Nhân viên điều hành',
+    'Nhan_Vien_Bao_Tri'    => 'Nhân viên bảo trì',
     'Ke_Toan'              => 'Kế toán',
 ];
 $vaiTroRaw = $_SESSION['vai_tro'] ?? '';
@@ -117,7 +118,7 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
           <ul class="navbar-nav ms-auto">
             <!--begin::User Menu Dropdown (CSS :hover / :focus-within, không JS)-->
             <li class="nav-item dropdown user-menu">
-              <a href="#user-menu" class="nav-link dropdown-toggle" aria-haspopup="true">
+              <a href="<?= $daDangNhap ? $baseUrl . '/index.php?page=ho_so' : '#user-menu' ?>" class="nav-link dropdown-toggle" title="Xem thông tin cá nhân & đổi mật khẩu" aria-haspopup="true">
                 <img
                   src="<?= $adminLteUrl ?>/assets/img/user2-160x160.jpg"
                   class="user-image rounded-circle shadow"
@@ -137,13 +138,16 @@ if ($daDangNhap && !empty($_SESSION['san_bay_iata'])) {
                     <small><?= htmlspecialchars($vaiTroHienThi, ENT_QUOTES, 'UTF-8') ?></small>
                   </p>
                 </li>
-                <li class="user-footer">
+                <li class="user-footer d-flex justify-content-between align-items-center">
                   <?php if ($daDangNhap): ?>
-                    <a href="<?= $baseUrl ?>/controllers/AuthController.php?action=logout" class="btn btn-outline-danger float-end">
-                      Đăng xuất
+                    <a href="<?= $baseUrl ?>/index.php?page=ho_so" class="btn btn-outline-primary btn-sm">
+                      <i class="bi bi-person-circle me-1"></i>Hồ sơ & Đổi MK
+                    </a>
+                    <a href="<?= $baseUrl ?>/controllers/AuthController.php?action=logout" class="btn btn-outline-danger btn-sm">
+                      <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
                     </a>
                   <?php else: ?>
-                    <a href="<?= $baseUrl ?>/index.php?page=login" class="btn btn-outline-primary float-end">
+                    <a href="<?= $baseUrl ?>/index.php?page=login" class="btn btn-outline-primary btn-sm ms-auto">
                       Đăng nhập
                     </a>
                   <?php endif; ?>

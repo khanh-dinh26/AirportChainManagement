@@ -915,6 +915,11 @@ class BaoTriController {
             $this->redirect($this->viewUrl('index.php'));
         }
 
+        if (!co_quyen_ky_thuat_vien()) {
+            $this->setFlash('error', 'Chỉ kỹ thuật viên bảo trì hoặc quản lý mới có quyền cập nhật tiến độ phiếu.');
+            $this->redirect($this->viewUrl('index.php'));
+        }
+
         $id_ticket      = isset($_POST['id_ticket']) ? (int) $_POST['id_ticket'] : 0;
         $trang_thai_moi = isset($_POST['trang_thai_xu_ly']) ? (string) $_POST['trang_thai_xu_ly'] : '';
 
@@ -933,6 +938,19 @@ class BaoTriController {
 
         if (!$tim_thay) {
             $this->setFlash('error', 'Không tìm thấy phiếu bảo trì cần cập nhật.');
+            $this->redirect($this->viewUrl('index.php'));
+        }
+
+        // Kiểm tra phạm vi sân bay của thiết bị
+        $stmtSb = $this->db->prepare("SELECT id_san_bay FROM thiet_bi_san_bay WHERE id = ?");
+        $stmtSb->bind_param('i', $id_thiet_bi);
+        $stmtSb->execute();
+        $stmtSb->bind_result($id_sb_thiet_bi);
+        $stmtSb->fetch();
+        $stmtSb->close();
+
+        if (!trong_pham_vi_san_bay($id_sb_thiet_bi)) {
+            $this->setFlash('error', 'Bạn không có quyền thao tác trên phiếu bảo trì của sân bay khác.');
             $this->redirect($this->viewUrl('index.php'));
         }
 

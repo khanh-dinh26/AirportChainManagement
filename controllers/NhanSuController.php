@@ -24,6 +24,7 @@ class NhanSuController
         'Admin_Tong_Cong_Ty'  => 'Quản trị tổng công ty',
         'Quan_Ly_San_Bay'     => 'Quản lý sân bay',
         'Nhan_Vien_Dieu_Hanh' => 'Nhân viên điều hành',
+        'Nhan_Vien_Bao_Tri'   => 'Nhân viên bảo trì',
         'Ke_Toan'             => 'Kế toán',
     ];
 
@@ -41,6 +42,12 @@ class NhanSuController
     public function handle(): array
     {
         yeu_cau_dang_nhap();
+
+        if (!co_quyen_nhan_su()) {
+            $_SESSION['flash_danger'] = 'Bạn không có quyền truy cập vào phân hệ Quản lý nhân sự.';
+            header('Location: ' . BASE_URL . '/index.php');
+            exit();
+        }
 
         $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
         $isAdminTong = la_admin();
