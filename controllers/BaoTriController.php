@@ -818,6 +818,50 @@ class BaoTriController {
         $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
     }
 
+    /**
+     * Thống kê dữ liệu đang phụ thuộc vào một hãng hàng không.
+     * Dùng cho hộp thoại xác nhận xóa và cho bước kiểm tra phía server.
+     */
+    public function getHangHangKhongDependencies($id) {
+        $id = (int) $id;
+        $deps = [
+            'tau_bay'         => 0, // số loại tàu bay thuộc hãng
+            'tau_bay_dang_bay' => 0, // số loại tàu bay đang được dùng trong chuyến bay
+            'chuyen_bay'      => 0, // số chuyến bay của hãng
+            'hoa_don'         => 0, // số hóa đơn gắn với hãng
+        ];
+
+        if ($id <= 0) {
+            return $deps;
+        }
+
+        $queries = [
+            'tau_bay'          => "SELECT COUNT(*) FROM loai_tau_bay WHERE id_hang_hang_khong = ?",
+            'tau_bay_dang_bay' => "SELECT COUNT(DISTINCT tb.id)
+                                    FROM loai_tau_bay tb
+                                    JOIN chuyen_bay_ngay cb ON cb.id_loai_tau_bay = tb.id
+                                    WHERE tb.id_hang_hang_khong = ?",
+            'chuyen_bay'       => "SELECT COUNT(*) FROM chuyen_bay_ngay WHERE id_hang_hang_khong = ?",
+            'hoa_don'          => "SELECT COUNT(*) FROM hoa_don WHERE id_hang_hang_khong = ?",
+        ];
+
+        foreach ($queries as $key => $sql) {
+            $stmt = $this->db->prepare($sql);
+            if (!$stmt) {
+                continue;
+            }
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->bind_result($count);
+            if ($stmt->fetch()) {
+                $deps[$key] = (int) $count;
+            }
+            $stmt->close();
+        }
+
+        return $deps;
+    }
+
     public function xoaHangHangKhong() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect($this->viewUrl('hang_hang_khong.php'));
@@ -834,30 +878,63 @@ class BaoTriController {
             $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
         }
 
-        // Kiểm tra ràng buộc loại tàu bay
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM loai_tau_bay WHERE id_hang_hang_khong = ?");
+        // Kiểm tra hãng có tồn tại
+        $stmt = $this->db->prepare("SELECT ten_hang, ma_iata FROM hang_hang_khong WHERE id = ? LIMIT 1");
         $stmt->bind_param('i', $id);
         $stmt->execute();
-        $stmt->bind_result($soTb);
-        $stmt->fetch();
+        $stmt->bind_result($tenHangXoa, $maIataXoa);
+        $tonTai = $stmt->fetch();
         $stmt->close();
 
-        if ((int) $soTb > 0) {
-            $this->setFlash('error', "Không thể xóa hãng này vì đang có {$soTb} loại tàu bay trực thuộc.");
+        if (!$tonTai) {
+            $this->setFlash('error', 'Không tìm thấy hãng hàng không cần xóa.');
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        $deps = $this->getHangHangKhongDependencies($id);
+
+        // Chặn xóa khi còn dữ liệu nghiệp vụ tham chiếu (tránh mất dữ liệu chuyến bay / hóa đơn).
+        if ($deps['chuyen_bay'] > 0) {
+            $this->setFlash('error', "Không thể xóa hãng {$tenHangXoa} ({$maIataXoa}) vì đang có {$deps['chuyen_bay']} chuyến bay thuộc hãng.");
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        if ($deps['hoa_don'] > 0) {
+            $this->setFlash('error', "Không thể xóa hãng {$tenHangXoa} ({$maIataXoa}) vì đang gắn với {$deps['hoa_don']} hóa đơn.");
+            $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
+        }
+
+        if ($deps['tau_bay_dang_bay'] > 0) {
+            $this->setFlash('error', "Không thể xóa hãng {$tenHangXoa} ({$maIataXoa}) vì có {$deps['tau_bay_dang_bay']} loại tàu bay đang được dùng trong chuyến bay.");
             $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
         }
 
         try {
+            $this->db->begin_transaction();
+
+            // Các loại tàu bay không còn chuyến bay nào sử dụng sẽ được xóa cùng hãng.
+            $stmt = $this->db->prepare("DELETE FROM loai_tau_bay WHERE id_hang_hang_khong = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
             $stmt = $this->db->prepare("DELETE FROM hang_hang_khong WHERE id = ?");
             $stmt->bind_param('i', $id);
             $stmt->execute();
             $stmt->close();
+
+            $this->db->commit();
         } catch (\Throwable $e) {
+            try {
+                $this->db->rollback();
+            } catch (\Throwable $rollbackError) {
+                // Không có transaction đang mở: bỏ qua.
+            }
             $this->setFlash('error', 'Lỗi xóa hãng hàng không: ' . $e->getMessage());
             $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
         }
 
-        $this->setFlash('success', 'Đã xóa hãng hàng không thành công.');
+        $this->setFlash('success', "Đã xóa hãng hàng không {$tenHangXoa} ({$maIataXoa}) thành công.");
         $this->redirect($this->viewUrl('hang_hang_khong.php', $giuLoc));
     }
 

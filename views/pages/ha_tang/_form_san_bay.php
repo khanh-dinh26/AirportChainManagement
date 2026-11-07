@@ -123,38 +123,7 @@ $actionName = $isEdit ? 'sua_san_bay' : 'them_san_bay';
       <button type="submit" class="btn btn-primary btn-sm">
         <i class="bi bi-check2 me-1"></i> <?= $isEdit ? 'Lưu thay đổi' : 'Thêm sân bay' ?>
       </button>
-      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm">Hủy</a>
+      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm js-ht-form-close">Hủy</a>
     </div>
   </form>
 </div>
-
-<script>
-  function previewAirportImage(input) {
-    const previewWrapper = document.getElementById('sb-image-preview-wrapper');
-    const previewImg = document.getElementById('sb-image-preview');
-    const previewLabel = document.getElementById('sb-preview-label');
-    const previewSub = document.getElementById('sb-preview-sub');
-
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        previewImg.src = e.target.result;
-        previewImg.style.display = 'block';
-        previewLabel.textContent = 'Ảnh vừa chọn:';
-        previewSub.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-        previewWrapper.classList.remove('d-none');
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  function clearAirportImagePreview() {
-    const fileInput = document.getElementById('sb-hinh-file');
-    const hiddenInput = document.getElementById('sb-hinh');
-    const previewWrapper = document.getElementById('sb-image-preview-wrapper');
-    if (fileInput) fileInput.value = '';
-    if (hiddenInput) hiddenInput.value = '';
-    if (previewWrapper) previewWrapper.classList.add('d-none');
-  }
-</script>

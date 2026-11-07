@@ -29,7 +29,7 @@ $airports = $data['airports'];
             <i class="bi bi-building"></i>
             <h3>Chưa có sân bay</h3>
             <p>Thêm sân bay đầu tiên để bắt đầu cấu hình chuỗi cảng hàng không.</p>
-            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2">Thêm sân bay</a>
+            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2 js-ht-form-open">Thêm sân bay</a>
           </div>
         </td>
       </tr>
@@ -69,7 +69,7 @@ $airports = $data['airports'];
               <?php if (la_admin()): ?>
                 <a
                   href="<?= $e($adminUrl(['tab' => 'san_bay', 'san_bay' => $airport['ma_iata'], 'sua' => (int) $airport['id']])) ?>"
-                  class="btn btn-sm btn-outline-secondary"
+                  class="btn btn-sm btn-outline-secondary js-ht-form-open"
                 >
                   <i class="bi bi-pencil"></i> Sửa
                 </a>

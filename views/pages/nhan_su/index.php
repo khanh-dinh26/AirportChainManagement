@@ -585,7 +585,7 @@ ob_start();
         </div>
 
         <?php if ($data['isAdminTong']): ?>
-          <div class="mb-3">
+          <div class="mb-3" id="themSanBayWrapper">
             <label class="form-label fw-bold" for="themIdSanBay">
               Sân bay làm việc / phụ trách
             </label>
@@ -841,6 +841,29 @@ ob_start();
   </div>
   <?php endif; ?>
 <?php endforeach; ?>
+
+<script>
+  (function () {
+    var vaiTro = document.getElementById('themVaiTro');
+    var sanBayWrapper = document.getElementById('themSanBayWrapper');
+    var sanBaySelect = document.getElementById('themIdSanBay');
+    if (!vaiTro || !sanBayWrapper || !sanBaySelect) {
+      return;
+    }
+
+    function capNhatSanBay() {
+      var laAdminTong = vaiTro.value === 'Admin_Tong_Cong_Ty';
+      sanBayWrapper.style.display = laAdminTong ? 'none' : '';
+      sanBaySelect.disabled = laAdminTong;
+      if (laAdminTong) {
+        sanBaySelect.value = '';
+      }
+    }
+
+    vaiTro.addEventListener('change', capNhatSanBay);
+    capNhatSanBay();
+  })();
+</script>
 
 <?php
 $content = ob_get_clean();

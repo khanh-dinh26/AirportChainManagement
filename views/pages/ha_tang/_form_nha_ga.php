@@ -147,7 +147,7 @@ $airportGroupLabels = ['Quoc_Te' => 'Cảng hàng không quốc tế', 'Quoc_Noi
       <button type="submit" class="btn btn-primary btn-sm">
         <i class="bi bi-check2 me-1"></i> <?= $isEdit ? 'Lưu thay đổi' : 'Thêm nhà ga' ?>
       </button>
-      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm">Hủy</a>
+      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm js-ht-form-close">Hủy</a>
     </div>
   </form>
 </div>

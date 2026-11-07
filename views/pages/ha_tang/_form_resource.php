@@ -123,7 +123,7 @@ $actionName = $isEdit ? $config['action_edit'] : $config['action_add'];
       <button type="submit" class="btn btn-primary btn-sm">
         <i class="bi bi-check2 me-1"></i> <?= $isEdit ? 'Lưu thay đổi' : 'Thêm mới' ?>
       </button>
-      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm">Hủy</a>
+      <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm js-ht-form-close">Hủy</a>
     </div>
   </form>
 </div>
