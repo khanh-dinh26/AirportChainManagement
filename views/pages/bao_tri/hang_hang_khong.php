@@ -72,12 +72,16 @@ $urlDongModal = baoTriUrl('hang_hang_khong.php', $filterQuery);
  * ------------------------------------------------------------ */
 $idCanXoa = (int) ($_GET['xac_nhan_xoa'] ?? 0);
 $hangCanXoa = null;
+$phuThuocHang = null;
 if ($idCanXoa > 0) {
     foreach ($baoTriController->getHangHangKhongList() as $hItem) {
         if ((int) $hItem['id'] === $idCanXoa) {
             $hangCanXoa = $hItem;
             break;
         }
+    }
+    if ($hangCanXoa !== null) {
+        $phuThuocHang = $baoTriController->getHangHangKhongDependencies($idCanXoa);
     }
 }
 
@@ -194,15 +198,9 @@ ob_start();
                                         <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php', $filterQuery + ['sua' => $idHang]), ENT_QUOTES, 'UTF-8') ?>#suaHangModal" class="btn btn-outline-secondary" title="Sửa thông tin hãng">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <?php if ($soTb === 0): ?>
-                                            <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php', $filterQuery + ['xac_nhan_xoa' => $idHang]), ENT_QUOTES, 'UTF-8') ?>#xoaHangModal" class="btn btn-outline-danger" title="Xóa hãng hàng không">
-                                                <i class="bi bi-trash3"></i>
-                                            </a>
-                                        <?php else: ?>
-                                            <button type="button" class="btn btn-outline-secondary" disabled title="Không thể xóa hãng đang có loại tàu bay">
-                                                <i class="bi bi-trash3"></i>
-                                            </button>
-                                        <?php endif; ?>
+                                        <a href="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php', $filterQuery + ['xac_nhan_xoa' => $idHang]), ENT_QUOTES, 'UTF-8') ?>#xoaHangModal" class="btn btn-outline-danger" title="Xóa hãng hàng không">
+                                            <i class="bi bi-trash3"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -401,31 +399,78 @@ ob_start();
 <?php endif; ?>
 
 <?php if ($hangCanXoa !== null): ?>
+<?php
+    $phuThuocHang = $phuThuocHang ?? ['tau_bay' => 0, 'tau_bay_dang_bay' => 0, 'chuyen_bay' => 0, 'hoa_don' => 0];
+    $biChanXoa = $phuThuocHang['chuyen_bay'] > 0
+        || $phuThuocHang['hoa_don'] > 0
+        || $phuThuocHang['tau_bay_dang_bay'] > 0;
+    $lyDoChan = [];
+    if ($phuThuocHang['chuyen_bay'] > 0) {
+        $lyDoChan[] = $phuThuocHang['chuyen_bay'] . ' chuyến bay';
+    }
+    if ($phuThuocHang['hoa_don'] > 0) {
+        $lyDoChan[] = $phuThuocHang['hoa_don'] . ' hóa đơn';
+    }
+    if ($phuThuocHang['tau_bay_dang_bay'] > 0) {
+        $lyDoChan[] = $phuThuocHang['tau_bay_dang_bay'] . ' loại tàu bay đang khai thác';
+    }
+?>
 <!--begin::Modal xác nhận xóa-->
 <div class="modal fade maint-modal is-open" id="xoaHangModal" tabindex="-1" aria-labelledby="xoaHangModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg text-center p-3">
             <div class="modal-body pt-3 pb-2">
                 <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger mb-3" style="width: 58px; height: 58px;">
                     <i class="bi bi-trash3 fs-4"></i>
                 </span>
                 <h5 class="mb-2 fw-bold" id="xoaHangModalLabel">Xóa hãng hàng không?</h5>
-                <p class="text-secondary small mb-0">
+                <p class="text-secondary small mb-3">
                     Bạn có chắc muốn xóa hãng <strong><?= htmlspecialchars($hangCanXoa['ten_hang'], ENT_QUOTES, 'UTF-8') ?></strong> (<?= htmlspecialchars($hangCanXoa['ma_iata'], ENT_QUOTES, 'UTF-8') ?>)?
                     Hành động này không thể hoàn tác.
                 </p>
+
+                <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                    <span class="badge <?= $phuThuocHang['tau_bay'] > 0 ? 'text-bg-info' : 'text-bg-light border text-secondary' ?>">
+                        <i class="bi bi-airplane me-1"></i><?= (int) $phuThuocHang['tau_bay'] ?> loại tàu bay
+                    </span>
+                    <span class="badge <?= $phuThuocHang['chuyen_bay'] > 0 ? 'text-bg-warning' : 'text-bg-light border text-secondary' ?>">
+                        <i class="bi bi-signpost-split me-1"></i><?= (int) $phuThuocHang['chuyen_bay'] ?> chuyến bay
+                    </span>
+                    <span class="badge <?= $phuThuocHang['hoa_don'] > 0 ? 'text-bg-warning' : 'text-bg-light border text-secondary' ?>">
+                        <i class="bi bi-receipt me-1"></i><?= (int) $phuThuocHang['hoa_don'] ?> hóa đơn
+                    </span>
+                </div>
+
+                <?php if ($biChanXoa): ?>
+                    <div class="alert alert-warning text-start small mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Không thể xóa hãng này vì vẫn còn <?= htmlspecialchars(implode(', ', $lyDoChan), ENT_QUOTES, 'UTF-8') ?>.
+                        Vui lòng xử lý dữ liệu liên quan trước khi xóa hãng.
+                    </div>
+                <?php elseif ($phuThuocHang['tau_bay'] > 0): ?>
+                    <div class="alert alert-info text-start small mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <?= (int) $phuThuocHang['tau_bay'] ?> loại tàu bay chưa khai thác chuyến nào thuộc hãng này cũng sẽ bị xóa theo.
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="modal-footer border-0 justify-content-center pt-2 pb-2">
                 <a href="<?= htmlspecialchars($urlDongModal, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-light border px-3">Hủy</a>
-                <form method="post" action="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php'), ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
-                    <input type="hidden" name="action" value="xoa_hang_hang_khong" />
-                    <input type="hidden" name="id" value="<?= (int) $hangCanXoa['id'] ?>" />
-                    <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
-                    <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />
-                    <button type="submit" class="btn btn-danger px-3">
-                        <i class="bi bi-trash3 me-1"></i>Xóa hãng
-                    </button>
-                </form>
+                <?php if ($biChanXoa): ?>
+                    <a href="<?= htmlspecialchars(baoTriUrl('tau_bay.php', ['q' => $hangCanXoa['ma_iata']]), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-primary px-3">
+                        <i class="bi bi-airplane me-1"></i>Xem tàu bay
+                    </a>
+                <?php else: ?>
+                    <form method="post" action="<?= htmlspecialchars(baoTriUrl('hang_hang_khong.php'), ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                        <input type="hidden" name="action" value="xoa_hang_hang_khong" />
+                        <input type="hidden" name="id" value="<?= (int) $hangCanXoa['id'] ?>" />
+                        <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
+                        <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />
+                        <button type="submit" class="btn btn-danger px-3">
+                            <i class="bi bi-trash3 me-1"></i>Xóa hãng
+                        </button>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
     </div>

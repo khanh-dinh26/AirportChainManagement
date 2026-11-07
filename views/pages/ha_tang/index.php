@@ -201,6 +201,68 @@ $viewUrl = $url($viewParams);
 
 $airports = $data['airports'];
 
+/* ------------------------------------------------------------
+ * Trả về riêng phần biểu mẫu (thêm/sửa) để mở trong hộp thoại
+ * mà không phải tải lại trang.
+ * ------------------------------------------------------------ */
+if (($_GET['ht_form'] ?? '') === '1') {
+    $formTab = (string) ($_GET['tab'] ?? 'san_bay');
+    if (!in_array($formTab, ['san_bay', 'nha_ga', 'cua_ra', 'quay', 'bang_chuyen'], true)) {
+        http_response_code(400);
+        exit;
+    }
+
+    $formMode = is_array($management) ? $management['formMode'] : null;
+    $formRecord = is_array($management) ? $management['editRecord'] : null;
+
+    // Chế độ "Quản lí sân bay" (quan_ly_san_bay=1) không đi qua management của controller.
+    if ($formMode === null && $showAirportManagement) {
+        $editId = isset($_GET['sua']) ? (int) $_GET['sua'] : 0;
+        if ($editId > 0) {
+            $formMode = 'sua';
+            foreach ($airports as $ap) {
+                if ((int) $ap['id'] === $editId) {
+                    $formRecord = $ap;
+                    break;
+                }
+            }
+        } elseif (isset($_GET['them']) && $_GET['them'] === '1') {
+            $formMode = 'them';
+        }
+    }
+
+    if ($formMode !== 'them' && $formMode !== 'sua') {
+        http_response_code(400);
+        exit;
+    }
+
+    $returnTab = $formTab;
+    $returnSanBay = $selectedAirport['ma_iata'] ?? '';
+    $returnNhaGa = (int) ($selectedTerminal['id'] ?? 0);
+
+    if ($showAirportManagement || $airportAdmin) {
+        $listUrl = $url(['quan_ly_san_bay' => '1']);
+    } else {
+        $listParams = ['quan_tri' => '1', 'tab' => $formTab];
+        if ($returnSanBay !== '') {
+            $listParams['san_bay'] = $returnSanBay;
+        }
+        if ($returnNhaGa > 0) {
+            $listParams['nha_ga'] = $returnNhaGa;
+        }
+        $listUrl = $url($listParams);
+    }
+
+    if ($formTab === 'san_bay') {
+        require __DIR__ . '/_form_san_bay.php';
+    } elseif ($formTab === 'nha_ga') {
+        require __DIR__ . '/_form_nha_ga.php';
+    } else {
+        require __DIR__ . '/_form_resource.php';
+    }
+    exit;
+}
+
 $pageTitle = 'Quản lý hạ tầng';
 $pageHeader = 'Quản lý hạ tầng';
 $navActive = 'ha_tang';
@@ -1402,6 +1464,69 @@ ob_start();
   .ht-page .btn { font-size: 1rem; }
   .ht-page .btn-sm { font-size: .9rem; }
   .ht-page .badge { font-size: .82rem; }
+
+  /* ---------- Hộp thoại biểu mẫu thêm/sửa (mở/đóng không tải lại trang) ---------- */
+  body.ht-modal-open { overflow: hidden; }
+  .ht-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .ht-modal[hidden] { display: none; }
+  .ht-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 18, 34, .55);
+    backdrop-filter: blur(2px);
+  }
+  .ht-modal__dialog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(940px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    border: 1px solid var(--ht-line, rgba(15, 35, 63, .11));
+    border-radius: 18px;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: 0 26px 60px rgba(8, 25, 50, .3);
+    animation: ht-modal-in .18s ease-out;
+  }
+  @keyframes ht-modal-in {
+    from { opacity: 0; transform: translateY(-12px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .ht-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .85rem 1.1rem;
+    border-bottom: 1px solid var(--ht-line, rgba(15, 35, 63, .11));
+  }
+  .ht-modal__title {
+    margin: 0;
+    color: var(--ht-ink, #10233f);
+    font-size: 1.08rem;
+    font-weight: 800;
+  }
+  .ht-modal__body {
+    overflow-y: auto;
+    padding: 1rem 1.1rem 1.15rem;
+  }
+  .ht-modal__body .ht-form-card {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+  }
+  .ht-modal__body .ht-form-card > div:first-child {
+    display: none;
+  }
 </style>
 
 <div class="ht-page">
@@ -1690,6 +1815,7 @@ ob_start();
 // Lightbox phải nằm ngoài .ht-page: .ht-page có animation transform nên sẽ
 // "nhốt" phần tử position:fixed vào bên trong và bị cắt bởi overflow của thẻ.
 echo $htLightboxHtml ?? '';
+echo $htFormModalHtml ?? '';
 ?>
 
 <?php

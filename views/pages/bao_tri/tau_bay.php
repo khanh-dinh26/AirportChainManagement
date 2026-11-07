@@ -735,7 +735,6 @@ require __DIR__ . '/_lightbox.php';
                     <input type="hidden" name="action" value="xoa_tau_bay" />
                     <input type="hidden" name="id" value="<?= (int) $idCanXoa ?>" />
                     <input type="hidden" name="giu_q" value="<?= htmlspecialchars($tuKhoa, ENT_QUOTES, 'UTF-8') ?>" />
-" />
                     <input type="hidden" name="giu_trang" value="<?= $trangHienTai ?>" />
                     <button type="submit" class="btn btn-danger px-3">
                         <i class="bi bi-trash3 me-1"></i>Xóa loại tàu bay

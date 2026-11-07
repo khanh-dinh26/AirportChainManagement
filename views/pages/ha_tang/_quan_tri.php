@@ -145,15 +145,14 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
       <p><?= $e($currentMeta['desc']) ?></p>
     </div>
     <?php if ($canUseTab): ?>
-      <?php if ($formMode): ?>
-        <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm ms-auto">
-          <i class="bi bi-x-lg me-1"></i> Đóng biểu mẫu
-        </a>
-      <?php else: ?>
-        <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm ms-auto">
+      <div class="d-flex flex-wrap gap-2 ms-auto">
+        <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm js-ht-form-open" data-ht-form-add <?= $formMode ? 'hidden' : '' ?>>
           <i class="bi bi-plus-lg me-1"></i> <?= $e($currentMeta['add']) ?>
         </a>
-      <?php endif; ?>
+        <a href="<?= $e($listUrl) ?>" class="btn btn-outline-secondary btn-sm js-ht-form-close" data-ht-form-close <?= $formMode ? '' : 'hidden' ?>>
+          <i class="bi bi-x-lg me-1"></i> Đóng biểu mẫu
+        </a>
+      </div>
     <?php endif; ?>
   </div>
 
@@ -182,8 +181,36 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
       </div>
     </div>
   <?php else: ?>
-    <?php if ($formMode): ?>
-      <div class="card-body pb-0">
+    <div class="table-responsive">
+      <?php if ($tab === 'san_bay'): ?>
+        <?php require __DIR__ . '/_table_san_bay.php'; ?>
+      <?php elseif ($tab === 'nha_ga'): ?>
+        <?php require __DIR__ . '/_table_nha_ga.php'; ?>
+      <?php else: ?>
+        <?php require __DIR__ . '/_table_resource.php'; ?>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+</div>
+
+<?php
+/* ------------------------------------------------------------
+ * Hộp thoại biểu mẫu thêm/sửa: mở và đóng bằng JavaScript nên
+ * không tải lại trang, vị trí cuộn của trang được giữ nguyên.
+ * HTML được đưa ra ngoài .ht-page (xem index.php) để tránh bị
+ * hiệu ứng transform của khung trang nhốt position: fixed.
+ * ------------------------------------------------------------ */
+ob_start();
+?>
+<div class="ht-modal" id="ht-form-modal"<?= $formMode ? '' : ' hidden' ?> aria-hidden="<?= $formMode ? 'false' : 'true' ?>">
+  <div class="ht-modal__backdrop js-ht-form-close"></div>
+  <div class="ht-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="ht-form-modal-title">
+    <div class="ht-modal__head">
+      <h4 class="ht-modal__title" id="ht-form-modal-title">Biểu mẫu hạ tầng</h4>
+      <button type="button" class="btn-close js-ht-form-close" aria-label="Đóng biểu mẫu"></button>
+    </div>
+    <div class="ht-modal__body" id="ht-form-body">
+      <?php if ($formMode): ?>
         <?php if ($formMode === 'sua' && !$formRecord): ?>
           <div class="alert alert-warning mb-0">
             <i class="bi bi-exclamation-triangle me-1"></i>
@@ -196,17 +223,152 @@ $addUrl = $adminUrl(array_merge($tabParams, ['them' => 1]));
         <?php else: ?>
           <?php require __DIR__ . '/_form_resource.php'; ?>
         <?php endif; ?>
-      </div>
-    <?php endif; ?>
-
-    <div class="table-responsive">
-      <?php if ($tab === 'san_bay'): ?>
-        <?php require __DIR__ . '/_table_san_bay.php'; ?>
-      <?php elseif ($tab === 'nha_ga'): ?>
-        <?php require __DIR__ . '/_table_nha_ga.php'; ?>
-      <?php else: ?>
-        <?php require __DIR__ . '/_table_resource.php'; ?>
       <?php endif; ?>
     </div>
-  <?php endif; ?>
+  </div>
 </div>
+<script>
+  (function () {
+    var modal = document.getElementById('ht-form-modal');
+    var body = document.getElementById('ht-form-body');
+    var titleEl = document.getElementById('ht-form-modal-title');
+    if (!modal || !body) {
+      return;
+    }
+
+    var addButtons = document.querySelectorAll('[data-ht-form-add]');
+    var closeButtons = document.querySelectorAll('[data-ht-form-close]');
+    var scrollLocked = false;
+
+    function syncTitle() {
+      var heading = body.querySelector('.ht-form-card h4');
+      if (heading && titleEl) {
+        titleEl.textContent = heading.textContent.trim();
+      }
+    }
+
+    function setOpen(open) {
+      modal.hidden = !open;
+      modal.setAttribute('aria-hidden', open ? 'false' : 'true');
+
+      for (var i = 0; i < addButtons.length; i++) {
+        addButtons[i].hidden = open;
+      }
+      for (var j = 0; j < closeButtons.length; j++) {
+        closeButtons[j].hidden = !open;
+      }
+
+      if (open) {
+        if (!scrollLocked) {
+          var scrollbar = window.innerWidth - document.documentElement.clientWidth;
+          document.body.style.paddingRight = scrollbar > 0 ? scrollbar + 'px' : '';
+          document.body.classList.add('ht-modal-open');
+          scrollLocked = true;
+        }
+        return;
+      }
+
+      if (scrollLocked) {
+        document.body.classList.remove('ht-modal-open');
+        document.body.style.paddingRight = '';
+        scrollLocked = false;
+      }
+
+      body.innerHTML = '';
+
+      var url = new URL(window.location.href);
+      url.searchParams.delete('them');
+      url.searchParams.delete('sua');
+      url.searchParams.delete('ht_form');
+      window.history.replaceState(null, '', url.toString());
+    }
+
+    function openForm(url) {
+      var target = new URL(url, window.location.href);
+      target.searchParams.set('ht_form', '1');
+
+      fetch(target.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+          return response.text();
+        })
+        .then(function (html) {
+          body.innerHTML = html;
+          syncTitle();
+          setOpen(true);
+          body.scrollTop = 0;
+        })
+        .catch(function () {
+          window.location.href = url;
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+      var opener = event.target.closest('.js-ht-form-open');
+      if (opener) {
+        var href = opener.getAttribute('href');
+        if (href) {
+          event.preventDefault();
+          openForm(href);
+        }
+        return;
+      }
+
+      var closer = event.target.closest('.js-ht-form-close');
+      if (closer) {
+        event.preventDefault();
+        setOpen(false);
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !modal.hidden) {
+        setOpen(false);
+      }
+    });
+
+    /* Các hàm xem trước ảnh sân bay dùng trong _form_san_bay.php.
+       Khai báo toàn cục để vẫn chạy khi biểu mẫu được nạp bằng fetch. */
+    window.previewAirportImage = function (input) {
+      var previewWrapper = document.getElementById('sb-image-preview-wrapper');
+      var previewImg = document.getElementById('sb-image-preview');
+      var previewLabel = document.getElementById('sb-preview-label');
+      var previewSub = document.getElementById('sb-preview-sub');
+
+      if (input.files && input.files[0]) {
+        var file = input.files[0];
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+          previewLabel.textContent = 'Ảnh vừa chọn:';
+          previewSub.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+          previewWrapper.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.clearAirportImagePreview = function () {
+      var fileInput = document.getElementById('sb-hinh-file');
+      var hiddenInput = document.getElementById('sb-hinh');
+      var previewWrapper = document.getElementById('sb-image-preview-wrapper');
+      if (fileInput) fileInput.value = '';
+      if (hiddenInput) hiddenInput.value = '';
+      if (previewWrapper) previewWrapper.classList.add('d-none');
+    };
+
+    if (!modal.hidden) {
+      setOpen(true);
+      syncTitle();
+    }
+  })();
+</script>
+<?php
+$htFormModalHtml = ob_get_clean();
+?>

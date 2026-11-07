@@ -31,7 +31,7 @@ $items = $data['terminals'];
             <i class="bi bi-door-closed"></i>
             <h3>Sân bay chưa có nhà ga</h3>
             <p>Thêm nhà ga đầu tiên cho <?= $e($airport['ten_san_bay']) ?> để cấu hình tài nguyên khai thác.</p>
-            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2">Thêm nhà ga</a>
+            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2 js-ht-form-open">Thêm nhà ga</a>
           </div>
         </td>
       </tr>
@@ -92,7 +92,7 @@ $items = $data['terminals'];
             <div class="ht-actions">
               <a
                 href="<?= $e($adminUrl(['tab' => 'nha_ga', 'san_bay' => $airport['ma_iata'], 'nha_ga' => (int) $item['id'], 'sua' => (int) $item['id']])) ?>"
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-secondary js-ht-form-open"
               >
                 <i class="bi bi-pencil"></i> Sửa
               </a>

@@ -60,7 +60,7 @@ $terminal = $selectedTerminal;
             <i class="bi <?= $e($config['icon']) ?>"></i>
             <h3><?= $e($config['empty']) ?></h3>
             <p>Thêm <?= $e($config['label']) ?> cho nhà ga <?= $e($terminal['ten_nha_ga'] ?? '') ?> để hoàn thiện sơ đồ khai thác.</p>
-            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2">Thêm mới</a>
+            <a href="<?= $e($addUrl) ?>" class="btn btn-primary btn-sm mt-2 js-ht-form-open">Thêm mới</a>
           </div>
         </td>
       </tr>
@@ -91,7 +91,7 @@ $terminal = $selectedTerminal;
             <div class="ht-actions">
               <a
                 href="<?= $e($adminUrl(['tab' => $tab, 'san_bay' => $selectedAirport['ma_iata'], 'nha_ga' => (int) $terminal['id'], 'sua' => (int) $item['id']])) ?>"
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-secondary js-ht-form-open"
               >
                 <i class="bi bi-pencil"></i> Sửa
               </a>
