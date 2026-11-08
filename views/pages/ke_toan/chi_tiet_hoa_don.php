@@ -64,7 +64,7 @@ ob_start();
             $soKhach    = (int) ($hoaDon['luong_hanh_khach'] ?? 0);
             // Kiểm tra cột thoi_gian_do_gio nếu CSDL đã mở rộng, ngược lại lấy mặc định 1.0 giờ
             $coCotDo    = isset($hoaDon['thoi_gian_do_gio']) && $hoaDon['thoi_gian_do_gio'] !== null && $hoaDon['thoi_gian_do_gio'] !== '';
-            $thoiGianDo = $coCotDo ? (float) $hoaDon['thoi_gian_do_gio'] : 1.0;
+            $thoiGianDo = $coCotDo ? (float) $hoaDon['thoi_gian_do_gio'] : 1.5;
             ?>
             <table class="table table-sm table-borderless mb-4">
                 <tr><th style="width: 25%;">Mã hóa đơn:</th><td class="fw-bold text-danger">#<?= (int) $hoaDon['id'] ?></td></tr>
@@ -143,7 +143,7 @@ ob_start();
                 <strong>Giải thích quy tắc tính cước:</strong>
                 <ul class="mb-0 mt-2">
                     <li><strong>Phí cất/hạ cánh:</strong> Cước cố định tính theo lượt khai thác chuyến bay tại cảng.</li>
-                    <li><strong>Phí đỗ tàu bay:</strong> Tính theo công thức: <code>Đơn giá × MTOW (tấn) × Thời gian đỗ (giờ)</code>. <?= !$coCotDo ? '(Hiện đang áp dụng quy ước mặc định 1.0 giờ)' : '' ?></li>
+                    <li><strong>Phí đỗ tàu bay:</strong> Tính theo công thức: <code>Đơn giá × MTOW (tấn) × Thời gian đỗ (giờ)</code>. <?= !$coCotDo ? '(Hiện đang áp dụng quy ước mặc định 1.5 giờ tự động tính từ lịch bay)' : '' ?></li>
                     <li><strong>Phí phục vụ hành khách:</strong> Tính theo số lượng hành khách thực tế lên/xuống tàu bay.</li>
                     <li>Đơn giá được áp dụng trực tiếp từ bảng định mức biểu phí dịch vụ của Tổng công ty.</li>
                 </ul>

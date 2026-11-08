@@ -111,6 +111,51 @@ class KeToanController {
     //     }
     //     return false;
     // }
+    /**
+     * Tự động tính thời gian đỗ (giờ) dựa trên lịch bay:
+     * - Tìm chuyến bay tiếp theo cất cánh từ sân bay đến của chuyến hiện tại
+     * - Cùng loại máy bay (id_loai_tau_bay)
+     * - Giờ cất cánh dự kiến > giờ cất cánh thực tế của chuyến hiện tại
+     * - Thời gian đỗ = gio_du_kien(chuyến sau) - gio_thuc_te(chuyến hiện tại)
+     * Nếu không tìm thấy -> mặc định 1.5 giờ (quy định chuyển tiếp tối thiểu).
+     */
+    private function tinhThoiGianDoTuDong(int $id_chuyen_bay): float
+    {
+        // Lấy thông tin chuyến hiện tại
+        $sql = "SELECT id_san_bay_den, id_loai_tau_bay, gio_thuc_te 
+                FROM chuyen_bay_ngay WHERE id = $id_chuyen_bay";
+        $res = mysqli_query($this->conn, $sql);
+        $cur = mysqli_fetch_assoc($res);
+        if (!$cur || !$cur['gio_thuc_te']) {
+            return 1.5; // mặc định
+        }
+
+        $san_bay_den = (int)$cur['id_san_bay_den'];
+        $loai_tau    = (int)$cur['id_loai_tau_bay'];
+        $gio_thuc_te = $cur['gio_thuc_te'];
+
+        // Tìm chuyến tiếp theo: cùng loại máy bay, cất cánh từ sân bay đến của chuyến hiện tại, giờ cất cánh > giờ thực tế hiện tại
+        $sql_next = "SELECT gio_du_kien 
+                     FROM chuyen_bay_ngay 
+                     WHERE id_san_bay_di = $san_bay_den 
+                       AND id_loai_tau_bay = $loai_tau 
+                       AND gio_du_kien > '$gio_thuc_te'
+                       AND trang_thai_tong NOT IN ('Huy')
+                     ORDER BY gio_du_kien ASC 
+                     LIMIT 1";
+        $res_next = mysqli_query($this->conn, $sql_next);
+        $next = mysqli_fetch_assoc($res_next);
+
+        if ($next && $next['gio_du_kien']) {
+            $diff = strtotime($next['gio_du_kien']) - strtotime($gio_thuc_te);
+            $hours = $diff / 3600;
+            // Giới hạn hợp lý: 0.5h - 24h
+            return max(0.5, min(24, round($hours, 2)));
+        }
+
+        return 1.5; // mặc định nếu không có chuyến kế tiếp
+    }
+
     public function TinhVaTaoHoaDon($id_chuyen_bay) {
         $id_chuyen_bay = (int)$id_chuyen_bay; 
         $sql_info = "SELECT cb.*, tb.tai_trong_cat_canh_mtow 
@@ -121,10 +166,8 @@ class KeToanController {
         $cb = mysqli_fetch_assoc($result_info);
         
         if ($cb) {
-            // Thời gian đỗ mặc định là 1.0 giờ (hoặc lấy từ cột thoi_gian_do_gio nếu CSDL có)
-            $so_gio_do = isset($cb['thoi_gian_do_gio']) && $cb['thoi_gian_do_gio'] > 0 
-                         ? (float)$cb['thoi_gian_do_gio'] 
-                         : 1.0; 
+            // Tự động tính thời gian đỗ dựa trên lịch bay
+            $so_gio_do = $this->tinhThoiGianDoTuDong($id_chuyen_bay);
             
             // Lấy biểu phí dịch vụ
             $result_gia = mysqli_query($this->conn, "SELECT loai_dich_vu, don_gia FROM bang_gia_dich_vu");
@@ -132,9 +175,9 @@ class KeToanController {
             while ($row = mysqli_fetch_assoc($result_gia)) {
                 $bang_gia[$row['loai_dich_vu']] = (float)$row['don_gia'];
             }
-            $gia_ha_canh = $bang_gia['Phi_Cat_Ha_Canh'] ?? 1500000;
-            $gia_do      = $bang_gia['Phi_Do_Tau_Bay'] ?? 50000;
-            $phi_psc     = $bang_gia['Phi_Phuc_Vu_Hanh_Khach'] ?? 100000;
+            $gia_ha_canh = $bang_gia['Phi_Cat_Ha_Canh'] ?? 3500000;
+            $gia_do      = $bang_gia['Phi_Do_Tau_Bay'] ?? 12000;
+            $phi_psc     = $bang_gia['Phi_Phuc_Vu_Hanh_Khach'] ?? 80000;
             
             $mtow = (float)($cb['tai_trong_cat_canh_mtow'] ?? 0);
             $so_khach = (int)($cb['luong_hanh_khach'] ?? 0);
@@ -153,16 +196,36 @@ class KeToanController {
             
             $id_hang = (int) ($cb['id_hang_hang_khong'] ?? 0);
             
-            // Lưu vào CSDL
-            $stmt = mysqli_prepare($this->conn, "
-                INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
-                VALUES (?, ?, ?, ?, ?, ?, NOW(), 'Chua_Thanh_Toan')
-            ");
-            if ($stmt) {
-                mysqli_stmt_bind_param($stmt, 'iiddds', $id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien);
-                $res = mysqli_stmt_execute($stmt);
-                mysqli_stmt_close($stmt);
-                return $res;
+            // Lưu vào CSDL (kèm thoi_gian_do_gio)
+            // Kiểm tra xem cột thoi_gian_do_gio có tồn tại không (cache kết quả)
+            static $hasThoiGianDoCol = null;
+            if ($hasThoiGianDoCol === null) {
+                $check = mysqli_query($this->conn, "SHOW COLUMNS FROM hoa_don LIKE 'thoi_gian_do_gio'");
+                $hasThoiGianDoCol = $check && mysqli_num_rows($check) > 0;
+            }
+
+            if ($hasThoiGianDoCol) {
+                $stmt = mysqli_prepare($this->conn, "
+                    INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan, thoi_gian_do_gio) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW(), 'Chua_Thanh_Toan', ?)
+                ");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, 'iidddsd', $id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien, $so_gio_do);
+                    $res = mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
+                    return $res;
+                }
+            } else {
+                $stmt = mysqli_prepare($this->conn, "
+                    INSERT INTO hoa_don (id_chuyen_bay, id_hang_hang_khong, phi_cat_ha_canh, phi_do_tau_bay, phi_phuc_vu_hk, tong_tien, ngay_xuat, trang_thai_thanh_toan) 
+                    VALUES (?, ?, ?, ?, ?, ?, NOW(), 'Chua_Thanh_Toan')
+                ");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, 'iidddd', $id_chuyen_bay, $id_hang, $phi_cat_ha_canh, $phi_do_tau_bay, $phi_phuc_vu_hk, $tong_tien);
+                    $res = mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
+                    return $res;
+                }
             }
         }
         return false;
